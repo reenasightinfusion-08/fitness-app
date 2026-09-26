@@ -26,6 +26,10 @@ class SignupScreenState extends ConsumerState<SignupScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
+  /// Fields only start validating live once a submit has actually been
+  /// attempted, so errors don't flash up while the user is still typing.
+  bool hasSubmitted = false;
+
   @override
   void dispose() {
     emailController.dispose();
@@ -34,6 +38,7 @@ class SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   void submit() {
+    setState(() => hasSubmitted = true);
     if (formKey.currentState?.validate() ?? false) {
       ref.read(pendingAuthProvider.notifier).start(emailController.text.trim());
       ref.read(appFlowProvider.notifier).showVerifyEmail();
@@ -67,6 +72,9 @@ class SignupScreenState extends ConsumerState<SignupScreen> {
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.email],
                   validator: AppValidators.email,
+                  autovalidateMode: hasSubmitted
+                      ? AutovalidateMode.onUserInteraction
+                      : AutovalidateMode.disabled,
                 ),
                 14.verticalSpace,
                 AppTextField(
@@ -78,6 +86,9 @@ class SignupScreenState extends ConsumerState<SignupScreen> {
                   autofillHints: const [AutofillHints.newPassword],
                   validator: AppValidators.password,
                   onSubmitted: (_) => submit(),
+                  autovalidateMode: hasSubmitted
+                      ? AutovalidateMode.onUserInteraction
+                      : AutovalidateMode.disabled,
                 ),
                 18.verticalSpace,
                 AppButton(label: 'Create account', onPressed: submit),

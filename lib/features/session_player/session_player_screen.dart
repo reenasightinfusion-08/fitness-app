@@ -11,6 +11,7 @@ import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/session_complete/session_complete_screen.dart';
 import 'package:fitness_app/features/stretch_detail/models/stretch_guide.dart';
 import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
+import 'package:fitness_app/services/audio_service.dart';
 
 enum _StepKind { getReady, hold, switchSides }
 
@@ -82,13 +83,26 @@ String _formatSeconds(int seconds) {
 /// Matches the prototype's `screens.player`: the always-dark session
 /// screen that walks through a routine one hold at a time.
 class SessionPlayerScreen extends StatefulWidget {
-  const SessionPlayerScreen({super.key, required this.plan, this.holdSecondsOverride});
+  const SessionPlayerScreen({
+    super.key,
+    required this.plan,
+    this.holdSecondsOverride,
+    this.guideMode = GuideMode.voice,
+    this.musicOn = true,
+  });
 
   final RoutineSummary plan;
 
   /// Overrides every stretch's hold time for this session — the "Hold
   /// time" stepper on the Get Ready screen.
   final int? holdSecondsOverride;
+
+  /// Voice / beeps / silent, picked on the Get Ready screen — routes every
+  /// cue this screen fires through [AudioService.cue].
+  final GuideMode guideMode;
+
+  /// Whether to start the calm background drone for this session.
+  final bool musicOn;
 
   @override
   State<SessionPlayerScreen> createState() => SessionPlayerScreenState();
@@ -103,6 +117,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   int stepIndex = 0;
   bool paused = false;
   Timer? _ticker;
+  bool _tenFired = false;
 
   /// A per-session working copy of the plan's stretches, so "Swap" can
   /// replace one stretch for this session without mutating [widget.plan]
@@ -124,6 +139,16 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   void initState() {
     super.initState();
     _startTicker();
+    unawaited(_prepareAudio());
+  }
+
+  /// Preloads every SFX asset before the first cue tries to play it, so
+  /// that first cue doesn't race the asset load and get skipped.
+  Future<void> _prepareAudio() async {
+    await AudioService.instance.init();
+    if (!mounted) return;
+    if (widget.musicOn) AudioService.instance.startMusic();
+    _announceStep();
   }
 
   void _startTicker() {
@@ -133,11 +158,66 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
       setState(() {
         if (remaining > 1) {
           remaining -= 1;
+          _checkCountdownCues();
         } else {
           _advance();
         }
       });
     });
+  }
+
+  /// Ten-seconds-left and 3-2-1 cues, matching the prototype's `tick()`.
+  void _checkCountdownCues() {
+    final step = currentStep;
+    if (step.kind == _StepKind.hold &&
+        step.durationSeconds >= 20 &&
+        remaining <= 10 &&
+        !_tenFired) {
+      _tenFired = true;
+      AudioService.instance.cue(
+        CueKind.ten,
+        text: 'Ten seconds.',
+        mode: widget.guideMode,
+      );
+    }
+    if (remaining <= 3 && remaining >= 1) {
+      AudioService.instance.cue(CueKind.count, mode: widget.guideMode);
+    }
+  }
+
+  /// Narrates entering the current step, matching the prototype's
+  /// `announce()`: a "get ready" beat names the next stretch and reads its
+  /// setup cue, a hold beat says which side (if any) and whether to move
+  /// or stay still, a switch beat just says "Switch sides."
+  void _announceStep() {
+    _tenFired = false;
+    final step = currentStep;
+    final stretch = currentStretch;
+    switch (step.kind) {
+      case _StepKind.getReady:
+        final pos = step.stretchIndex == 0
+            ? 'Get ready. First up: ${stretch.name}.'
+            : 'Next: ${stretch.name}.';
+        AudioService.instance.cue(
+          CueKind.trans,
+          text: '$pos ${stretch.setupCue}',
+          mode: widget.guideMode,
+        );
+        break;
+      case _StepKind.hold:
+        final isDynamic = StretchLibrary.guideFor(stretch.pose)?.isDynamic ?? false;
+        final text = (step.side != null ? '${step.side} side. ' : '') +
+            (isDynamic ? 'Start moving. Breathe with it.' : 'Hold, and breathe.');
+        AudioService.instance.cue(CueKind.start, text: text, mode: widget.guideMode);
+        break;
+      case _StepKind.switchSides:
+        AudioService.instance.cue(
+          CueKind.switchSides,
+          text: 'Switch sides.',
+          mode: widget.guideMode,
+        );
+        break;
+    }
   }
 
   void _advance() {
@@ -147,17 +227,21 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
     }
     stepIndex += 1;
     remaining = steps[stepIndex].durationSeconds;
+    _announceStep();
   }
 
   void _goBack() {
     setState(() {
       stepIndex = stepIndex > 0 ? stepIndex - 1 : 0;
       remaining = steps[stepIndex].durationSeconds;
+      _announceStep();
     });
   }
 
   void _finish() {
     _ticker?.cancel();
+    AudioService.instance.stopMusic();
+    AudioService.instance.gong();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => SessionCompleteScreen(plan: widget.plan),
@@ -165,7 +249,10 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
     );
   }
 
-  void _exit() => Navigator.of(context).popUntil((route) => route.isFirst);
+  void _exit() {
+    AudioService.instance.stopMusic();
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
 
   void _togglePause() => setState(() => paused = !paused);
 
@@ -244,6 +331,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   @override
   void dispose() {
     _ticker?.cancel();
+    AudioService.instance.stopMusic();
     super.dispose();
   }
 

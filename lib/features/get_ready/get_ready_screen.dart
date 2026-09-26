@@ -6,9 +6,7 @@ import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/session_player/session_player_screen.dart';
-
-/// How the session narrates itself — the prototype's `settings.guide`.
-enum GuideMode { voice, beeps, silent }
+import 'package:fitness_app/services/audio_service.dart' show GuideMode;
 
 /// Matches the prototype's `screens.getready`: the settings screen shown
 /// right before a session starts — guidance style, background music, and
@@ -52,6 +50,8 @@ class GetReadyScreenState extends State<GetReadyScreen> {
       builder: (_) => SessionPlayerScreen(
         plan: widget.plan,
         holdSecondsOverride: holdSeconds,
+        guideMode: guideMode,
+        musicOn: musicOn,
       ),
     ),
   );

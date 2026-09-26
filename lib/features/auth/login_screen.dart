@@ -25,6 +25,10 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
+  /// Fields only start validating live once a submit has actually been
+  /// attempted, so errors don't flash up while the user is still typing.
+  bool hasSubmitted = false;
+
   @override
   void dispose() {
     emailController.dispose();
@@ -33,6 +37,7 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void submit() {
+    setState(() => hasSubmitted = true);
     if (formKey.currentState?.validate() ?? false) {
       ref.read(appFlowProvider.notifier).enterApp();
     }
@@ -65,6 +70,9 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.email],
                   validator: AppValidators.email,
+                  autovalidateMode: hasSubmitted
+                      ? AutovalidateMode.onUserInteraction
+                      : AutovalidateMode.disabled,
                 ),
                 14.verticalSpace,
                 AppTextField(
@@ -76,6 +84,9 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                   autofillHints: const [AutofillHints.password],
                   validator: AppValidators.required,
                   onSubmitted: (_) => submit(),
+                  autovalidateMode: hasSubmitted
+                      ? AutovalidateMode.onUserInteraction
+                      : AutovalidateMode.disabled,
                 ),
                 6.verticalSpace,
                 Align(

@@ -1,33 +1,31 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/get_ready/get_ready_screen.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
+import 'package:fitness_app/features/routine_builder/routine_builder_screen.dart';
 import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
 
 /// Matches the prototype's `screens.routine`: what a routine contains and
 /// why, before committing to it. Reached by tapping any routine card —
-/// a quick pick, today's plan, or (once built) a search result.
-class RoutineDetailScreen extends StatefulWidget {
+/// a quick pick, today's plan, or (once built) a search result. The heart
+/// toggle writes to [favoritesProvider], keyed by [RoutineSummary.name],
+/// so a routine favourited here shows up in the Mine tab's Favourites list.
+class RoutineDetailScreen extends ConsumerWidget {
   const RoutineDetailScreen({super.key, required this.routine});
 
   final RoutineSummary routine;
 
   @override
-  State<RoutineDetailScreen> createState() => RoutineDetailScreenState();
-}
-
-class RoutineDetailScreenState extends State<RoutineDetailScreen> {
-  bool isFavorite = false;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
-    final routine = widget.routine;
     final firstStretch = routine.stretches.first;
+    final isFavorite = ref.watch(favoritesProvider).contains(routine.name);
 
     return Scaffold(
       backgroundColor: colors.ground,
@@ -38,7 +36,8 @@ class RoutineDetailScreenState extends State<RoutineDetailScreen> {
           activeIcon: Icons.favorite_rounded,
           isActive: isFavorite,
           tooltip: isFavorite ? 'Remove from favourites' : 'Add to favourites',
-          onPressed: () => setState(() => isFavorite = !isFavorite),
+          onPressed: () =>
+              ref.read(favoritesProvider.notifier).toggle(routine.name),
         ),
       ),
       body: SafeArea(
@@ -170,9 +169,11 @@ class RoutineDetailScreenState extends State<RoutineDetailScreen> {
                 AppButton(
                   label: 'Customise a copy',
                   variant: AppButtonVariant.text,
-                  onPressed: () => AppSnackBar.show(
-                    context,
-                    "That screen isn't built yet.",
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          RoutineBuilderScreen(initialRoutine: routine),
+                    ),
                   ),
                 ),
               ],

@@ -4,11 +4,11 @@ import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/explore/explore_view.dart';
 import 'package:fitness_app/features/home/widgets/today_view.dart';
+import 'package:fitness_app/features/mine/mine_view.dart';
 import 'package:fitness_app/features/profile/widgets/profile_view.dart';
 import 'package:fitness_app/features/progress/widgets/progress_view.dart';
 
 /// The app's real home: bottom-tabbed shell around the Today screen.
-/// Mine isn't built yet, so it shows a placeholder rather than nothing.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -59,7 +59,7 @@ class HomeScreenState extends State<HomeScreen> {
           children: [
             const TodayView(firstName: 'Anand'),
             const ExploreView(),
-            _ComingSoonTab(label: navItems[2].label),
+            const MineView(),
             const ProgressView(),
             const ProfileView(),
           ],
@@ -72,22 +72,4 @@ class HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-}
-
-class _ComingSoonTab extends StatelessWidget {
-  const _ComingSoonTab({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: AppInsets.page,
-      child: AppEmptyState(
-        icon: Icons.hourglass_top_rounded,
-        title: '$label is coming soon',
-        message: "This tab isn't built yet.",
-      ),
-    ),
-  );
 }

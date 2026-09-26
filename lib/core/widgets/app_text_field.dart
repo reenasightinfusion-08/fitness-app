@@ -28,6 +28,7 @@ class AppTextField extends StatefulWidget {
     this.initialValue,
     this.onChanged,
     this.onSubmitted,
+    this.autovalidateMode = AutovalidateMode.disabled,
   });
 
   final AppValidator validator;
@@ -45,6 +46,12 @@ class AppTextField extends StatefulWidget {
   final String? initialValue;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+
+  /// Defaults to [AutovalidateMode.disabled] so an error doesn't flash up
+  /// before the user has ever tried to submit. Pass
+  /// [AutovalidateMode.onUserInteraction] once the surrounding form has
+  /// had a failed submit attempt, so fixes are then validated live.
+  final AutovalidateMode autovalidateMode;
 
   @override
   State<AppTextField> createState() => AppTextFieldState();
@@ -72,7 +79,7 @@ class AppTextFieldState extends State<AppTextField> {
           controller: widget.controller,
           initialValue: widget.initialValue,
           validator: widget.validator,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
+          autovalidateMode: widget.autovalidateMode,
           obscureText: isPassword && isObscured,
           keyboardType: isOtp ? TextInputType.number : widget.keyboardType,
           textInputAction: widget.textInputAction,

@@ -13,12 +13,18 @@ class AppChip extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     this.isCompact = false,
+    this.showCheck = true,
   });
 
   final String label;
   final bool isSelected;
   final VoidCallback? onTap;
   final bool isCompact;
+
+  /// Set false for a chip whose label is already the whole content (a
+  /// single letter, an icon) — the check mark would just crowd it, and
+  /// the fill color alone is enough to read as selected there.
+  final bool showCheck;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +58,7 @@ class AppChip extends StatelessWidget {
                 children: [
                   AnimatedSize(
                     duration: const Duration(milliseconds: 180),
-                    child: isSelected
+                    child: (isSelected && showCheck)
                         ? Padding(
                             padding: EdgeInsets.only(right: 6.w),
                             child: Icon(

@@ -25,8 +25,16 @@ const int _bodyStepIndex = 1;
 /// A single screen swaps its step content by index rather than pushing a
 /// new route per step, so the top bar's progress bar and Continue button
 /// stay put while the body animates between steps.
+///
+/// Passing [editStepIndex] opens directly on that one step in "edit"
+/// mode — matching the prototype's `screens.ob({step, edit: true})`,
+/// reached by tapping a row on [EditProfileScreen]: a plain title
+/// instead of the progress bar, no Skip action, and a "Save" button that
+/// pops back to Edit profile instead of advancing to the next step.
 class OnboardingSetupScreen extends ConsumerStatefulWidget {
-  const OnboardingSetupScreen({super.key});
+  const OnboardingSetupScreen({super.key, this.editStepIndex});
+
+  final int? editStepIndex;
 
   @override
   ConsumerState<OnboardingSetupScreen> createState() =>
@@ -35,12 +43,14 @@ class OnboardingSetupScreen extends ConsumerStatefulWidget {
 
 class OnboardingSetupScreenState
     extends ConsumerState<OnboardingSetupScreen> {
-  int currentStep = 0;
+  late int currentStep = widget.editStepIndex ?? 0;
 
-  bool get isLastStep => currentStep == onboardingSteps.length - 1;
+  bool get isEditMode => widget.editStepIndex != null;
+  bool get isLastStep =>
+      !isEditMode && currentStep == onboardingSteps.length - 1;
 
   void goBack() {
-    if (currentStep == 0) return;
+    if (isEditMode || currentStep == 0) return;
     setState(() => currentStep -= 1);
   }
 
@@ -52,6 +62,10 @@ class OnboardingSetupScreenState
   }
 
   void advance() {
+    if (isEditMode) {
+      Navigator.of(context).pop();
+      return;
+    }
     if (isLastStep) {
       ref.read(appFlowProvider.notifier).showPlanReady();
       return;
@@ -82,14 +96,19 @@ class OnboardingSetupScreenState
     return Scaffold(
       backgroundColor: colors.ground,
       appBar: AppTopBar(
-        onBack: currentStep == 0 ? null : goBack,
-        center: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8.w),
-          child: AppProgressBar(
-            value: (currentStep + 1) / onboardingSteps.length,
-          ),
-        ),
-        trailing: step.skippable
+        title: isEditMode ? 'Edit profile' : null,
+        onBack: isEditMode
+            ? () => Navigator.of(context).pop()
+            : (currentStep == 0 ? null : goBack),
+        center: isEditMode
+            ? null
+            : Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                child: AppProgressBar(
+                  value: (currentStep + 1) / onboardingSteps.length,
+                ),
+              ),
+        trailing: !isEditMode && step.skippable
             ? AppButton(
                 label: 'Skip',
                 variant: AppButtonVariant.text,
@@ -110,13 +129,15 @@ class OnboardingSetupScreenState
                   key: ValueKey(currentStep),
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'Step ${currentStep + 1} of ${onboardingSteps.length}',
-                      style: AppTextStyle.eyebrow.copyWith(
-                        color: colors.accent,
+                    if (!isEditMode) ...[
+                      Text(
+                        'Step ${currentStep + 1} of ${onboardingSteps.length}',
+                        style: AppTextStyle.eyebrow.copyWith(
+                          color: colors.accent,
+                        ),
                       ),
-                    ),
-                    8.verticalSpace,
+                      8.verticalSpace,
+                    ],
                     Text(step.title, style: AppTextStyle.titleLarge),
                     if (step.why != null) ...[
                       6.verticalSpace,
@@ -136,7 +157,9 @@ class OnboardingSetupScreenState
             Padding(
               padding: EdgeInsets.fromLTRB(18.w, 0, 18.w, 14.h),
               child: AppButton(
-                label: isLastStep ? 'Build my plan' : 'Continue',
+                label: isEditMode
+                    ? 'Save'
+                    : (isLastStep ? 'Build my plan' : 'Continue'),
                 onPressed: isValid ? advance : null,
               ),
             ),

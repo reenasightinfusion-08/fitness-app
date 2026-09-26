@@ -33,6 +33,7 @@ class StretchPreview {
     required this.name,
     required this.pose,
     this.holdSeconds = 30,
+    this.repCount = 1,
     this.position = StretchPosition.standing,
     this.isEachSide = false,
     this.setupCue = 'Get into position.',
@@ -44,6 +45,9 @@ class StretchPreview {
 
   /// How long a single hold lasts — the prototype's per-stretch `hold`.
   final int holdSeconds;
+
+  /// How many times the hold repeats — the prototype's per-stretch `reps`.
+  final int repCount;
   final StretchPosition position;
 
   /// Whether the hold repeats on the other side (the player inserts a
@@ -56,6 +60,19 @@ class StretchPreview {
   /// Read out during the hold, e.g. "Feel it: down the side of your leg."
   /// Falls back to a generic breathing cue when unset.
   final String? feelCue;
+
+  /// Used by the routine builder to adjust just the hold time or rep count
+  /// of a picked stretch without rebuilding the rest of it by hand.
+  StretchPreview copyWith({int? holdSeconds, int? repCount}) => StretchPreview(
+    name: name,
+    pose: pose,
+    holdSeconds: holdSeconds ?? this.holdSeconds,
+    repCount: repCount ?? this.repCount,
+    position: position,
+    isEachSide: isEachSide,
+    setupCue: setupCue,
+    feelCue: feelCue,
+  );
 }
 
 /// A short routine: what it's called, how long it runs, and its stretches
@@ -71,6 +88,7 @@ class RoutineSummary {
     this.equipmentLabel = 'None',
     this.tags = const [],
     this.adaptedNotes = const [],
+    this.transitionSeconds,
   });
 
   final String name;
@@ -79,6 +97,10 @@ class RoutineSummary {
   final String? blurb;
   final RoutineLevel level;
   final String equipmentLabel;
+
+  /// How long to allow to get into each stretch — the prototype's `B.trans`.
+  /// Null means "Auto": more time when moving from standing to the floor.
+  final int? transitionSeconds;
 
   /// e.g. "For your shoulders", "Fits your desk job".
   final List<String> tags;
