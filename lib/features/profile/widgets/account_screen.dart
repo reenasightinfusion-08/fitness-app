@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:fitness_app/core/providers/providers.dart';
+import 'package:fitness_app/services/auth_service.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/app_validators.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
@@ -49,7 +50,9 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
       confirmLabel: 'Delete everything',
       isDestructive: true,
     );
-    if (!confirmed || !context.mounted) return;
+    if (!confirmed) return;
+    await ref.read(authServiceProvider).logout();
+    if (!context.mounted) return;
     ref.read(appFlowProvider.notifier).showWelcome();
     AppSnackBar.show(context, 'Account deleted.');
   }
@@ -145,7 +148,12 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
             AppButton(
               label: 'Log out',
               variant: AppButtonVariant.secondary,
-              onPressed: () => ref.read(appFlowProvider.notifier).showWelcome(),
+              onPressed: () async {
+                await ref.read(authServiceProvider).logout();
+                if (context.mounted) {
+                  ref.read(appFlowProvider.notifier).showWelcome();
+                }
+              },
             ),
             4.verticalSpace,
             AppButton(

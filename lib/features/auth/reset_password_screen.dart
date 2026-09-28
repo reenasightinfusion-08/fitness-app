@@ -7,11 +7,10 @@ import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/app_validators.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
+import 'package:fitness_app/services/auth_service.dart';
 
-/// Matches the prototype's `screens.reset`. On success there's no
-/// backend to actually change a password against, so it just clears the
-/// pending state and returns to login with a confirmation toast — same
-/// as the mock.
+/// Matches the prototype's `screens.reset`. The code + new password are
+/// checked by [AuthService.resetPassword] against the backend.
 class ResetPasswordScreen extends ConsumerStatefulWidget {
   const ResetPasswordScreen({super.key});
 
@@ -25,6 +24,7 @@ class ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   final codeController = TextEditingController();
   final passwordController = TextEditingController();
   String? codeError;
+  bool isLoading = false;
 
   @override
   void dispose() {
@@ -33,18 +33,32 @@ class ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     super.dispose();
   }
 
-  void submit(PendingAuth pending) {
+  Future<void> submit(PendingAuth pending) async {
+    if (isLoading) return;
     if (!(formKey.currentState?.validate() ?? false)) return;
-    if (codeController.text.trim() != pending.code) {
-      setState(() => codeError = "That code doesn't match.");
-      return;
+
+    setState(() {
+      isLoading = true;
+      codeError = null;
+    });
+    try {
+      await ref.read(authServiceProvider).resetPassword(
+        email: pending.email,
+        code: codeController.text.trim(),
+        newPassword: passwordController.text,
+      );
+      if (!mounted) return;
+      ref.read(pendingAuthProvider.notifier).clear();
+      ref.read(appFlowProvider.notifier).showLogin();
+      AppSnackBar.showSuccess(
+        context,
+        'Password updated. Log in with your new password.',
+      );
+    } on AuthException catch (e) {
+      setState(() => codeError = e.message);
+    } finally {
+      if (mounted) setState(() => isLoading = false);
     }
-    ref.read(pendingAuthProvider.notifier).clear();
-    ref.read(appFlowProvider.notifier).showLogin();
-    AppSnackBar.showSuccess(
-      context,
-      'Password updated. Log in with your new password.',
-    );
   }
 
   @override
@@ -104,11 +118,6 @@ class ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   ),
                 ),
                 18.verticalSpace,
-                AppNote(
-                  tone: AppTone.warm,
-                  message: 'Prototype: your reset code is ${pending.code}',
-                ),
-                18.verticalSpace,
                 AppTextField(
                   controller: codeController,
                   label: 'Code',
@@ -140,6 +149,7 @@ class ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 AppButton(
                   label: 'Save new password',
                   onPressed: () => submit(pending),
+                  isLoading: isLoading,
                 ),
               ],
             ),

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:fitness_app/core/providers/app_flow_provider.dart';
+import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/profile/models/profile_data.dart';
@@ -103,7 +103,12 @@ class ProfileView extends ConsumerWidget {
         AppButton(
           label: 'Log out',
           variant: AppButtonVariant.secondary,
-          onPressed: () => ref.read(appFlowProvider.notifier).showWelcome(),
+          onPressed: () async {
+            await ref.read(authServiceProvider).logout();
+            if (context.mounted) {
+              ref.read(appFlowProvider.notifier).showWelcome();
+            }
+          },
         ),
       ],
     );

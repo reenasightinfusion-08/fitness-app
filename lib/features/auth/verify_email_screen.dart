@@ -7,11 +7,10 @@ import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/app_validators.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
+import 'package:fitness_app/services/auth_service.dart';
 
-/// Matches the prototype's `screens.verify`. There's no real mail here —
-/// same as the mock, the "sent" code is shown on screen in a demo note,
-/// and matching it against [PendingAuthController]'s state is the whole
-/// check.
+/// Matches the prototype's `screens.verify`. The 6-digit code is checked
+/// by [AuthService.verifyEmail] against the backend, not locally.
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   const VerifyEmailScreen({super.key});
 
@@ -23,6 +22,8 @@ class VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   final formKey = GlobalKey<FormState>();
   final codeController = TextEditingController();
   String? codeError;
+  bool isLoading = false;
+  bool isResending = false;
 
   @override
   void dispose() {
@@ -30,23 +31,45 @@ class VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     super.dispose();
   }
 
-  void submit(PendingAuth pending) {
+  Future<void> submit(PendingAuth pending) async {
+    if (isLoading) return;
     if (!(formKey.currentState?.validate() ?? false)) return;
-    if (codeController.text.trim() != pending.code) {
-      setState(
-        () => codeError = "That code doesn't match. Check the latest code "
-            'and try again.',
+
+    setState(() {
+      isLoading = true;
+      codeError = null;
+    });
+    try {
+      await ref.read(authServiceProvider).verifyEmail(
+        email: pending.email,
+        code: codeController.text.trim(),
       );
-      return;
+      if (!mounted) return;
+      ref.read(pendingAuthProvider.notifier).clear();
+      ref.read(appFlowProvider.notifier).showOnboarding();
+    } on AuthException catch (e) {
+      setState(() => codeError = e.message);
+    } finally {
+      if (mounted) setState(() => isLoading = false);
     }
-    ref.read(pendingAuthProvider.notifier).clear();
-    ref.read(appFlowProvider.notifier).showOnboarding();
   }
 
-  void resend() {
-    ref.read(pendingAuthProvider.notifier).resend();
-    setState(() => codeError = null);
-    AppSnackBar.show(context, 'New code sent.');
+  Future<void> resend(PendingAuth pending) async {
+    if (isResending) return;
+    setState(() => isResending = true);
+    try {
+      await ref
+          .read(authServiceProvider)
+          .resendCode(email: pending.email, purpose: 'verify');
+      if (mounted) {
+        setState(() => codeError = null);
+        AppSnackBar.show(context, 'New code sent.');
+      }
+    } on AuthException catch (e) {
+      if (mounted) AppSnackBar.showError(context, e.message);
+    } finally {
+      if (mounted) setState(() => isResending = false);
+    }
   }
 
   @override
@@ -107,13 +130,6 @@ class VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                   ),
                 ),
                 18.verticalSpace,
-                AppNote(
-                  tone: AppTone.warm,
-                  message:
-                      'Prototype: no email is actually sent. Your code is '
-                      '${pending.code}',
-                ),
-                18.verticalSpace,
                 AppTextField(
                   controller: codeController,
                   label: '6-digit code',
@@ -136,12 +152,14 @@ class VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                 AppButton(
                   label: 'Verify and continue',
                   onPressed: () => submit(pending),
+                  isLoading: isLoading,
                 ),
                 10.verticalSpace,
                 AppButton(
                   label: 'Send a new code',
                   variant: AppButtonVariant.text,
-                  onPressed: resend,
+                  onPressed: () => resend(pending),
+                  isLoading: isResending,
                 ),
               ],
             ),

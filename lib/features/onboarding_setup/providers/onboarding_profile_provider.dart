@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fitness_app/features/onboarding_setup/models/onboarding_options.dart';
 import 'package:fitness_app/features/onboarding_setup/models/onboarding_profile.dart';
+import 'package:fitness_app/features/onboarding_setup/models/onboarding_options.dart' show flexibilityQuestions;
 
 /// Holds the profile the 10-step wizard is filling in. One [OnboardingProfile]
 /// replaced wholesale per edit — mirrors the prototype's single mutable
@@ -109,6 +110,48 @@ class OnboardingProfileController extends Notifier<OnboardingProfile> {
   Set<String> _toggled(Set<String> current, String id) => current.contains(id)
       ? (Set<String>.from(current)..remove(id))
       : (Set<String>.from(current)..add(id));
+}
+
+/// Shapes an [OnboardingProfile] into the JSON body `PATCH /api/users/me`
+/// expects — matches the flat field set on the backend's User schema.
+extension OnboardingProfileApi on OnboardingProfile {
+  Map<String, dynamic> toUserUpdate({bool markComplete = false}) => {
+    'name': name,
+    'age': int.tryParse(age),
+    'gender': gender,
+    'heightCm': int.tryParse(heightCm),
+    'weightKg': int.tryParse(weightKg),
+    'lifestyle': lifestyle,
+    'sports': sports.toList(),
+    'goals': goals.toList(),
+    'painAreas': painAreas.toList(),
+    'noKneel': noKneel,
+    'noFloor': noFloor,
+    'hadRecentSurgery': hadRecentSurgery,
+    'isPregnant': isPregnant,
+    'injurySeverity': injurySeverity.map((k, v) => MapEntry(k, v.name)),
+    'equipment': equipment.toList(),
+    'equipmentNone': equipmentNone,
+    'flexAnswers': [
+      for (var i = 0; i < flexAnswers.length; i++)
+        if (flexAnswers[i] != null)
+          {
+            'question': flexibilityQuestions[i].question,
+            'answer': flexibilityQuestions[i]
+                .options
+                .firstWhere((o) => o.score == flexAnswers[i])
+                .label,
+            'score': flexAnswers[i],
+          },
+    ],
+    'flexibilityLevel': calcFlexibilityLevel(flexAnswers),
+    'minutesPerDay': minutesPerDay,
+    'timeOfDay': timeOfDay,
+    'reminderOn': reminderOn,
+    'reminderTime': {'hour': reminderTime.hour, 'minute': reminderTime.minute},
+    'safetyAcknowledged': safetyAcknowledged,
+    if (markComplete) 'onboardingComplete': true,
+  };
 }
 
 final onboardingProfileProvider =

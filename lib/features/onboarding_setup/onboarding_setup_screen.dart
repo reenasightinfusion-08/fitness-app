@@ -18,6 +18,7 @@ import 'package:fitness_app/features/onboarding_setup/widgets/steps/lifestyle_st
 import 'package:fitness_app/features/onboarding_setup/widgets/steps/pain_step.dart';
 import 'package:fitness_app/features/onboarding_setup/widgets/steps/safety_step.dart';
 import 'package:fitness_app/features/onboarding_setup/widgets/steps/time_step.dart';
+import 'package:fitness_app/services/auth_service.dart';
 
 const int _bodyStepIndex = 1;
 
@@ -54,6 +55,8 @@ class OnboardingSetupScreenState
     setState(() => currentStep -= 1);
   }
 
+  bool isSyncing = false;
+
   void skip() {
     if (currentStep == _bodyStepIndex) {
       ref.read(onboardingProfileProvider.notifier).resetHeightWeight();
@@ -61,16 +64,37 @@ class OnboardingSetupScreenState
     advance();
   }
 
-  void advance() {
+  Future<void> advance() async {
     if (isEditMode) {
-      Navigator.of(context).pop();
+      await _syncProfile();
+      if (mounted) Navigator.of(context).pop();
       return;
     }
     if (isLastStep) {
-      ref.read(appFlowProvider.notifier).showPlanReady();
+      await _syncProfile(markComplete: true);
+      if (mounted) ref.read(appFlowProvider.notifier).showPlanReady();
       return;
     }
     setState(() => currentStep += 1);
+  }
+
+  /// Pushes the wizard's current answers to `PATCH /api/users/me`. Never
+  /// blocks navigation on failure — the profile still lives in
+  /// [onboardingProfileProvider] locally, so a flaky connection here just
+  /// means the next successful sync (or a manual retry) catches it up.
+  Future<void> _syncProfile({bool markComplete = false}) async {
+    if (isSyncing) return;
+    setState(() => isSyncing = true);
+    try {
+      final profile = ref.read(onboardingProfileProvider);
+      await ref
+          .read(authServiceProvider)
+          .updateMe(profile.toUserUpdate(markComplete: markComplete));
+    } on AuthException catch (e) {
+      if (mounted) AppSnackBar.showError(context, "Couldn't save: ${e.message}");
+    } finally {
+      if (mounted) setState(() => isSyncing = false);
+    }
   }
 
   Widget stepContent(int index) => switch (index) {
@@ -160,7 +184,8 @@ class OnboardingSetupScreenState
                 label: isEditMode
                     ? 'Save'
                     : (isLastStep ? 'Build my plan' : 'Continue'),
-                onPressed: isValid ? advance : null,
+                onPressed: isValid && !isSyncing ? advance : null,
+                isLoading: isSyncing,
               ),
             ),
           ],
