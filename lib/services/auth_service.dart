@@ -138,16 +138,7 @@ class AuthService {
 
     debugPrint('[AuthService] Response status: ${response.statusCode}');
 
-    final data = response.body.isEmpty
-        ? <String, dynamic>{}
-        : jsonDecode(response.body) as Map<String, dynamic>;
-
-    if (response.statusCode >= 400) {
-      final errorMsg = data['error'] as String? ?? 'Something went wrong';
-      debugPrint('[AuthService] Server returned error: $errorMsg');
-      throw AuthException(errorMsg);
-    }
-    return data;
+    return _decode(response);
   }
 
   Future<String?> _authHeader() async {
@@ -184,13 +175,18 @@ class AuthService {
     return _decode(response);
   }
 
+  /// Every endpoint replies `{ success, message, data }`. Returns `data`
+  /// as a map (empty when null) and throws [AuthException] with `message`
+  /// on failure.
   Map<String, dynamic> _decode(http.Response response) {
-    final data = response.body.isEmpty
+    final body = response.body.isEmpty
         ? <String, dynamic>{}
         : jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode >= 400) {
-      throw AuthException(data['error'] as String? ?? 'Something went wrong');
+    if (response.statusCode >= 400 || body['success'] == false) {
+      final message = body['message'] as String? ?? 'Something went wrong';
+      debugPrint('[AuthService] Server returned error: $message');
+      throw AuthException(message);
     }
-    return data;
+    return (body['data'] as Map<String, dynamic>?) ?? <String, dynamic>{};
   }
 }
