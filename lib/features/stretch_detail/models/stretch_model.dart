@@ -28,6 +28,8 @@ class StretchModel {
     this.easier = '',
     this.harder = '',
     this.cautions = '',
+    this.thumbnailUrl,
+    this.videoUrl,
     this.isActive = true,
   });
 
@@ -52,6 +54,8 @@ class StretchModel {
     easier: json['easier'] as String? ?? '',
     harder: json['harder'] as String? ?? '',
     cautions: json['cautions'] as String? ?? '',
+    thumbnailUrl: json['thumbnailUrl'] as String?,
+    videoUrl: json['videoUrl'] as String?,
     isActive: json['isActive'] as bool? ?? true,
   );
 
@@ -81,6 +85,8 @@ class StretchModel {
   final String easier;
   final String harder;
   final String cautions;
+  final String? thumbnailUrl;
+  final String? videoUrl;
   final bool isActive;
 
   /// Total hold time — same formula the backend stores as `totalHoldSeconds`.

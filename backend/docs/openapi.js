@@ -168,6 +168,8 @@ module.exports = {
           easier: { type: 'string' },
           harder: { type: 'string' },
           cautions: { type: 'string' },
+          thumbnailUrl: { type: 'string' },
+          videoUrl: { type: 'string' },
         },
       },
       Stretch: {
@@ -340,6 +342,16 @@ module.exports = {
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           200: okResponse('Stretch', { $ref: '#/components/schemas/Stretch' }, 'Stretch fetched'),
+          400: err('Invalid id', 'Cast to ObjectId failed'),
+          404: err('Not found', 'Stretch not found'),
+        },
+      },
+      delete: {
+        tags: ['Stretches'],
+        summary: 'Delete a stretch permanently',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          200: okResponse('Deleted', { type: 'object', nullable: true, example: null }, 'Stretch deleted'),
           400: err('Invalid id', 'Cast to ObjectId failed'),
           404: err('Not found', 'Stretch not found'),
         },

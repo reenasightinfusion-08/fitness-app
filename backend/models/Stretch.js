@@ -46,6 +46,8 @@ const stretchSchema = new mongoose.Schema(
     easier: { type: String, default: '' },
     harder: { type: String, default: '' },
     cautions: { type: String, default: '' },
+    thumbnailUrl: { type: String, default: '' },
+    videoUrl: { type: String, default: '' },
 
     isActive: { type: Boolean, default: true },
   },

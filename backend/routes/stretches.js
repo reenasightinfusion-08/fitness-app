@@ -28,4 +28,11 @@ router.post('/', async (req, res) => {
   }
 });
 
+// DELETE /api/stretches/:id  (permanent — no auth yet, lock down before use)
+router.delete('/:id', asyncHandler(async (req, res) => {
+  const stretch = await Stretch.findByIdAndDelete(req.params.id);
+  if (!stretch) return fail(res, 404, 'Stretch not found');
+  ok(res, null, 'Stretch deleted');
+}));
+
 module.exports = router;
