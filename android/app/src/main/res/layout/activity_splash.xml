@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:gravity="center">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <!-- Small Centered Animated Circle Loader -->
+        <ProgressBar
+            android:id="@+id/splashLoader"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:indeterminate="true"
+            android:indeterminateTint="#1C6A56"
+            android:indeterminateTintMode="src_in" />
+
+        <!-- App Name -->
+        <TextView
+            android:id="@+id/splashTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Loosen"
+            android:textColor="#15201B"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Stretching that fits your body."
+            android:textColor="#4F5E57"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</RelativeLayout>
