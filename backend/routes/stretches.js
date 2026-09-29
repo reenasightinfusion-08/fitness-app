@@ -2,9 +2,9 @@ const router = require('express').Router();
 const Stretch = require('../models/Stretch');
 const { ok, fail, asyncHandler } = require('../utils/response');
 
-// GET /api/stretches
+// GET /api/stretches  (inactive stretches are hidden, not deleted)
 router.get('/', asyncHandler(async (_req, res) => {
-  const stretches = await Stretch.find().sort({ name: 1 });
+  const stretches = await Stretch.find({ isActive: true }).sort({ name: 1 });
   ok(res, stretches, 'Stretches fetched');
 }));
 
@@ -23,6 +23,7 @@ router.post('/', async (req, res) => {
     const stretch = await Stretch.create(req.body);
     ok(res, stretch, 'Stretch created', 201);
   } catch (err) {
+    if (err.code === 11000) return fail(res, 409, 'A stretch with this poseKey already exists');
     fail(res, 400, err.message);
   }
 });

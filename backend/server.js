@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const stretchRoutes = require('./routes/stretches');
 const { ok, fail } = require('./utils/response');
+const openapi = require('./docs/openapi');
 
 const app = express();
 app.use(cors());
@@ -33,6 +34,18 @@ app.use(async (_req, res, next) => {
 });
 
 app.get('/health', (_req, res) => ok(res, { ok: true }, 'Healthy'));
+// API docs — UI loaded from CDN because swagger-ui's bundled assets 404 on Vercel serverless.
+app.get('/api/docs.json', (_req, res) => res.json(openapi));
+app.get('/api/docs', (_req, res) => {
+  res.type('html').send(`<!doctype html>
+<html><head><meta charset="utf-8"><title>Fitness API Docs</title>
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css"></head>
+<body><div id="ui"></div>
+<script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script>SwaggerUIBundle({ url: '/api/docs.json', dom_id: '#ui', persistAuthorization: true });</script>
+</body></html>`);
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/stretches', stretchRoutes);
