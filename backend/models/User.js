@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema(
     name: { type: String, default: '' },
     age: { type: Number, default: null },
     gender: { type: String, default: null },
+    country: { type: String, default: null, trim: true },
     heightCm: { type: Number, default: null },
     weightKg: { type: Number, default: null },
     lifestyle: { type: String, default: null },

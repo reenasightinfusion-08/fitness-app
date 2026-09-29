@@ -5,6 +5,8 @@ const cors = require('cors');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const stretchRoutes = require('./routes/stretches');
+const { ok, fail } = require('./utils/response');
 
 const app = express();
 app.use(cors());
@@ -26,13 +28,23 @@ app.use(async (_req, res, next) => {
     next();
   } catch (err) {
     console.error('Database connection error:', err.message);
-    res.status(500).json({ error: 'Database connection failed' });
+    fail(res, 500, 'Database connection failed');
   }
 });
 
-app.get('/health', (_req, res) => res.json({ ok: true }));
+app.get('/health', (_req, res) => ok(res, { ok: true }, 'Healthy'));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/stretches', stretchRoutes);
+
+app.use((_req, res) => fail(res, 404, 'Route not found'));
+
+// eslint-disable-next-line no-unused-vars
+app.use((err, _req, res, _next) => {
+  console.error('[unhandled error]:', err);
+  fail(res, err.name === 'ValidationError' || err.name === 'CastError' ? 400 : 500,
+    err.name === 'ValidationError' || err.name === 'CastError' ? err.message : 'Internal server error');
+});
 
 const port = process.env.PORT || 4000;
 

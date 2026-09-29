@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendCode } = require('../utils/mailer');
+const { ok, fail } = require('../utils/response');
 
 const sign = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES || '7d' });
@@ -16,11 +17,11 @@ router.post('/signup', async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const { password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
-    if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    if (!email || !password) return fail(res, 400, 'Email and password are required');
+    if (password.length < 8) return fail(res, 400, 'Password must be at least 8 characters');
 
     const existing = await User.findOne({ email });
-    if (existing?.isVerified) return res.status(409).json({ error: 'Email already in use' });
+    if (existing?.isVerified) return fail(res, 409, 'Email already in use');
 
     const passwordHash = await bcrypt.hash(password, 12);
     const verifyCode = genCode();
@@ -34,10 +35,10 @@ router.post('/signup', async (req, res) => {
     }
 
     await sendCode(email, verifyCode, 'verify');
-    res.json({ message: 'Verification code sent' });
+    ok(res, null, 'Verification code sent');
   } catch (err) {
     console.error('[auth/signup error]:', err);
-    res.status(500).json({ error: 'Signup failed: ' + (err.message || err) });
+    fail(res, 500, 'Signup failed: ' + (err.message || err));
   }
 });
 
@@ -48,15 +49,15 @@ router.post('/verify-email', async (req, res) => {
     const { code } = req.body;
     const user = await User.findOne({ email });
     if (!user || !user.verifyCode || user.verifyCode !== code) {
-      return res.status(400).json({ error: "That code doesn't match" });
+      return fail(res, 400, "That code doesn't match");
     }
     user.isVerified = true;
     user.verifyCode = undefined;
     await user.save();
-    res.json({ token: sign(user._id), email: user.email });
+    ok(res, { token: sign(user._id), email: user.email }, 'Signed in');
   } catch (err) {
     console.error('[auth/verify-email error]:', err);
-    res.status(500).json({ error: 'Verification failed' });
+    fail(res, 500, 'Verification failed');
   }
 });
 
@@ -67,13 +68,13 @@ router.post('/login', async (req, res) => {
     const { password } = req.body;
     const user = await User.findOne({ email });
     if (!user || !(await bcrypt.compare(password || '', user.passwordHash))) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return fail(res, 401, 'Invalid email or password');
     }
-    if (!user.isVerified) return res.status(403).json({ error: 'Please verify your email first' });
-    res.json({ token: sign(user._id), email: user.email });
+    if (!user.isVerified) return fail(res, 403, 'Please verify your email first');
+    ok(res, { token: sign(user._id), email: user.email }, 'Signed in');
   } catch (err) {
     console.error('[auth/login error]:', err);
-    res.status(500).json({ error: 'Login failed' });
+    fail(res, 500, 'Login failed');
   }
 });
 
@@ -90,10 +91,10 @@ router.post('/forgot-password', async (req, res) => {
     }
     // Same response whether or not the account exists, so the endpoint can't
     // be used to check which emails are registered.
-    res.json({ message: 'If that email exists, a code was sent' });
+    ok(res, null, 'If that email exists, a code was sent');
   } catch (err) {
     console.error('[auth/forgot-password error]:', err);
-    res.status(500).json({ error: 'Request failed' });
+    fail(res, 500, 'Request failed');
   }
 });
 
@@ -107,7 +108,7 @@ router.post('/resend-code', async (req, res) => {
       const sinceLast = user.lastCodeSentAt ? Date.now() - user.lastCodeSentAt.getTime() : Infinity;
       if (sinceLast < RESEND_COOLDOWN_MS) {
         const waitSec = Math.ceil((RESEND_COOLDOWN_MS - sinceLast) / 1000);
-        return res.status(429).json({ error: `Please wait ${waitSec}s before resending`, retryAfter: waitSec });
+        return fail(res, 429, `Please wait ${waitSec}s before resending`, { retryAfter: waitSec });
       }
       const code = genCode();
       if (purpose === 'verify') {
@@ -120,10 +121,10 @@ router.post('/resend-code', async (req, res) => {
       await user.save();
       await sendCode(email, code, purpose);
     }
-    res.json({ message: 'Code resent' });
+    ok(res, null, 'Code resent');
   } catch (err) {
     console.error('[auth/resend-code error]:', err);
-    res.status(500).json({ error: 'Could not resend code' });
+    fail(res, 500, 'Could not resend code');
   }
 });
 
@@ -133,23 +134,23 @@ router.post('/reset-password', async (req, res) => {
     const email = String(req.body.email || '').trim().toLowerCase();
     const { code, newPassword } = req.body;
     if (!newPassword || newPassword.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+      return fail(res, 400, 'Password must be at least 8 characters');
     }
     const user = await User.findOne({
       email,
       resetCode: code,
       resetCodeExpires: { $gt: new Date() },
     });
-    if (!user) return res.status(400).json({ error: 'Invalid or expired code' });
+    if (!user) return fail(res, 400, 'Invalid or expired code');
 
     user.passwordHash = await bcrypt.hash(newPassword, 12);
     user.resetCode = undefined;
     user.resetCodeExpires = undefined;
     await user.save();
-    res.json({ message: 'Password updated' });
+    ok(res, null, 'Password updated');
   } catch (err) {
     console.error('[auth/reset-password error]:', err);
-    res.status(500).json({ error: 'Reset failed' });
+    fail(res, 500, 'Reset failed');
   }
 });
 
