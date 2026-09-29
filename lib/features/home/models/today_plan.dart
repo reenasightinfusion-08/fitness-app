@@ -280,7 +280,12 @@ class TodayDemoData {
 
   /// "Quick picks" — each a full routine so tapping one can open the
   /// routine detail screen, same as any other routine card.
-  static const quickPicks = [_morning, _deskBreak, _bedtimeWindDown, _afterWorkout];
+  static const quickPicks = [
+    _morning,
+    _deskBreak,
+    _bedtimeWindDown,
+    _afterWorkout,
+  ];
 
   /// This week's strip, [today]'s weekday marking the "today" cell and the
   /// three days before it marked done — a stand-in for real history.

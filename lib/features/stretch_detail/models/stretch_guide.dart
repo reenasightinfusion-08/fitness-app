@@ -88,7 +88,8 @@ class StretchLibrary {
         'Tilt your ear toward your shoulder.',
         'Rest the same-side hand lightly on your head. No pulling.',
       ],
-      commonMistake: 'Lifting the opposite shoulder, or pulling hard with the hand.',
+      commonMistake:
+          'Lifting the opposite shoulder, or pulling hard with the hand.',
       easier: 'Skip the hand and just tilt.',
       harder: 'Reach the opposite hand toward the floor.',
       cautions: 'Numbness or tingling in the arm: stop.',
@@ -447,7 +448,8 @@ class StretchLibrary {
         'Lift your hips and slide a block under your sacrum.',
         'Rest your weight on the block and relax.',
       ],
-      commonMistake: 'Placing the block under the lower back instead of the sacrum.',
+      commonMistake:
+          'Placing the block under the lower back instead of the sacrum.',
       easier: 'Use the block on its lowest side.',
       harder: 'Straighten one leg along the floor.',
       cautions: 'Neck issues: keep your head still.',

@@ -38,7 +38,13 @@ List<_SessionStep> _buildSteps(RoutineSummary plan, int? holdOverride) {
   for (var i = 0; i < plan.stretches.length; i++) {
     final stretch = plan.stretches[i];
     final hold = holdOverride ?? stretch.holdSeconds;
-    steps.add(_SessionStep(kind: _StepKind.getReady, stretchIndex: i, durationSeconds: 8));
+    steps.add(
+      _SessionStep(
+        kind: _StepKind.getReady,
+        stretchIndex: i,
+        durationSeconds: 8,
+      ),
+    );
     if (stretch.isEachSide) {
       steps.add(
         _SessionStep(
@@ -49,7 +55,11 @@ List<_SessionStep> _buildSteps(RoutineSummary plan, int? holdOverride) {
         ),
       );
       steps.add(
-        _SessionStep(kind: _StepKind.switchSides, stretchIndex: i, durationSeconds: 5),
+        _SessionStep(
+          kind: _StepKind.switchSides,
+          stretchIndex: i,
+          durationSeconds: 5,
+        ),
       );
       steps.add(
         _SessionStep(
@@ -61,18 +71,23 @@ List<_SessionStep> _buildSteps(RoutineSummary plan, int? holdOverride) {
       );
     } else {
       steps.add(
-        _SessionStep(kind: _StepKind.hold, stretchIndex: i, durationSeconds: hold),
+        _SessionStep(
+          kind: _StepKind.hold,
+          stretchIndex: i,
+          durationSeconds: hold,
+        ),
       );
     }
   }
   return steps;
 }
 
-String _phaseLabel(_SessionStep step, bool isFirstStretch) => switch (step.kind) {
-  _StepKind.getReady => isFirstStretch ? 'Get ready' : 'Get into position',
-  _StepKind.switchSides => 'Switch sides',
-  _StepKind.hold => 'Hold',
-};
+String _phaseLabel(_SessionStep step, bool isFirstStretch) =>
+    switch (step.kind) {
+      _StepKind.getReady => isFirstStretch ? 'Get ready' : 'Get into position',
+      _StepKind.switchSides => 'Switch sides',
+      _StepKind.hold => 'Hold',
+    };
 
 String _formatSeconds(int seconds) {
   final m = seconds ~/ 60;
@@ -130,9 +145,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   int get _totalSeconds =>
       steps.fold(0, (sum, step) => sum + step.durationSeconds);
   int get _elapsedSeconds =>
-      steps
-          .take(stepIndex)
-          .fold(0, (sum, step) => sum + step.durationSeconds) +
+      steps.take(stepIndex).fold(0, (sum, step) => sum + step.durationSeconds) +
       (currentStep.durationSeconds - remaining);
 
   @override
@@ -205,10 +218,18 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
         );
         break;
       case _StepKind.hold:
-        final isDynamic = StretchLibrary.guideFor(stretch.pose)?.isDynamic ?? false;
-        final text = (step.side != null ? '${step.side} side. ' : '') +
-            (isDynamic ? 'Start moving. Breathe with it.' : 'Hold, and breathe.');
-        AudioService.instance.cue(CueKind.start, text: text, mode: widget.guideMode);
+        final isDynamic =
+            StretchLibrary.guideFor(stretch.pose)?.isDynamic ?? false;
+        final text =
+            (step.side != null ? '${step.side} side. ' : '') +
+            (isDynamic
+                ? 'Start moving. Breathe with it.'
+                : 'Hold, and breathe.');
+        AudioService.instance.cue(
+          CueKind.start,
+          text: text,
+          mode: widget.guideMode,
+        );
         break;
       case _StepKind.switchSides:
         AudioService.instance.cue(
@@ -267,8 +288,11 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
     final currentAreas = ExploreDemoData.stretches
         .firstWhere(
           (s) => s.pose == current.pose,
-          orElse: () =>
-              ExploreStretch(name: current.name, pose: current.pose, areas: const []),
+          orElse: () => ExploreStretch(
+            name: current.name,
+            pose: current.pose,
+            areas: const [],
+          ),
         )
         .areas;
     final usedPoses = _stretches.map((s) => s.pose).toSet();
@@ -347,7 +371,8 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
 
     final cue = switch (step.kind) {
       _StepKind.getReady => stretch.setupCue,
-      _StepKind.switchSides => 'Slowly come out, then set up on the other side.',
+      _StepKind.switchSides =>
+        'Slowly come out, then set up on the other side.',
       _StepKind.hold => stretch.feelCue ?? 'Hold, and breathe.',
     };
 
