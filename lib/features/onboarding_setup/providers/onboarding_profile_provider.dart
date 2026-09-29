@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fitness_app/features/onboarding_setup/models/onboarding_options.dart';
 import 'package:fitness_app/features/onboarding_setup/models/onboarding_profile.dart';
-import 'package:fitness_app/features/onboarding_setup/models/onboarding_options.dart' show flexibilityQuestions;
 
 /// Holds the profile the 10-step wizard is filling in. One [OnboardingProfile]
 /// replaced wholesale per edit — mirrors the prototype's single mutable
@@ -13,7 +12,12 @@ class OnboardingProfileController extends Notifier<OnboardingProfile> {
   @override
   OnboardingProfile build() => const OnboardingProfile();
 
+  void loadFromApi(Map<String, dynamic> json) =>
+      state = OnboardingProfile.fromUserJson(json);
+
   void setName(String value) => state = state.copyWith(name: value);
+
+  void setCountry(String value) => state = state.copyWith(country: value);
 
   void setAge(String value) => state = state.copyWith(age: value);
 
@@ -117,6 +121,7 @@ class OnboardingProfileController extends Notifier<OnboardingProfile> {
 extension OnboardingProfileApi on OnboardingProfile {
   Map<String, dynamic> toUserUpdate({bool markComplete = false}) => {
     'name': name,
+    'country': country,
     'age': int.tryParse(age),
     'gender': gender,
     'heightCm': int.tryParse(heightCm),

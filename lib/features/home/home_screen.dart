@@ -57,7 +57,7 @@ class HomeScreenState extends State<HomeScreen> {
         child: IndexedStack(
           index: tabIndex,
           children: [
-            const TodayView(firstName: 'Anand'),
+            const TodayView(),
             const ExploreView(),
             const MineView(),
             const ProgressView(),

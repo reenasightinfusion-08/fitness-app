@@ -108,8 +108,8 @@ class EditProfileScreen extends ConsumerWidget {
     return [
       _ProfileRow(
         0,
-        'Name & age',
-        [p.name, if (p.age.isNotEmpty) '${p.age} yrs']
+        'Name, age & country',
+        [p.name, if (p.age.isNotEmpty) '${p.age} yrs', if (p.country.isNotEmpty) p.country]
             .where((s) => s.isNotEmpty)
             .join(' · '),
         fallback: 'Not set',

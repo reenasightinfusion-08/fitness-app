@@ -8,6 +8,7 @@ import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/app_validators.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/auth/widgets/auth_social_buttons.dart';
+import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/services/auth_service.dart';
 
 /// Matches the prototype's `screens.login`. Email/password are local
@@ -44,10 +45,18 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => isLoading = true);
     try {
-      await ref.read(authServiceProvider).login(
+      final authService = ref.read(authServiceProvider);
+      await authService.login(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
+      try {
+        final res = await authService.getMe();
+        final userData = (res['user'] ?? res['data'] ?? res) as Map<String, dynamic>;
+        if (mounted) {
+          ref.read(onboardingProfileProvider.notifier).loadFromApi(userData);
+        }
+      } catch (_) {}
       if (mounted) ref.read(appFlowProvider.notifier).enterApp();
     } on AuthException catch (e) {
       if (mounted) AppSnackBar.showError(context, e.message);

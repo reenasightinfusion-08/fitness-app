@@ -303,12 +303,12 @@ class _BuilderItemTile extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.all(10.r),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               ReorderableDragStartListener(
                 index: index,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 2.w),
+                  padding: EdgeInsets.symmetric(horizontal: 2.w),
                   child: Icon(
                     Icons.drag_indicator_rounded,
                     size: 20.r,
@@ -324,41 +324,48 @@ class _BuilderItemTile extends StatelessWidget {
               10.horizontalSpace,
               Expanded(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(item.name, style: AppTextStyle.titleMedium),
                     6.verticalSpace,
-                    Wrap(
-                      spacing: 8.w,
-                      runSpacing: 6.h,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        AppStepper(
-                          valueLabel: '${item.holdSeconds}s',
-                          onDecrement: item.holdSeconds <= 10
-                              ? null
-                              : onHoldDecrement,
-                          onIncrement: item.holdSeconds >= 90
-                              ? null
-                              : onHoldIncrement,
-                        ),
-                        AppStepper(
-                          valueLabel: '×${item.repCount}',
-                          onDecrement: item.repCount <= 1
-                              ? null
-                              : onRepsDecrement,
-                          onIncrement: item.repCount >= 5
-                              ? null
-                              : onRepsIncrement,
-                        ),
-                        if (item.isEachSide)
-                          Text(
-                            'each side',
-                            style: AppTextStyle.meta.copyWith(
-                              color: colors.ink2,
-                            ),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          AppStepper(
+                           isTransparent: true,
+                            valueLabel: '${item.holdSeconds}s',
+                            onDecrement: item.holdSeconds <= 10
+                                ? null
+                                : onHoldDecrement,
+                            onIncrement: item.holdSeconds >= 90
+                                ? null
+                                : onHoldIncrement,
                           ),
-                      ],
+                          6.horizontalSpace,
+                          AppStepper(
+                           isTransparent: true,
+                            valueLabel: '×${item.repCount}',
+                            onDecrement: item.repCount <= 1
+                                ? null
+                                : onRepsDecrement,
+                            onIncrement: item.repCount >= 5
+                                ? null
+                                : onRepsIncrement,
+                          ),
+                          if (item.isEachSide) ...[
+                            6.horizontalSpace,
+                            Text(
+                              'each side',
+                              style: AppTextStyle.meta.copyWith(
+                                color: colors.ink2,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
