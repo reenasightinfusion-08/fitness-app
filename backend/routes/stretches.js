@@ -20,8 +20,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // not user data. Lock this down (e.g. an admin check) before shipping.
 router.post('/', async (req, res) => {
   try {
-    const stretch = await Stretch.create(req.body);
-    ok(res, stretch, 'Stretch created', 201);
+    await Stretch.create(req.body);
+    ok(res, null, 'Stretch created', 201);
   } catch (err) {
     if (err.code === 11000) return fail(res, 409, 'A stretch with this poseKey already exists');
     fail(res, 400, err.message);

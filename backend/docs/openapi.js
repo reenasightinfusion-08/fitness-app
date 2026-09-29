@@ -1,6 +1,8 @@
 // OpenAPI 3 spec, served at /api/docs (UI) and /api/docs.json (raw).
 // Keep in sync with routes/*.js. All responses use the { success, message, data } envelope.
 
+const { POSE_KEYS, AREAS } = require('../models/Stretch');
+
 const envelope = (dataSchema, example) => ({
   type: 'object',
   required: ['success', 'message', 'data'],
@@ -16,9 +18,18 @@ const jsonBody = (schema, example) => ({
   content: { 'application/json': { schema, ...(example && { example }) } },
 });
 
+const nullData = { type: 'object', nullable: true, example: null };
+
+// Swagger UI ignores `example: null` inside a schema and shows `data: {}`, so
+// responses with no data get an explicit example on the media type instead.
 const okResponse = (description, dataSchema, message) => ({
   description,
-  content: { 'application/json': { schema: envelope(dataSchema, message) } },
+  content: {
+    'application/json': {
+      schema: envelope(dataSchema, message),
+      ...(dataSchema === nullData && { example: { success: true, message, data: null } }),
+    },
+  },
 });
 
 const err = (description, message) => ({
@@ -31,9 +42,9 @@ const err = (description, message) => ({
   },
 });
 
-const nullData = { type: 'object', nullable: true, example: null };
 const emailProp = { type: 'string', format: 'email', example: 'user@example.com' };
 const auth = [{ bearerAuth: [] }];
+const serverErr = err('Unhandled server error', 'Internal server error');
 
 module.exports = {
   openapi: '3.0.3',
@@ -148,28 +159,40 @@ module.exports = {
       },
       StretchInput: {
         type: 'object',
-        required: ['poseKey', 'name', 'position', 'feel'],
+        required: ['poseKey', 'name', 'position', 'areas', 'feel'],
         properties: {
-          poseKey: { type: 'string', example: 'standing_hamstring' },
-          name: { type: 'string', example: 'Standing Hamstring Stretch' },
+          poseKey: {
+            type: 'string',
+            enum: POSE_KEYS,
+            example: 'quad',
+            description: 'Unique. Must match a StretchPoses constant in the app, since the figure is drawn from it.',
+          },
+          name: { type: 'string', example: 'Standing Quad Stretch' },
           position: { type: 'string', enum: ['standing', 'seated', 'floor'] },
+          areas: {
+            type: 'array',
+            minItems: 1,
+            items: { type: 'string', enum: AREAS },
+            example: ['quads'],
+          },
           isEachSide: { type: 'boolean', default: false },
           isDynamic: { type: 'boolean', default: false },
           isKneeling: { type: 'boolean', default: false },
           level: { type: 'string', enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
           equipment: { type: 'array', items: { type: 'string' } },
-          defaultHoldSeconds: { type: 'number', default: 30 },
-          defaultRepCount: { type: 'number', default: 1 },
+          defaultHoldSeconds: { type: 'integer', minimum: 10, maximum: 90, default: 30, description: 'Per side, in seconds.' },
+          defaultRepCount: { type: 'integer', minimum: 1, maximum: 5, default: 1 },
           setupCue: { type: 'string' },
           feelCue: { type: 'string', nullable: true },
-          feel: { type: 'string', example: 'Back of the thigh' },
+          feel: { type: 'string', example: 'Along the front of your thigh.' },
           steps: { type: 'array', items: { type: 'string' } },
           commonMistake: { type: 'string' },
           easier: { type: 'string' },
           harder: { type: 'string' },
           cautions: { type: 'string' },
-          thumbnailUrl: { type: 'string' },
-          videoUrl: { type: 'string' },
+          thumbnailUrl: { type: 'string', default: '', example: 'https://example.com/quad.jpg' },
+          videoUrl: { type: 'string', default: '', example: 'https://example.com/quad.mp4' },
+          isActive: { type: 'boolean', default: true, description: 'Inactive stretches are hidden from the list.' },
         },
       },
       Stretch: {
@@ -179,8 +202,14 @@ module.exports = {
             type: 'object',
             properties: {
               _id: { type: 'string' },
+              totalHoldSeconds: {
+                type: 'integer',
+                readOnly: true,
+                description: 'Computed by the server: hold seconds x reps x (2 if isEachSide). Never taken from the client.',
+              },
               createdAt: { type: 'string', format: 'date-time' },
               updatedAt: { type: 'string', format: 'date-time' },
+              __v: { type: 'integer' },
             },
           },
         ],
@@ -302,6 +331,7 @@ module.exports = {
           200: okResponse('Profile', { $ref: '#/components/schemas/User' }, 'Profile fetched'),
           401: err('Missing or invalid token', 'No token provided'),
           404: err('User not found', 'User not found'),
+          500: serverErr,
         },
       },
       patch: {
@@ -311,27 +341,57 @@ module.exports = {
         requestBody: jsonBody({ $ref: '#/components/schemas/UserUpdate' }, { country: 'India', minutesPerDay: 15 }),
         responses: {
           200: okResponse('Updated profile', { $ref: '#/components/schemas/User' }, 'Profile updated'),
-          400: err('Validation error', 'Validation failed'),
+          400: err('Validation error', 'Cast to Number failed for value "abc" (type string) at path "age"'),
           401: err('Missing or invalid token', 'Invalid or expired token'),
           404: err('User not found', 'User not found'),
+          500: serverErr,
         },
       },
     },
     '/api/stretches': {
       get: {
         tags: ['Stretches'],
-        summary: 'List all stretches (sorted by name)',
+        summary: 'List active stretches (sorted by name; inactive ones are hidden)',
         responses: {
           200: okResponse('Stretches', { type: 'array', items: { $ref: '#/components/schemas/Stretch' } }, 'Stretches fetched'),
+          500: serverErr,
         },
       },
       post: {
         tags: ['Stretches'],
         summary: 'Create a stretch (no auth yet, lock down before shipping)',
-        requestBody: jsonBody({ $ref: '#/components/schemas/StretchInput' }),
+        requestBody: jsonBody({ $ref: '#/components/schemas/StretchInput' }, {
+          poseKey: 'child',
+          name: "Child's Pose",
+          position: 'floor',
+          areas: ['lowerback', 'shoulders', 'hips'],
+          level: 'beginner',
+          equipment: ['mat'],
+          isEachSide: false,
+          isDynamic: false,
+          isKneeling: true,
+          defaultHoldSeconds: 45,
+          defaultRepCount: 1,
+          setupCue: 'Kneel on a mat with your big toes touching.',
+          feelCue: 'Feel your back widen with each breath.',
+          feel: 'Across your lower back and shoulders.',
+          steps: [
+            'Sit back onto your heels.',
+            'Walk your hands forward and lower your chest.',
+            'Rest your forehead down and breathe slowly.',
+          ],
+          commonMistake: 'Lifting the hips away from the heels.',
+          easier: 'Place a cushion under your hips or chest.',
+          harder: 'Walk your hands to one side to stretch the opposite flank.',
+          cautions: 'Knee pain: place a folded towel behind the knees.',
+          thumbnailUrl: 'https://picsum.photos/seed/quad/640/360.jpg',
+          videoUrl: 'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+          isActive: true,
+        }),
         responses: {
-          201: okResponse('Created', { $ref: '#/components/schemas/Stretch' }, 'Stretch created'),
-          400: err('Validation error or duplicate poseKey', 'Path `name` is required.'),
+          201: okResponse('Created. The record is saved; nothing is returned in data.', nullData, 'Stretch created'),
+          400: err('Validation error', 'Stretch validation failed: name: Path `name` is required.'),
+          409: err('A stretch with this poseKey already exists', 'A stretch with this poseKey already exists'),
         },
       },
     },
@@ -344,6 +404,7 @@ module.exports = {
           200: okResponse('Stretch', { $ref: '#/components/schemas/Stretch' }, 'Stretch fetched'),
           400: err('Invalid id', 'Cast to ObjectId failed'),
           404: err('Not found', 'Stretch not found'),
+          500: serverErr,
         },
       },
       delete: {
@@ -351,9 +412,10 @@ module.exports = {
         summary: 'Delete a stretch permanently',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
-          200: okResponse('Deleted', { type: 'object', nullable: true, example: null }, 'Stretch deleted'),
+          200: okResponse('Deleted', nullData, 'Stretch deleted'),
           400: err('Invalid id', 'Cast to ObjectId failed'),
           404: err('Not found', 'Stretch not found'),
+          500: serverErr,
         },
       },
     },
