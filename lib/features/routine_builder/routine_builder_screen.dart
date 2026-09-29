@@ -60,11 +60,8 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
     super.dispose();
   }
 
-  int get _totalSeconds => _items.fold(
-    0,
-    (sum, item) =>
-        sum + item.holdSeconds * item.repCount * (item.isEachSide ? 2 : 1),
-  );
+  int get _totalSeconds =>
+      _items.fold(0, (sum, item) => sum + item.totalHoldSeconds);
 
   Future<void> _openPicker() async {
     final existingNames = _items.map((item) => item.name).toSet();

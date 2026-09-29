@@ -176,6 +176,41 @@ class StretchPoses {
     73, 54, 91,
   ]);
 
+  /// Looks a pose up by the `poseKey` the backend stores for each stretch —
+  /// the key is the constant's own name, so the two can never drift apart.
+  static const byKey = <String, StretchPose>{
+    'reach': reach,
+    'sidebend': sidebend,
+    'necktilt': necktilt,
+    'cross': cross,
+    'wallchest': wallchest,
+    'fold': fold,
+    'quad': quad,
+    'calf': calf,
+    'wrist': wrist,
+    'chairtwist': chairtwist,
+    'chairfig4': chairfig4,
+    'seatedfold': seatedfold,
+    'butterfly': butterfly,
+    'seatedtwist': seatedtwist,
+    'strap': strap,
+    'kneehug': kneehug,
+    'fig4': fig4,
+    'supinetwist': supinetwist,
+    'child': child,
+    'catcow': catcow,
+    'lunge': lunge,
+    'cobra': cobra,
+    'downdog': downdog,
+    'pigeon': pigeon,
+    'thread': thread,
+    'roller': roller,
+    'bandpull': bandpull,
+    'bridge': bridge,
+    'halfsplit': halfsplit,
+    'torsotwist': torsotwist,
+  };
+
   // The three poses the prototype gives an authored second frame to
   // breathe/sway between (its `DYN_POSES`), instead of the default subtle
   // lift every other pose uses.

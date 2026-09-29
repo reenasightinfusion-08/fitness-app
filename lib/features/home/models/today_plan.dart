@@ -61,6 +61,10 @@ class StretchPreview {
   /// Falls back to a generic breathing cue when unset.
   final String? feelCue;
 
+  /// Total time spent holding this stretch — hold × reps, doubled when it
+  /// is done on each side. Mirrors the backend's `totalHoldSeconds`.
+  int get totalHoldSeconds => holdSeconds * repCount * (isEachSide ? 2 : 1);
+
   /// Used by the routine builder to adjust just the hold time or rep count
   /// of a picked stretch without rebuilding the rest of it by hand.
   StretchPreview copyWith({int? holdSeconds, int? repCount}) => StretchPreview(
