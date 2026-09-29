@@ -292,14 +292,14 @@ class TodayDemoData {
   static List<WeekDayModel> weekStrip(DateTime today) {
     const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final todayIndex = today.weekday - 1;
-    return List.generate(
-      7,
-      (index) => WeekDayModel(
+    return List.generate(7, (index) {
+      final dayDate = today.add(Duration(days: index - todayIndex));
+      return WeekDayModel(
         label: labels[index],
-        dayOfMonth: today.day - (todayIndex - index),
+        dayOfMonth: dayDate.day,
         isDone: index < todayIndex && index >= todayIndex - 3,
         isToday: index == todayIndex,
-      ),
-    );
+      );
+    });
   }
 }

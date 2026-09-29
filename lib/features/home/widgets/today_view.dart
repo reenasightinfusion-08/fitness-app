@@ -1,28 +1,26 @@
+import 'package:fitness_app/features/session_player/session_player_screen.dart';
 import 'package:flutter/material.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/greeting.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/get_ready/get_ready_screen.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/home/widgets/today_plan_card.dart';
+import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
 
 /// Matches the prototype's `screens.today`: greeting + streak, an optional
 /// paused-session banner, today's plan, quick picks and the week strip.
-class TodayView extends StatelessWidget {
-  const TodayView({super.key, required this.firstName});
-
-  final String firstName;
-
-  void _notBuiltYet(BuildContext context) =>
-      AppSnackBar.show(context, "That screen isn't built yet.");
+class TodayView extends ConsumerWidget {
+  const TodayView({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
+    final profile = ref.watch(onboardingProfileProvider);
+    final firstName = profile.name.isEmpty ? 'Runner' : profile.name;
     final now = DateTime.now();
 
     return ListView(
@@ -59,7 +57,12 @@ class TodayView extends StatelessWidget {
             isOnDark: true,
             child: StretchFigure(pose: TodayDemoData.pausedSession.pose),
           ),
-          onResume: () => _notBuiltYet(context),
+          onResume: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  const SessionPlayerScreen(plan: TodayDemoData.todaysPlan),
+            ),
+          ),
         ),
         18.verticalSpace,
         TodayPlanCard(
@@ -90,9 +93,7 @@ class TodayView extends StatelessWidget {
               10.horizontalSpace,
               Expanded(
                 child: i + 1 < TodayDemoData.quickPicks.length
-                    ? _QuickPickTile(
-                        routine: TodayDemoData.quickPicks[i + 1],
-                      )
+                    ? _QuickPickTile(routine: TodayDemoData.quickPicks[i + 1])
                     : const SizedBox.shrink(),
               ),
             ],
@@ -121,7 +122,9 @@ class _QuickPickTile extends StatelessWidget {
   Widget build(BuildContext context) => AppTileCard(
     title: routine.name,
     meta: '${routine.minutes} min',
-    thumbnail: AppThumb(child: StretchFigure(pose: routine.stretches.first.pose)),
+    thumbnail: AppThumb(
+      child: StretchFigure(pose: routine.stretches.first.pose),
+    ),
     onTap: () => Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => RoutineDetailScreen(routine: routine)),
     ),

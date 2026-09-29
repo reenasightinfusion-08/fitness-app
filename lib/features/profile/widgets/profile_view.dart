@@ -6,7 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
-import 'package:fitness_app/features/profile/models/profile_data.dart';
+import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/profile/providers/premium_provider.dart';
 import 'package:fitness_app/features/profile/providers/reminders_provider.dart';
 import 'package:fitness_app/features/profile/widgets/account_screen.dart';
@@ -29,6 +29,9 @@ class ProfileView extends ConsumerWidget {
     final colors = context.colors;
     final isPremium = ref.watch(premiumProvider);
     final reminders = ref.watch(remindersProvider);
+    final profile = ref.watch(onboardingProfileProvider);
+    final displayName = profile.name.isEmpty ? 'Runner' : profile.name;
+    final displayEmail = profile.email.isNotEmpty ? profile.email : profile.country;
     final onReminders = reminders.where((r) => r.isOn).toList();
     final remindersSubtitle = onReminders.isEmpty
         ? 'Off'
@@ -67,15 +70,15 @@ class ProfileView extends ConsumerWidget {
       children: [
         Row(
           children: [
-            const AppAvatar(name: ProfileDemoData.name),
+            AppAvatar(name: displayName),
             14.horizontalSpace,
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(ProfileDemoData.name, style: AppTextStyle.titleLarge),
+                  Text(displayName, style: AppTextStyle.titleLarge),
                   Text(
-                    '${ProfileDemoData.email} · '
+                    '${displayEmail.isEmpty ? "" : "$displayEmail · "}'
                     '${isPremium ? 'Premium' : 'Free plan'}',
                     style: AppTextStyle.meta.copyWith(color: colors.ink2),
                   ),

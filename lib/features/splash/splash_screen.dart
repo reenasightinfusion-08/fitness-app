@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
+import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 
 /// Matches the prototype's `screens.splash` view: brand mark + wordmark,
 /// centered, with a one-line tagline underneath. After a short beat it
@@ -25,7 +26,20 @@ class SplashScreenState extends ConsumerState<SplashScreen> {
     super.initState();
     Future.delayed(const Duration(milliseconds: 900), () async {
       if (!mounted) return;
-      final hasSession = await ref.read(authServiceProvider).hasSession();
+      final authService = ref.read(authServiceProvider);
+      final hasSession = await authService.hasSession();
+      if (!mounted) return;
+      if (hasSession) {
+        try {
+          final res = await authService.getMe();
+          final userData = (res['user'] ?? res['data'] ?? res) as Map<String, dynamic>;
+          if (mounted) {
+            ref.read(onboardingProfileProvider.notifier).loadFromApi(userData);
+          }
+        } catch (_) {
+          // Soft fallback if network fails
+        }
+      }
       if (!mounted) return;
       final flow = ref.read(appFlowProvider.notifier);
       hasSession ? flow.enterApp() : flow.finishSplash();

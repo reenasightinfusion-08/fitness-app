@@ -8,6 +8,7 @@ import 'package:fitness_app/services/auth_service.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/app_validators.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
+import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/profile/models/profile_data.dart';
 import 'package:fitness_app/features/profile/providers/premium_provider.dart';
 
@@ -62,6 +63,9 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
     final colors = context.colors;
     final isPremium = ref.watch(premiumProvider);
 
+    final profile = ref.watch(onboardingProfileProvider);
+    final userEmail = profile.email.isEmpty ? ProfileDemoData.email : profile.email;
+
     return Scaffold(
       backgroundColor: colors.ground,
       appBar: AppTopBar(
@@ -78,7 +82,7 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
               child: Column(
                 children: [
                   AppSettingRow(
-                    title: ProfileDemoData.email,
+                    title: userEmail,
                     subtitle: 'Email',
                   ),
                   const AppSettingRow(

@@ -11,6 +11,8 @@ enum InjurySeverity { mild, moderate, serious }
 class OnboardingProfile {
   const OnboardingProfile({
     this.name = '',
+    this.email = '',
+    this.country = '',
     this.age = '',
     this.gender,
     this.heightCm = '',
@@ -35,6 +37,8 @@ class OnboardingProfile {
   });
 
   final String name;
+  final String email;
+  final String country;
   final String age;
   final String? gender;
   final String heightCm;
@@ -73,6 +77,8 @@ class OnboardingProfile {
 
   OnboardingProfile copyWith({
     String? name,
+    String? email,
+    String? country,
     String? age,
     String? Function()? gender,
     String? heightCm,
@@ -96,6 +102,8 @@ class OnboardingProfile {
     bool? safetyAcknowledged,
   }) => OnboardingProfile(
     name: name ?? this.name,
+    email: email ?? this.email,
+    country: country ?? this.country,
     age: age ?? this.age,
     gender: gender == null ? this.gender : gender(),
     heightCm: heightCm ?? this.heightCm,
@@ -118,6 +126,82 @@ class OnboardingProfile {
     reminderTime: reminderTime ?? this.reminderTime,
     safetyAcknowledged: safetyAcknowledged ?? this.safetyAcknowledged,
   );
+
+  factory OnboardingProfile.fromUserJson(Map<String, dynamic> json) {
+    TimeOfDay reminderTime = const TimeOfDay(hour: 8, minute: 0);
+    if (json['reminderTime'] is Map) {
+      final rMap = json['reminderTime'] as Map;
+      if (rMap['hour'] != null && rMap['minute'] != null) {
+        reminderTime = TimeOfDay(
+          hour: rMap['hour'] as int,
+          minute: rMap['minute'] as int,
+        );
+      }
+    }
+
+    final rawInjury = json['injurySeverity'];
+    final injurySeverity = <String, InjurySeverity>{};
+    if (rawInjury is Map) {
+      rawInjury.forEach((k, v) {
+        final severity = InjurySeverity.values.firstWhere(
+          (s) => s.name == v,
+          orElse: () => InjurySeverity.mild,
+        );
+        injurySeverity[k.toString()] = severity;
+      });
+    }
+
+    List<int?> flexAnswers = const [null, null, null];
+    if (json['flexAnswers'] is List) {
+      final list = json['flexAnswers'] as List;
+      final parsed = List<int?>.filled(3, null);
+      for (var i = 0; i < list.length && i < 3; i++) {
+        if (list[i] is Map && list[i]['score'] is int) {
+          parsed[i] = list[i]['score'] as int;
+        }
+      }
+      flexAnswers = parsed;
+    }
+
+    return OnboardingProfile(
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      country: json['country']?.toString() ?? '',
+      age: json['age']?.toString() ?? '',
+      gender: json['gender']?.toString(),
+      heightCm: json['heightCm']?.toString() ?? '',
+      weightKg: json['weightKg']?.toString() ?? '',
+      lifestyle: json['lifestyle']?.toString(),
+      sports: (json['sports'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toSet() ??
+          const {},
+      goals: (json['goals'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toSet() ??
+          const {},
+      painAreas: (json['painAreas'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toSet() ??
+          const {},
+      noKneel: json['noKneel'] == true,
+      noFloor: json['noFloor'] == true,
+      hadRecentSurgery: json['hadRecentSurgery'] == true,
+      isPregnant: json['isPregnant'] == true,
+      injurySeverity: injurySeverity,
+      equipment: (json['equipment'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toSet() ??
+          const {},
+      equipmentNone: json['equipmentNone'] == true,
+      flexAnswers: flexAnswers,
+      minutesPerDay: json['minutesPerDay'] as int? ?? 10,
+      timeOfDay: json['timeOfDay']?.toString(),
+      reminderOn: json['reminderOn'] != false,
+      reminderTime: reminderTime,
+      safetyAcknowledged: json['safetyAcknowledged'] == true,
+    );
+  }
 }
 
 /// The prototype's `calcLevel()`: three 0–2 scores add up to a 1–3

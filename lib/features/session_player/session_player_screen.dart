@@ -529,7 +529,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                   AppPlayerButton(
                     icon: Icons.add_rounded,
                     tooltip: 'Add 15 seconds',
-                    label: '+15 sec',
+                    label: '15 sec',
                     onTap: _addFifteen,
                   ),
                   AppPlayerButton(

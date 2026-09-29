@@ -11,11 +11,13 @@ class AppStepper extends StatelessWidget {
     required this.valueLabel,
     required this.onDecrement,
     required this.onIncrement,
+    this.isTransparent = false,
   });
 
   final String valueLabel;
   final VoidCallback? onDecrement;
   final VoidCallback? onIncrement;
+  final bool isTransparent;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +35,7 @@ class AppStepper extends StatelessWidget {
             icon: Icons.remove_rounded,
             tooltip: 'Decrease',
             onTap: onDecrement,
+            isTransparent: isTransparent,
           ),
           ConstrainedBox(
             constraints: BoxConstraints(minWidth: 44.w),
@@ -50,6 +53,7 @@ class AppStepper extends StatelessWidget {
             icon: Icons.add_rounded,
             tooltip: 'Increase',
             onTap: onIncrement,
+            isTransparent: isTransparent,
           ),
         ],
       ),
@@ -63,19 +67,25 @@ class AppStepperButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onTap,
+    this.isTransparent = false,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback? onTap;
+  final bool isTransparent;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final bgColor = isTransparent
+        ? Colors.transparent
+        : (onTap == null ? Colors.transparent : colors.surface);
+
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: onTap == null ? Colors.transparent : colors.surface,
+        color: bgColor,
         borderRadius: AppBorderRadius.xs,
         child: InkWell(
           onTap: onTap,
