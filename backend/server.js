@@ -6,6 +6,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const stretchRoutes = require('./routes/stretches');
+const routineRoutes = require('./routes/routines');
 const { ok, fail } = require('./utils/response');
 const openapi = require('./docs/openapi');
 
@@ -49,6 +50,7 @@ app.get('/api/docs', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/stretches', stretchRoutes);
+app.use('/api/routines', routineRoutes);
 
 app.use((_req, res) => fail(res, 404, 'Route not found'));
 

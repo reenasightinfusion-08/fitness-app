@@ -58,7 +58,7 @@ module.exports = {
     { url: 'https://fitness-backend-eight.vercel.app', description: 'Production' },
     { url: 'http://localhost:4000', description: 'Local' },
   ],
-  tags: [{ name: 'Health' }, { name: 'Auth' }, { name: 'Users' }, { name: 'Stretches' }],
+  tags: [{ name: 'Health' }, { name: 'Auth' }, { name: 'Users' }, { name: 'Stretches' }, { name: 'Routines' }],
   components: {
     securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } },
     schemas: {
@@ -213,6 +213,68 @@ module.exports = {
             },
           },
         ],
+      },
+
+      RoutineItemInput: {
+        type: 'object',
+        description: 'One stretch in a routine. Send either `stretch` (Stretch _id) or `poseKey`.',
+        properties: {
+          stretch: { type: 'string', description: 'Stretch _id.' },
+          poseKey: { type: 'string', enum: POSE_KEYS, example: 'reach', description: 'Alternative to `stretch`, on create only.' },
+          holdSeconds: { type: 'integer', minimum: 10, maximum: 90, default: 30, description: 'Per side, in seconds.' },
+          repCount: { type: 'integer', minimum: 1, maximum: 5, default: 1 },
+        },
+      },
+      RoutineInput: {
+        type: 'object',
+        required: ['name', 'stretches'],
+        properties: {
+          name: { type: 'string', example: 'Morning', description: 'Unique.' },
+          description: { type: 'string', example: 'A quick wake-up for a stiff neck and shoulders.' },
+          level: { type: 'string', enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
+          tags: { type: 'array', items: { type: 'string' }, example: ['For your shoulders'] },
+          transitionSeconds: { type: 'integer', nullable: true, minimum: 0, default: null, description: 'Seconds to get into each stretch. null = Auto.' },
+          stretches: {
+            type: 'array',
+            minItems: 1,
+            description: 'In play order.',
+            items: { $ref: '#/components/schemas/RoutineItemInput' },
+          },
+          isActive: { type: 'boolean', default: true, description: 'Inactive routines are hidden from the list.' },
+        },
+      },
+      Routine: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string' },
+          name: { type: 'string', example: 'Morning' },
+          description: { type: 'string' },
+          level: { type: 'string', enum: ['beginner', 'intermediate', 'advanced'] },
+          tags: { type: 'array', items: { type: 'string' } },
+          transitionSeconds: { type: 'integer', nullable: true },
+          stretches: {
+            type: 'array',
+            description: 'In play order. `stretch` is the full Stretch document.',
+            items: {
+              type: 'object',
+              properties: {
+                stretch: { $ref: '#/components/schemas/Stretch' },
+                holdSeconds: { type: 'integer' },
+                repCount: { type: 'integer' },
+              },
+            },
+          },
+          areas: { type: 'array', readOnly: true, items: { type: 'string', enum: AREAS }, description: 'Computed: union of the stretches\' areas.' },
+          equipment: { type: 'array', readOnly: true, items: { type: 'string' }, description: 'Computed: union of the stretches\' equipment. Empty means none.' },
+          stretchCount: { type: 'integer', readOnly: true },
+          totalSeconds: { type: 'integer', readOnly: true, description: 'Computed: sum of hold x reps x (2 if the stretch is each side).' },
+          minutes: { type: 'integer', readOnly: true, description: 'totalSeconds in minutes, rounded, at least 1.' },
+          sequence: { type: 'string', readOnly: true, example: 'Standing → Floor', description: 'Computed: positions in order, consecutive duplicates collapsed.' },
+          isActive: { type: 'boolean' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+          __v: { type: 'integer' },
+        },
       },
     },
   },
@@ -415,6 +477,59 @@ module.exports = {
           200: okResponse('Deleted', nullData, 'Stretch deleted'),
           400: err('Invalid id', 'Cast to ObjectId failed'),
           404: err('Not found', 'Stretch not found'),
+          500: serverErr,
+        },
+      },
+    },
+    '/api/routines': {
+      get: {
+        tags: ['Routines'],
+        summary: 'List active routines shown to every user (sorted by name; inactive ones are hidden)',
+        responses: {
+          200: okResponse('Routines', { type: 'array', items: { $ref: '#/components/schemas/Routine' } }, 'Routines fetched'),
+          500: serverErr,
+        },
+      },
+      post: {
+        tags: ['Routines'],
+        summary: 'Create a routine (no auth yet, lock down before shipping)',
+        requestBody: jsonBody({ $ref: '#/components/schemas/RoutineInput' }, {
+          name: 'Morning',
+          description: 'A quick wake-up for a stiff neck and shoulders.',
+          level: 'beginner',
+          tags: [],
+          stretches: [
+            { poseKey: 'reach', holdSeconds: 30, repCount: 1 },
+            { poseKey: 'fold', holdSeconds: 30, repCount: 1 },
+          ],
+        }),
+        responses: {
+          201: okResponse('Created, returned with populated stretches', { $ref: '#/components/schemas/Routine' }, 'Routine created'),
+          400: err('Validation error, or an unknown poseKey / stretch id', 'Unknown poseKey: reach'),
+          409: err('A routine with this name already exists', 'A routine with this name already exists'),
+        },
+      },
+    },
+    '/api/routines/{id}': {
+      get: {
+        tags: ['Routines'],
+        summary: 'Get one routine',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          200: okResponse('Routine', { $ref: '#/components/schemas/Routine' }, 'Routine fetched'),
+          400: err('Invalid id', 'Cast to ObjectId failed'),
+          404: err('Not found', 'Routine not found'),
+          500: serverErr,
+        },
+      },
+      delete: {
+        tags: ['Routines'],
+        summary: 'Delete a routine permanently',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          200: okResponse('Deleted', nullData, 'Routine deleted'),
+          400: err('Invalid id', 'Cast to ObjectId failed'),
+          404: err('Not found', 'Routine not found'),
           500: serverErr,
         },
       },
