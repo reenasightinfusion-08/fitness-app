@@ -59,7 +59,7 @@ module.exports = {
     { url: 'https://fitness-backend-eight.vercel.app', description: 'Production' },
     { url: 'http://localhost:4000', description: 'Local' },
   ],
-  tags: [{ name: 'Health' }, { name: 'Auth' }, { name: 'Users' }, { name: 'Stretches' }, { name: 'Routines' }, { name: 'Custom Routines' }],
+  tags: [{ name: 'Health' }, { name: 'Auth' }, { name: 'Users' }, { name: 'Stretches' }, { name: 'Routines' }, { name: 'Custom Routines' }, { name: 'Active Routines' }],
   components: {
     securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } },
     schemas: {
@@ -314,6 +314,28 @@ module.exports = {
           minutes: { type: 'integer', readOnly: true },
           sequence: { type: 'string', readOnly: true, example: 'Standing → Floor' },
           createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+          __v: { type: 'integer' },
+        },
+      },
+      ActiveRoutine: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string' },
+          user: { type: 'string', description: 'Owner (User _id).' },
+          routineType: { type: 'string', enum: ['system', 'custom'], description: 'system = Routine collection, custom = CustomRoutine collection.' },
+          routineId: { type: 'string', description: 'The source routine\'s _id.' },
+          routineName: { type: 'string', description: 'Copied when the routine begins.', example: 'Morning Stretch' },
+          stretches: {
+            type: 'array',
+            description: 'Snapshot taken at Begin, in play order. `stretch` is the full stretch on Current. Omitted from History.',
+            items: { $ref: '#/components/schemas/Routine/properties/stretches/items' },
+          },
+          totalStretch: { type: 'integer', example: 5 },
+          completedStretch: { type: 'integer', description: 'Resume position: 2 means the next stretch is the third one.', example: 2 },
+          status: { type: 'string', enum: ['inProgress', 'completed'] },
+          startedAt: { type: 'string', format: 'date-time' },
+          completedAt: { type: 'string', format: 'date-time', nullable: true },
           updatedAt: { type: 'string', format: 'date-time' },
           __v: { type: 'integer' },
         },
@@ -634,6 +656,76 @@ module.exports = {
           400: err('Invalid id', 'Cast to ObjectId failed'),
           401: err('Missing or invalid token', 'No token provided'),
           404: err('Not found, or it belongs to another user', 'Custom routine not found'),
+          500: serverErr,
+        },
+      },
+    },
+    '/api/active-routines': {
+      post: {
+        tags: ['Active Routines'],
+        summary: 'Begin a routine (or get the one already in progress)',
+        description: 'Several routines can be in progress at once, each with its own progress. If this routine is already in progress nothing changes (200); otherwise a new record is saved (201). Fetch it with GET /current.',
+        security: auth,
+        requestBody: jsonBody({
+          type: 'object',
+          required: ['routineId', 'routineType'],
+          properties: {
+            routineId: { type: 'string', example: '6abb8c45bce3ed8ed19eb011' },
+            routineType: { type: 'string', enum: ['system', 'custom'] },
+          },
+        }, { routineId: '6abb8c45bce3ed8ed19eb011', routineType: 'system' }),
+        responses: {
+          200: okResponse('This routine was already in progress; nothing is returned in data', nullData, 'Routine already in progress'),
+          201: okResponse('Started. The record is saved; read it with GET /current.', nullData, 'Routine started'),
+          400: err('Missing routineId, or routineType is not system / custom', "routineType must be 'system' or 'custom'"),
+          401: err('Missing or invalid token', 'No token provided'),
+          404: err('Routine not found (custom routines must belong to the user)', 'Routine not found'),
+          500: serverErr,
+        },
+      },
+    },
+    '/api/active-routines/current': {
+      get: {
+        tags: ['Active Routines'],
+        summary: 'Resume check: every routine in progress (latest activity first)',
+        security: auth,
+        responses: {
+          200: okResponse('Routines in progress; an empty array when there are none. Match a tapped routine by routineType + routineId.', { type: 'array', items: { $ref: '#/components/schemas/ActiveRoutine' } }, 'Current routines fetched'),
+          401: err('Missing or invalid token', 'No token provided'),
+          500: serverErr,
+        },
+      },
+    },
+    '/api/active-routines/history': {
+      get: {
+        tags: ['Active Routines'],
+        summary: 'Completed routines, newest first (stretches omitted)',
+        security: auth,
+        responses: {
+          200: okResponse('Completed routines', { type: 'array', items: { $ref: '#/components/schemas/ActiveRoutine' } }, 'History fetched'),
+          401: err('Missing or invalid token', 'No token provided'),
+          500: serverErr,
+        },
+      },
+    },
+    '/api/active-routines/{id}/progress': {
+      patch: {
+        tags: ['Active Routines'],
+        summary: 'Set how many stretches are done',
+        description: 'Sets an absolute position from 0 to totalStretch, so a retried request cannot double count. Reaching totalStretch completes the routine. 0 starts it over and resets startedAt.',
+        security: auth,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: jsonBody({
+          type: 'object',
+          required: ['completedStretch'],
+          properties: { completedStretch: { type: 'integer', minimum: 0, example: 3 } },
+        }, { completedStretch: 3 }),
+        responses: {
+          200: okResponse('Saved (the routine completes when the total is reached); nothing is returned in data', nullData, 'Progress saved'),
+          400: err('Not a whole number from 0 to totalStretch, or invalid id', 'completedStretch must be a whole number from 0 to 5'),
+          401: err('Missing or invalid token', 'No token provided'),
+          404: err('Not found, or it belongs to another user', 'Active routine not found'),
+          409: err('The routine is already completed', 'Routine is already completed'),
           500: serverErr,
         },
       },
