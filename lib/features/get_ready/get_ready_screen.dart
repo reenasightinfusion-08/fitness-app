@@ -59,7 +59,10 @@ class GetReadyScreenState extends State<GetReadyScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final firstStretch = widget.plan.stretches.first;
+    final firstStretch =
+        widget.plan.stretches.isNotEmpty ? widget.plan.stretches.first : null;
+    final thumbUrl = firstStretch?.model?.thumbnailUrl;
+    final hasThumb = thumbUrl != null && thumbUrl.trim().isNotEmpty;
 
     return Scaffold(
       backgroundColor: colors.ground,
@@ -83,9 +86,28 @@ class GetReadyScreenState extends State<GetReadyScreen> {
                         border: Border.all(color: colors.line),
                         borderRadius: AppBorderRadius.hero,
                       ),
-                      child: Padding(
-                        padding: EdgeInsets.all(28.r),
-                        child: AnimatedStretchFigure(pose: firstStretch.pose),
+                      child: ClipRRect(
+                        borderRadius: AppBorderRadius.hero,
+                        child: hasThumb
+                            ? Image.network(
+                                thumbUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Padding(
+                                  padding: EdgeInsets.all(28.r),
+                                  child: AnimatedStretchFigure(
+                                    pose: firstStretch?.pose ??
+                                        StretchPoses.neutral,
+                                  ),
+                                ),
+                              )
+                            : Padding(
+                                padding: EdgeInsets.all(28.r),
+                                child: AnimatedStretchFigure(
+                                  pose: firstStretch?.pose ??
+                                      StretchPoses.neutral,
+                                ),
+                              ),
                       ),
                     ),
                   ),
@@ -96,7 +118,7 @@ class GetReadyScreenState extends State<GetReadyScreen> {
                   ),
                   4.verticalSpace,
                   Text(
-                    'First up: ${firstStretch.name}',
+                    'First up: ${firstStretch?.name ?? ''}',
                     style: AppTextStyle.headline,
                   ),
                   4.verticalSpace,

@@ -24,7 +24,10 @@ class RoutineDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
-    final firstStretch = routine.stretches.first;
+    final firstStretch =
+        routine.stretches.isNotEmpty ? routine.stretches.first : null;
+    final thumbUrl = firstStretch?.model?.thumbnailUrl;
+    final hasThumb = thumbUrl != null && thumbUrl.trim().isNotEmpty;
     final isFavorite = ref.watch(favoritesProvider).contains(routine.name);
 
     return Scaffold(
@@ -56,9 +59,28 @@ class RoutineDetailScreen extends ConsumerWidget {
                         border: Border.all(color: colors.line),
                         borderRadius: AppBorderRadius.hero,
                       ),
-                      child: Padding(
-                        padding: EdgeInsets.all(28.r),
-                        child: StretchFigure(pose: firstStretch.pose),
+                      child: ClipRRect(
+                        borderRadius: AppBorderRadius.hero,
+                        child: hasThumb
+                            ? Image.network(
+                                thumbUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Padding(
+                                  padding: EdgeInsets.all(28.r),
+                                  child: StretchFigure(
+                                    pose: firstStretch?.pose ??
+                                        StretchPoses.neutral,
+                                  ),
+                                ),
+                              )
+                            : Padding(
+                                padding: EdgeInsets.all(28.r),
+                                child: StretchFigure(
+                                  pose: firstStretch?.pose ??
+                                      StretchPoses.neutral,
+                                ),
+                              ),
                       ),
                     ),
                   ),
@@ -79,7 +101,7 @@ class RoutineDetailScreen extends ConsumerWidget {
                       Expanded(
                         child: AppFactTile(
                           label: 'Time',
-                          value: '${routine.minutes} min',
+                          value: routine.durationText,
                         ),
                       ),
                       8.horizontalSpace,
@@ -130,35 +152,53 @@ class RoutineDetailScreen extends ConsumerWidget {
                   ],
                   20.verticalSpace,
                   Text('Stretches', style: AppTextStyle.sectionTitle),
-                  for (var i = 0; i < routine.stretches.length; i++)
-                    AppSettingRow(
-                      title: routine.stretches[i].name,
-                      subtitle:
-                          '${routine.stretches[i].holdSeconds}s'
-                          '${routine.stretches[i].isEachSide ? ' each side' : ''}'
-                          ' · ${routine.stretches[i].position.label}',
-                      leading: AppThumb(
-                        child: StretchFigure(pose: routine.stretches[i].pose),
-                      ),
-                      trailing: Icon(
-                        Icons.info_outline_rounded,
-                        size: 18.r,
-                        color: colors.ink3,
-                      ),
-                      onTap: () => StretchDetailSheet.open(
-                        context,
-                        name: routine.stretches[i].name,
-                        pose: routine.stretches[i].pose,
-                      ),
-                      showDivider: i < routine.stretches.length - 1,
+                  for (var i = 0; i < routine.stretches.length; i++) ...[
+                    Builder(
+                      builder: (context) {
+                        final stretch = routine.stretches[i];
+                        final thumbUrl = stretch.model?.thumbnailUrl;
+                        final hasThumb =
+                            thumbUrl != null && thumbUrl.trim().isNotEmpty;
+                        return AppSettingRow(
+                          title: stretch.name,
+                          subtitle:
+                              '${stretch.holdSeconds}s'
+                              '${stretch.isEachSide ? ' each side' : ''}'
+                              ' · ${stretch.position.label}',
+                          leading: AppThumb(
+                            child: hasThumb
+                                ? Image.network(
+                                    thumbUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            StretchFigure(pose: stretch.pose),
+                                  )
+                                : StretchFigure(pose: stretch.pose),
+                          ),
+                          trailing: Icon(
+                            Icons.info_outline_rounded,
+                            size: 18.r,
+                            color: colors.ink3,
+                          ),
+                          onTap: () => StretchDetailSheet.open(
+                            context,
+                            name: stretch.name,
+                            pose: stretch.pose,
+                            model: stretch.model,
+                          ),
+                          showDivider: i < routine.stretches.length - 1,
+                        );
+                      },
                     ),
+                  ],
                 ],
               ),
             ),
             AppBottomActionBar(
               children: [
                 AppButton(
-                  label: 'Start · ${routine.minutes} min',
+                  label: 'Start · ${routine.durationText}',
                   icon: Icons.play_arrow_rounded,
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(

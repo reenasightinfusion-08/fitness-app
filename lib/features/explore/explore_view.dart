@@ -7,7 +7,9 @@ import 'package:fitness_app/core/utils/app_validators.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/explore/models/explore_data.dart';
 import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
+import 'package:fitness_app/features/stretch_detail/models/stretch_model.dart';
 import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
+import 'package:fitness_app/services/stretch_service.dart';
 
 /// Matches the prototype's `screens.explore`: search, a "Safe for me"
 /// toggle, area/time filter chips, matching routine cards and the full
@@ -21,10 +23,45 @@ class ExploreView extends StatefulWidget {
 
 class _ExploreViewState extends State<ExploreView> {
   final _searchController = TextEditingController();
+  final _stretchService = StretchService();
+
   String _query = '';
   String? _area;
   ExploreTimeFilter _time = ExploreTimeFilter.any;
   bool _safeForMe = true;
+
+  List<StretchModel> _apiStretches = [];
+  bool _isLoadingStretches = true;
+  String? _stretchesError;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStretches();
+  }
+
+  Future<void> _fetchStretches() async {
+    setState(() {
+      _isLoadingStretches = true;
+      _stretchesError = null;
+    });
+    try {
+      final list = await _stretchService.fetchStretches();
+      if (mounted) {
+        setState(() {
+          _apiStretches = list;
+          _isLoadingStretches = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _stretchesError = e.toString();
+          _isLoadingStretches = false;
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -38,7 +75,7 @@ class _ExploreViewState extends State<ExploreView> {
     if (name.toLowerCase().contains(q)) return true;
     return areaKeys.any(
       (key) => ExploreDemoData.areas
-          .firstWhere((a) => a.key == key)
+          .firstWhere((a) => a.key == key, orElse: () => ExploreArea(key, key))
           .label
           .toLowerCase()
           .contains(q),
@@ -51,7 +88,7 @@ class _ExploreViewState extends State<ExploreView> {
       .where((r) => _time.matches(r.minutes))
       .toList();
 
-  List<ExploreStretch> get _filteredStretches => ExploreDemoData.stretches
+  List<StretchModel> get _filteredStretches => _apiStretches
       .where((s) => _matchesQuery(s.name, s.areas))
       .where((s) => _area == null || s.areas.contains(_area))
       .toList();
@@ -145,35 +182,58 @@ class _ExploreViewState extends State<ExploreView> {
           ],
         24.verticalSpace,
         Text(
-          'Stretch library · ${stretches.length}',
+          'Stretch library · ${_isLoadingStretches ? '...' : stretches.length}',
           style: AppTextStyle.sectionTitle,
         ),
         10.verticalSpace,
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: stretches.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 8.h,
-            crossAxisSpacing: 8.w,
-            childAspectRatio: 0.82,
-          ),
-          itemBuilder: (context, index) => _LibraryTile(
-            stretch: stretches[index],
-            onTap: () => StretchDetailSheet.open(
-              context,
-              name: stretches[index].name,
-              pose: stretches[index].pose,
+        if (_isLoadingStretches)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 24.h),
+            child: const Center(child: CircularProgressIndicator()),
+          )
+        else if (_stretchesError != null)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Failed to load stretches from server.',
+                  style: AppTextStyle.bodySmall.copyWith(color: colors.danger),
+                ),
+                4.verticalSpace,
+                TextButton(
+                  onPressed: _fetchStretches,
+                  child: const Text('Retry'),
+                ),
+              ],
             ),
-          ),
-        ),
-        if (stretches.isEmpty)
+          )
+        else if (stretches.isEmpty)
           Padding(
             padding: EdgeInsets.only(top: 4.h),
             child: Text(
               'No stretches match your filters.',
               style: AppTextStyle.bodySmall.copyWith(color: colors.ink2),
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: stretches.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 8.h,
+              crossAxisSpacing: 8.w,
+              childAspectRatio: 0.82,
+            ),
+            itemBuilder: (context, index) => _LibraryTile(
+              stretch: stretches[index],
+              onTap: () => StretchDetailSheet.open(
+                context,
+                model: stretches[index],
+              ),
             ),
           ),
       ],
@@ -187,12 +247,14 @@ class _ExploreViewState extends State<ExploreView> {
 class _LibraryTile extends StatelessWidget {
   const _LibraryTile({required this.stretch, required this.onTap});
 
-  final ExploreStretch stretch;
+  final StretchModel stretch;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final hasThumb = stretch.thumbnailUrl != null && stretch.thumbnailUrl!.trim().isNotEmpty;
+
     return Material(
       color: colors.surface,
       shape: RoundedRectangleBorder(
@@ -210,7 +272,16 @@ class _LibraryTile extends StatelessWidget {
               SizedBox(
                 width: 64.r,
                 height: 64.r,
-                child: StretchFigure(pose: stretch.pose),
+                child: hasThumb
+                    ? ClipRRect(
+                        borderRadius: AppBorderRadius.lg,
+                        child: Image.network(
+                          stretch.thumbnailUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => StretchFigure(pose: stretch.pose),
+                        ),
+                      )
+                    : StretchFigure(pose: stretch.pose),
               ),
               6.verticalSpace,
               Text(

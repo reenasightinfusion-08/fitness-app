@@ -1,3 +1,4 @@
+import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/features/session_player/session_player_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,7 @@ class TodayView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final profile = ref.watch(onboardingProfileProvider);
+    final routinesAsync = ref.watch(routinesProvider);
     final firstName = profile.name.isEmpty ? 'Runner' : profile.name;
     final now = DateTime.now();
 
@@ -82,23 +84,63 @@ class TodayView extends ConsumerWidget {
         24.verticalSpace,
         Text('Quick picks', style: AppTextStyle.sectionTitle),
         10.verticalSpace,
-        for (var i = 0; i < TodayDemoData.quickPicks.length; i += 2) ...[
-          if (i > 0) 10.verticalSpace,
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _QuickPickTile(routine: TodayDemoData.quickPicks[i]),
-              ),
-              10.horizontalSpace,
-              Expanded(
-                child: i + 1 < TodayDemoData.quickPicks.length
-                    ? _QuickPickTile(routine: TodayDemoData.quickPicks[i + 1])
-                    : const SizedBox.shrink(),
-              ),
-            ],
+        routinesAsync.when(
+          data: (routines) {
+            final quickPicks =
+                routines.isNotEmpty ? routines : TodayDemoData.quickPicks;
+            return Column(
+              children: [
+                for (var i = 0; i < quickPicks.length; i += 2) ...[
+                  if (i > 0) 10.verticalSpace,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _QuickPickTile(routine: quickPicks[i]),
+                      ),
+                      10.horizontalSpace,
+                      Expanded(
+                        child: i + 1 < quickPicks.length
+                            ? _QuickPickTile(routine: quickPicks[i + 1])
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: CircularProgressIndicator(),
+            ),
           ),
-        ],
+          error: (err, stack) {
+            final quickPicks = TodayDemoData.quickPicks;
+            return Column(
+              children: [
+                for (var i = 0; i < quickPicks.length; i += 2) ...[
+                  if (i > 0) 10.verticalSpace,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _QuickPickTile(routine: quickPicks[i]),
+                      ),
+                      10.horizontalSpace,
+                      Expanded(
+                        child: i + 1 < quickPicks.length
+                            ? _QuickPickTile(routine: quickPicks[i + 1])
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
         24.verticalSpace,
         Text('This week', style: AppTextStyle.sectionTitle),
         10.verticalSpace,
@@ -119,14 +161,31 @@ class _QuickPickTile extends StatelessWidget {
   final RoutineSummary routine;
 
   @override
-  Widget build(BuildContext context) => AppTileCard(
-    title: routine.name,
-    meta: '${routine.minutes} min',
-    thumbnail: AppThumb(
-      child: StretchFigure(pose: routine.stretches.first.pose),
-    ),
-    onTap: () => Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => RoutineDetailScreen(routine: routine)),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final firstStretch =
+        routine.stretches.isNotEmpty ? routine.stretches.first : null;
+    final thumbUrl = firstStretch?.model?.thumbnailUrl;
+    final hasThumb = thumbUrl != null && thumbUrl.trim().isNotEmpty;
+
+    return AppTileCard(
+      title: routine.name,
+      meta: routine.durationText,
+      thumbnail: AppThumb(
+        child: hasThumb
+            ? Image.network(
+                thumbUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => StretchFigure(
+                  pose: firstStretch?.pose ?? StretchPoses.neutral,
+                ),
+              )
+            : StretchFigure(
+                pose: firstStretch?.pose ?? StretchPoses.neutral,
+              ),
+      ),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => RoutineDetailScreen(routine: routine)),
+      ),
+    );
+  }
 }

@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/stretch_detail/models/stretch_guide.dart';
+import 'package:fitness_app/features/stretch_detail/models/stretch_model.dart';
 
 /// Matches the prototype's `stretchSheet()`: the modal reached from every
 /// info icon next to a stretch — a bigger look at the pose, what it works,
@@ -13,31 +14,42 @@ import 'package:fitness_app/features/stretch_detail/models/stretch_guide.dart';
 class StretchDetailSheet extends StatelessWidget {
   const StretchDetailSheet({
     super.key,
-    required this.name,
-    required this.pose,
+    this.name,
+    this.pose,
+    this.model,
     this.note,
   });
 
-  final String name;
-  final StretchPose pose;
+  final String? name;
+  final StretchPose? pose;
+  final StretchModel? model;
 
   /// e.g. "Timer paused while you read." — shown when opened mid-session.
   final String? note;
 
   static Future<void> open(
     BuildContext context, {
-    required String name,
-    required StretchPose pose,
+    String? name,
+    StretchPose? pose,
+    StretchModel? model,
     String? note,
   }) => AppBottomSheet.show(
     context,
-    child: StretchDetailSheet(name: name, pose: pose, note: note),
+    child: StretchDetailSheet(
+      name: name,
+      pose: pose,
+      model: model,
+      note: note,
+    ),
   );
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final guide = StretchLibrary.guideFor(pose);
+    final effectivePose = model?.pose ?? pose ?? StretchPoses.neutral;
+    final effectiveName = model?.name ?? name ?? '';
+    final guide = model?.toGuide() ?? (pose != null ? StretchLibrary.guideFor(pose!) : null);
+    final hasThumb = model?.thumbnailUrl != null && model!.thumbnailUrl!.trim().isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,9 +61,21 @@ class StretchDetailSheet extends StatelessWidget {
               color: colors.surface2,
               borderRadius: AppBorderRadius.card,
             ),
-            child: Padding(
-              padding: EdgeInsets.all(20.r),
-              child: StretchFigure(pose: pose),
+            child: ClipRRect(
+              borderRadius: AppBorderRadius.card,
+              child: hasThumb
+                  ? Image.network(
+                      model!.thumbnailUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Padding(
+                        padding: EdgeInsets.all(20.r),
+                        child: StretchFigure(pose: effectivePose),
+                      ),
+                    )
+                  : Padding(
+                      padding: EdgeInsets.all(20.r),
+                      child: StretchFigure(pose: effectivePose),
+                    ),
             ),
           ),
         ),
@@ -64,7 +88,7 @@ class StretchDetailSheet extends StatelessWidget {
           ),
           10.verticalSpace,
         ],
-        Text(name, style: AppTextStyle.titleLarge),
+        Text(effectiveName, style: AppTextStyle.titleLarge),
         if (guide == null) ...[
           16.verticalSpace,
           Text(
@@ -87,52 +111,67 @@ class StretchDetailSheet extends StatelessWidget {
             ],
           ),
           16.verticalSpace,
-          _Section(title: 'Where you should feel it', body: guide.feel),
-          16.verticalSpace,
-          Text('How to do it', style: AppTextStyle.titleSmall),
-          8.verticalSpace,
-          for (var i = 0; i < guide.steps.length; i++)
-            Padding(
-              padding: EdgeInsets.only(bottom: 6.h),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${i + 1}.',
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: colors.ink3,
-                      fontWeight: FontWeight.w700,
+          if (guide.feel.isNotEmpty) ...[
+            _Section(title: 'Where you should feel it', body: guide.feel),
+            16.verticalSpace,
+          ],
+          if (guide.steps.isNotEmpty) ...[
+            Text('How to do it', style: AppTextStyle.titleSmall),
+            8.verticalSpace,
+            for (var i = 0; i < guide.steps.length; i++)
+              Padding(
+                padding: EdgeInsets.only(bottom: 6.h),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${i + 1}.',
+                      style: AppTextStyle.bodyMedium.copyWith(
+                        color: colors.ink3,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  8.horizontalSpace,
-                  Expanded(
-                    child: Text(guide.steps[i], style: AppTextStyle.bodyMedium),
-                  ),
+                    8.horizontalSpace,
+                    Expanded(
+                      child: Text(guide.steps[i], style: AppTextStyle.bodyMedium),
+                    ),
+                  ],
+                ),
+              ),
+            10.verticalSpace,
+          ],
+          if (guide.commonMistake.isNotEmpty) ...[
+            _Section(title: 'Common mistake', body: guide.commonMistake),
+            16.verticalSpace,
+          ],
+          if (guide.easier.isNotEmpty || guide.harder.isNotEmpty) ...[
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (guide.easier.isNotEmpty)
+                    Expanded(
+                      child: _MiniCard(label: 'Easier', body: guide.easier),
+                    ),
+                  if (guide.easier.isNotEmpty && guide.harder.isNotEmpty)
+                    10.horizontalSpace,
+                  if (guide.harder.isNotEmpty)
+                    Expanded(
+                      child: _MiniCard(label: 'Harder', body: guide.harder),
+                    ),
                 ],
               ),
             ),
-          10.verticalSpace,
-          _Section(title: 'Common mistake', body: guide.commonMistake),
-          16.verticalSpace,
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _MiniCard(label: 'Easier', body: guide.easier),
-              ),
-              10.horizontalSpace,
-              Expanded(
-                child: _MiniCard(label: 'Harder', body: guide.harder),
-              ),
-            ],
-          ),
-          16.verticalSpace,
-          AppNote(
-            title: 'Take care if…',
-            message: guide.cautions,
-            tone: AppTone.danger,
-          ),
-          20.verticalSpace,
+            16.verticalSpace,
+          ],
+          if (guide.cautions.isNotEmpty) ...[
+            AppNote(
+              title: 'Take care if…',
+              message: guide.cautions,
+              tone: AppTone.danger,
+            ),
+            20.verticalSpace,
+          ],
         ],
         AppButton(
           label: 'Close',

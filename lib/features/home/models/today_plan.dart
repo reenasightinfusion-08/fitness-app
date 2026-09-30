@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:fitness_app/core/widgets/widgets.dart';
+import 'package:fitness_app/features/stretch_detail/models/stretch_model.dart';
 
 /// Where a stretch is done — mirrors the prototype's `POS_LABEL`. Drives
 /// both the fact-tile sequence line and the player's per-stretch layout.
@@ -38,6 +39,7 @@ class StretchPreview {
     this.isEachSide = false,
     this.setupCue = 'Get into position.',
     this.feelCue,
+    this.model,
   });
 
   final String name;
@@ -61,13 +63,20 @@ class StretchPreview {
   /// Falls back to a generic breathing cue when unset.
   final String? feelCue;
 
+  /// Full backend stretch document, if fetched from API.
+  final StretchModel? model;
+
   /// Total time spent holding this stretch — hold × reps, doubled when it
   /// is done on each side. Mirrors the backend's `totalHoldSeconds`.
   int get totalHoldSeconds => holdSeconds * repCount * (isEachSide ? 2 : 1);
 
   /// Used by the routine builder to adjust just the hold time or rep count
   /// of a picked stretch without rebuilding the rest of it by hand.
-  StretchPreview copyWith({int? holdSeconds, int? repCount}) => StretchPreview(
+  StretchPreview copyWith({
+    int? holdSeconds,
+    int? repCount,
+    StretchModel? model,
+  }) => StretchPreview(
     name: name,
     pose: pose,
     holdSeconds: holdSeconds ?? this.holdSeconds,
@@ -76,6 +85,7 @@ class StretchPreview {
     isEachSide: isEachSide,
     setupCue: setupCue,
     feelCue: feelCue,
+    model: model ?? this.model,
   );
 }
 
@@ -85,19 +95,96 @@ class StretchPreview {
 class RoutineSummary {
   const RoutineSummary({
     required this.name,
-    required this.minutes,
     required this.stretches,
+    int? minutes,
+    int totalSeconds = 0,
     this.blurb,
     this.level = RoutineLevel.beginner,
     this.equipmentLabel = 'None',
     this.tags = const [],
     this.adaptedNotes = const [],
     this.transitionSeconds,
-  });
+  }) : totalSeconds = totalSeconds > 0 ? totalSeconds : (minutes != null ? minutes * 60 : 0);
+
+  factory RoutineSummary.fromJson(Map<String, dynamic> json) {
+    final rawStretches = json['stretches'] as List? ?? [];
+    final stretches = rawStretches.map((item) {
+      if (item is! Map<String, dynamic>) {
+        return const StretchPreview(
+          name: 'Unknown Stretch',
+          pose: StretchPoses.neutral,
+        );
+      }
+
+      final stretchJson = item['stretch'];
+      if (stretchJson is Map<String, dynamic>) {
+        final stretchModel = StretchModel.fromJson(stretchJson);
+        final holdSeconds =
+            item['holdSeconds'] as int? ?? stretchModel.defaultHoldSeconds;
+        final repCount =
+            item['repCount'] as int? ?? stretchModel.defaultRepCount;
+        return stretchModel.toPreview().copyWith(
+          holdSeconds: holdSeconds,
+          repCount: repCount,
+          model: stretchModel,
+        );
+      }
+
+      return const StretchPreview(
+        name: 'Unknown Stretch',
+        pose: StretchPoses.neutral,
+      );
+    }).toList();
+
+    final equipmentList = List<String>.from(json['equipment'] as List? ?? []);
+    final equipmentLabel = equipmentList.isEmpty
+        ? 'None'
+        : equipmentList
+            .map((e) => e.isNotEmpty ? '${e[0].toUpperCase()}${e.substring(1)}' : e)
+            .join(', ');
+
+    final rawLevel = json['level'] as String? ?? 'beginner';
+    final level = RoutineLevel.values.firstWhere(
+      (l) => l.name.toLowerCase() == rawLevel.toLowerCase(),
+      orElse: () => RoutineLevel.beginner,
+    );
+
+    final totalSeconds = json['totalSeconds'] as int? ?? 0;
+
+    return RoutineSummary(
+      name: json['name'] as String? ?? 'Untitled Routine',
+      totalSeconds: totalSeconds,
+      stretches: stretches,
+      blurb: json['description'] as String?,
+      level: level,
+      equipmentLabel: equipmentLabel,
+      tags: List<String>.from(json['tags'] as List? ?? []),
+      transitionSeconds: json['transitionSeconds'] as int?,
+    );
+  }
 
   final String name;
-  final int minutes;
+  final int totalSeconds;
   final List<StretchPreview> stretches;
+
+  /// Computed minutes from totalSeconds (rounded up for full minute counts).
+  int get minutes => (totalSeconds / 60).ceil();
+
+  /// Calculates whole minutes component from totalSeconds.
+  int get calculatedMinutes => totalSeconds ~/ 60;
+
+  /// Calculates remainder seconds component from totalSeconds.
+  int get calculatedSeconds => totalSeconds % 60;
+
+  /// Formatted duration string for UI display (e.g. "2 min 30 sec", "1 min 20 sec", "45 sec").
+  String get durationText {
+    final m = calculatedMinutes;
+    final s = calculatedSeconds;
+    if (m > 0 && s > 0) return '$m min $s sec';
+    if (m > 0) return '$m min';
+    if (s > 0) return '$s sec';
+    return '$minutes min';
+  }
   final String? blurb;
   final RoutineLevel level;
   final String equipmentLabel;

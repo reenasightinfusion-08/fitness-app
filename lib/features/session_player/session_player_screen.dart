@@ -345,6 +345,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
       context,
       name: currentStretch.name,
       pose: currentStretch.pose,
+      model: currentStretch.model,
       note: 'Timer paused while you read.',
     ).then((_) {
       if (!mounted || wasPaused) return;
@@ -368,6 +369,14 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
     final nextStretch = step.stretchIndex + 1 < _stretches.length
         ? _stretches[step.stretchIndex + 1]
         : null;
+
+    final stretchThumbUrl = stretch.model?.thumbnailUrl;
+    final hasStretchThumb =
+        stretchThumbUrl != null && stretchThumbUrl.trim().isNotEmpty;
+
+    final nextThumbUrl = nextStretch?.model?.thumbnailUrl;
+    final hasNextThumb =
+        nextThumbUrl != null && nextThumbUrl.trim().isNotEmpty;
 
     final cue = switch (step.kind) {
       _StepKind.getReady => stretch.setupCue,
@@ -431,11 +440,28 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                     SizedBox(
                       height: 220.h,
                       width: 220.w,
-                      child: AnimatedStretchFigure(
-                        pose: stretch.pose,
-                        nearColor: colors.playerInk,
-                        farColor: colors.playerDim,
-                        groundColor: colors.playerInk.withValues(alpha: 0.14),
+                      child: ClipRRect(
+                        borderRadius: AppBorderRadius.hero,
+                        child: hasStretchThumb
+                            ? Image.network(
+                                stretchThumbUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    AnimatedStretchFigure(
+                                  pose: stretch.pose,
+                                  nearColor: colors.playerInk,
+                                  farColor: colors.playerDim,
+                                  groundColor:
+                                      colors.playerInk.withValues(alpha: 0.14),
+                                ),
+                              )
+                            : AnimatedStretchFigure(
+                                pose: stretch.pose,
+                                nearColor: colors.playerInk,
+                                farColor: colors.playerDim,
+                                groundColor:
+                                    colors.playerInk.withValues(alpha: 0.14),
+                              ),
                       ),
                     ),
                     Text(
@@ -470,15 +496,34 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                       isOnDark: true,
                       child: nextStretch == null
                           ? null
-                          : CustomPaint(
-                              painter: StretchFigurePainter(
-                                pose: nextStretch.pose,
-                                nearColor: colors.playerInk,
-                                farColor: colors.playerDim,
-                                groundColor: Colors.transparent,
-                                showGround: false,
-                              ),
-                            ),
+                          : (hasNextThumb
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  child: Image.network(
+                                    nextThumbUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            CustomPaint(
+                                      painter: StretchFigurePainter(
+                                        pose: nextStretch.pose,
+                                        nearColor: colors.playerInk,
+                                        farColor: colors.playerDim,
+                                        groundColor: Colors.transparent,
+                                        showGround: false,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : CustomPaint(
+                                  painter: StretchFigurePainter(
+                                    pose: nextStretch.pose,
+                                    nearColor: colors.playerInk,
+                                    farColor: colors.playerDim,
+                                    groundColor: Colors.transparent,
+                                    showGround: false,
+                                  ),
+                                )),
                     ),
                     12.horizontalSpace,
                     Expanded(
