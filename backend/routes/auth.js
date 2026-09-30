@@ -6,7 +6,7 @@ const { sendCode } = require('../utils/mailer');
 const { ok, fail } = require('../utils/response');
 
 const sign = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES || '7d' });
+  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES || '1h' });
 
 const genCode = () => String(Math.floor(100000 + Math.random() * 900000));
 const RESET_TTL_MS = 15 * 60 * 1000;
