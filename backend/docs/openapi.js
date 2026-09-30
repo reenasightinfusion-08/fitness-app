@@ -2,6 +2,7 @@
 // Keep in sync with routes/*.js. All responses use the { success, message, data } envelope.
 
 const { POSE_KEYS, AREAS } = require('../models/Stretch');
+const routineExample = require('./routineExample');
 
 const envelope = (dataSchema, example) => ({
   type: 'object',
@@ -58,7 +59,7 @@ module.exports = {
     { url: 'https://fitness-backend-eight.vercel.app', description: 'Production' },
     { url: 'http://localhost:4000', description: 'Local' },
   ],
-  tags: [{ name: 'Health' }, { name: 'Auth' }, { name: 'Users' }, { name: 'Stretches' }, { name: 'Routines' }],
+  tags: [{ name: 'Health' }, { name: 'Auth' }, { name: 'Users' }, { name: 'Stretches' }, { name: 'Routines' }, { name: 'Custom Routines' }],
   components: {
     securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } },
     schemas: {
@@ -245,6 +246,7 @@ module.exports = {
       },
       Routine: {
         type: 'object',
+        example: routineExample,
         properties: {
           _id: { type: 'string' },
           name: { type: 'string', example: 'Morning' },
@@ -258,8 +260,7 @@ module.exports = {
             items: {
               type: 'object',
               properties: {
-                stretch: { $ref: '#/components/schemas/Stretch' },
-                poseKey: { type: 'string', example: 'reach' },
+                stretch: { allOf: [{ $ref: '#/components/schemas/Stretch' }], nullable: true, description: 'Full Stretch document; null if that stretch was deleted.' },
                 holdSeconds: { type: 'integer' },
                 repCount: { type: 'integer' },
               },
@@ -272,6 +273,46 @@ module.exports = {
           minutes: { type: 'integer', readOnly: true, description: 'totalSeconds in minutes, rounded, at least 1.' },
           sequence: { type: 'string', readOnly: true, example: 'Standing → Floor', description: 'Computed: positions in order, consecutive duplicates collapsed.' },
           isActive: { type: 'boolean' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+          __v: { type: 'integer' },
+        },
+      },
+      CustomRoutineInput: {
+        type: 'object',
+        required: ['name', 'stretches'],
+        description: 'The owner is taken from the token. `areas`, `equipment`, `stretchCount`, `totalSeconds` and `sequence` are computed by the server.',
+        properties: {
+          name: { type: 'string', example: 'My desk reset', description: 'Unique per user.' },
+          description: { type: 'string', example: 'Quick stretches between meetings.' },
+          level: { type: 'string', enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
+          tags: { type: 'array', items: { type: 'string' }, example: ['Desk'] },
+          transitionSeconds: { type: 'integer', nullable: true, minimum: 0, default: null, description: 'Seconds to get into each stretch. null = Auto.' },
+          stretches: {
+            type: 'array',
+            minItems: 1,
+            description: 'In play order.',
+            items: { $ref: '#/components/schemas/RoutineItemInput' },
+          },
+        },
+      },
+      CustomRoutine: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string' },
+          user: { type: 'string', description: 'Owner (User _id).' },
+          name: { type: 'string', example: 'My desk reset' },
+          description: { type: 'string' },
+          level: { type: 'string', enum: ['beginner', 'intermediate', 'advanced'] },
+          tags: { type: 'array', items: { type: 'string' } },
+          transitionSeconds: { type: 'integer', nullable: true },
+          stretches: { $ref: '#/components/schemas/Routine/properties/stretches' },
+          areas: { $ref: '#/components/schemas/Routine/properties/areas' },
+          equipment: { $ref: '#/components/schemas/Routine/properties/equipment' },
+          stretchCount: { type: 'integer', readOnly: true },
+          totalSeconds: { type: 'integer', readOnly: true },
+          minutes: { type: 'integer', readOnly: true },
+          sequence: { type: 'string', readOnly: true, example: 'Standing → Floor' },
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' },
           __v: { type: 'integer' },
@@ -531,6 +572,68 @@ module.exports = {
           200: okResponse('Deleted', nullData, 'Routine deleted'),
           400: err('Invalid id', 'Cast to ObjectId failed'),
           404: err('Not found', 'Routine not found'),
+          500: serverErr,
+        },
+      },
+    },
+    '/api/custom-routines': {
+      get: {
+        tags: ['Custom Routines'],
+        summary: 'List the signed-in user\'s own routines (newest first)',
+        security: auth,
+        responses: {
+          200: okResponse('Custom routines', { type: 'array', items: { $ref: '#/components/schemas/CustomRoutine' } }, 'Custom routines fetched'),
+          401: err('Missing or invalid token', 'No token provided'),
+          500: serverErr,
+        },
+      },
+      post: {
+        tags: ['Custom Routines'],
+        summary: 'Create a routine for the signed-in user',
+        security: auth,
+        requestBody: jsonBody({ $ref: '#/components/schemas/CustomRoutineInput' }, {
+          name: 'My desk reset',
+          description: 'Quick stretches between meetings.',
+          level: 'beginner',
+          tags: ['Desk'],
+          transitionSeconds: 5,
+          stretches: [
+            { poseKey: 'reach', holdSeconds: 30, repCount: 1 },
+            { poseKey: 'fold', holdSeconds: 40, repCount: 2 },
+          ],
+        }),
+        responses: {
+          201: okResponse('Created. The record is saved; nothing is returned in data.', nullData, 'Custom routine created'),
+          400: err('Validation error, or an unknown poseKey / stretch id', 'Unknown poseKey: reach'),
+          401: err('Missing or invalid token', 'Invalid or expired token'),
+          409: err('This user already has a routine with this name', 'You already have a routine with this name'),
+        },
+      },
+    },
+    '/api/custom-routines/{id}': {
+      get: {
+        tags: ['Custom Routines'],
+        summary: 'Get one of the signed-in user\'s routines',
+        security: auth,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          200: okResponse('Custom routine', { $ref: '#/components/schemas/CustomRoutine' }, 'Custom routine fetched'),
+          400: err('Invalid id', 'Cast to ObjectId failed'),
+          401: err('Missing or invalid token', 'No token provided'),
+          404: err('Not found, or it belongs to another user', 'Custom routine not found'),
+          500: serverErr,
+        },
+      },
+      delete: {
+        tags: ['Custom Routines'],
+        summary: 'Delete one of the signed-in user\'s routines permanently',
+        security: auth,
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          200: okResponse('Deleted', nullData, 'Custom routine deleted'),
+          400: err('Invalid id', 'Cast to ObjectId failed'),
+          401: err('Missing or invalid token', 'No token provided'),
+          404: err('Not found, or it belongs to another user', 'Custom routine not found'),
           500: serverErr,
         },
       },

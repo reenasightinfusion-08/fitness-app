@@ -2,11 +2,12 @@ const mongoose = require('mongoose');
 const routineItemSchema = require('./routineItem');
 const { deriveRoutineFields } = require('../utils/routineItems');
 
-// Common routines shown to every user. Routines built by a user live in a
-// separate collection.
-const routineSchema = new mongoose.Schema(
+// A routine built by one user in the routine builder. Common routines shown
+// to everyone live in the Routine collection.
+const customRoutineSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, unique: true, trim: true },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    name: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
     level: { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
     tags: { type: [String], default: [] },
@@ -25,14 +26,15 @@ const routineSchema = new mongoose.Schema(
     stretchCount: { type: Number, default: 0 },
     totalSeconds: { type: Number, default: 0 },
     sequence: { type: String, default: '' },
-
-    isActive: { type: Boolean, default: true },
   },
   { timestamps: true },
 );
 
-routineSchema.pre('validate', function () {
+// A name only has to be unique within one user's routines.
+customRoutineSchema.index({ user: 1, name: 1 }, { unique: true });
+
+customRoutineSchema.pre('validate', function () {
   return deriveRoutineFields(this);
 });
 
-module.exports = mongoose.model('Routine', routineSchema);
+module.exports = mongoose.model('CustomRoutine', customRoutineSchema);

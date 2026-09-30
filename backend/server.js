@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const stretchRoutes = require('./routes/stretches');
 const routineRoutes = require('./routes/routines');
+const customRoutineRoutes = require('./routes/customRoutines');
 const { ok, fail } = require('./utils/response');
 const openapi = require('./docs/openapi');
 
@@ -51,6 +52,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/stretches', stretchRoutes);
 app.use('/api/routines', routineRoutes);
+app.use('/api/custom-routines', customRoutineRoutes);
 
 app.use((_req, res) => fail(res, 404, 'Route not found'));
 
