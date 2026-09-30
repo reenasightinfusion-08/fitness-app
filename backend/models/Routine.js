@@ -54,6 +54,10 @@ routineSchema.pre('validate', async function () {
   for (const item of this.stretches) {
     const stretch = byId.get(String(item.stretch));
     if (!stretch) throw new Error(`Stretch not found: ${item.stretch}`);
+    if (item.poseKey && item.poseKey !== stretch.poseKey) {
+      throw new Error(`poseKey ${item.poseKey} does not match stretch ${item.stretch} (${stretch.poseKey})`);
+    }
+    item.poseKey = stretch.poseKey;
 
     totalSeconds += item.holdSeconds * item.repCount * (stretch.isEachSide ? 2 : 1);
     stretch.areas.forEach((a) => areas.add(a));

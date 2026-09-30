@@ -7,6 +7,8 @@ const isWholeNumber = { validator: Number.isInteger, message: '{PATH} must be a 
 const routineItemSchema = new mongoose.Schema(
   {
     stretch: { type: mongoose.Schema.Types.ObjectId, ref: 'Stretch', required: true },
+    // Copied from the stretch on save (and checked against it if the client sends one).
+    poseKey: { type: String },
     holdSeconds: { type: Number, default: 30, min: 10, max: 90, validate: isWholeNumber },
     repCount: { type: Number, default: 1, min: 1, max: 5, validate: isWholeNumber },
   },

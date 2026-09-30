@@ -217,10 +217,10 @@ module.exports = {
 
       RoutineItemInput: {
         type: 'object',
-        description: 'One stretch in a routine. Send either `stretch` (Stretch _id) or `poseKey`.',
+        description: 'One stretch in a routine. Send `stretch` (Stretch _id), `poseKey`, or both (they must match). Both are stored and returned.',
         properties: {
           stretch: { type: 'string', description: 'Stretch _id.' },
-          poseKey: { type: 'string', enum: POSE_KEYS, example: 'reach', description: 'Alternative to `stretch`, on create only.' },
+          poseKey: { type: 'string', enum: POSE_KEYS, example: 'reach', description: 'Alternative to `stretch`. If both are sent they must refer to the same stretch.' },
           holdSeconds: { type: 'integer', minimum: 10, maximum: 90, default: 30, description: 'Per side, in seconds.' },
           repCount: { type: 'integer', minimum: 1, maximum: 5, default: 1 },
         },
@@ -259,6 +259,7 @@ module.exports = {
               type: 'object',
               properties: {
                 stretch: { $ref: '#/components/schemas/Stretch' },
+                poseKey: { type: 'string', example: 'reach' },
                 holdSeconds: { type: 'integer' },
                 repCount: { type: 'integer' },
               },
@@ -504,7 +505,7 @@ module.exports = {
           ],
         }),
         responses: {
-          201: okResponse('Created, returned with populated stretches', { $ref: '#/components/schemas/Routine' }, 'Routine created'),
+          201: okResponse('Created. The record is saved; nothing is returned in data.', nullData, 'Routine created'),
           400: err('Validation error, or an unknown poseKey / stretch id', 'Unknown poseKey: reach'),
           409: err('A routine with this name already exists', 'A routine with this name already exists'),
         },
