@@ -6,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
-import 'package:fitness_app/features/explore/models/explore_data.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/session_complete/session_complete_screen.dart';
 import 'package:fitness_app/features/stretch_detail/models/stretch_guide.dart';
@@ -279,60 +278,26 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
 
   void _addFifteen() => setState(() => remaining += 15);
 
-  /// Replaces the current stretch with the best-matching alternative that
-  /// isn't already in this session — mirrors the prototype's `plSwap()` /
-  /// `bestAlt()`: most shared body areas wins, ties broken by matching
-  /// position (standing/seated/floor).
+  bool get _canSwapSide =>
+      currentStretch.isEachSide && currentStep.kind == _StepKind.hold;
+
+  /// Toggles between First and Second side for each-side stretches during hold phase.
   void _swap() {
-    final current = currentStretch;
-    final currentAreas = ExploreDemoData.stretches
-        .firstWhere(
-          (s) => s.pose == current.pose,
-          orElse: () => ExploreStretch(
-            name: current.name,
-            pose: current.pose,
-            areas: const [],
-          ),
-        )
-        .areas;
-    final usedPoses = _stretches.map((s) => s.pose).toSet();
+    if (!_canSwapSide) return;
 
-    ExploreStretch? best;
-    var bestScore = 0;
-    for (final candidate in ExploreDemoData.stretches) {
-      if (usedPoses.contains(candidate.pose)) continue;
-      final overlap = candidate.areas.where(currentAreas.contains).length;
-      if (overlap == 0) continue;
-      final samePosition =
-          StretchLibrary.guideFor(candidate.pose)?.position == current.position;
-      final score = overlap * 3 + (samePosition ? 1 : 0);
-      if (score > bestScore) {
-        bestScore = score;
-        best = candidate;
-      }
+    final targetSide = currentStep.side == 'First' ? 'Second' : 'First';
+    final targetIndex = steps.indexWhere(
+      (s) => s.stretchIndex == currentStep.stretchIndex && s.side == targetSide,
+    );
+
+    if (targetIndex != -1) {
+      setState(() {
+        stepIndex = targetIndex;
+        remaining = steps[stepIndex].durationSeconds;
+        _announceStep();
+      });
+      AppSnackBar.show(context, 'Switched to $targetSide side');
     }
-
-    if (best == null) {
-      AppSnackBar.show(
-        context,
-        'No similar stretch available for this one. Try skip instead.',
-      );
-      return;
-    }
-
-    final guide = StretchLibrary.guideFor(best.pose);
-    setState(() {
-      _stretches[currentStep.stretchIndex] = StretchPreview(
-        name: best!.name,
-        pose: best.pose,
-        holdSeconds: current.holdSeconds,
-        position: guide?.position ?? current.position,
-        isEachSide: guide?.isEachSide ?? current.isEachSide,
-        feelCue: guide?.feel,
-      );
-      remaining = currentStep.durationSeconds;
-    });
-    AppSnackBar.show(context, 'Swapped to ${best.name}.');
   }
 
   /// Pauses the timer (like tapping pause) while the stretch-info sheet is
@@ -559,9 +524,11 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                   ),
                   AppPlayerButton(
                     icon: Icons.swap_horiz_rounded,
-                    tooltip: 'Swap for a similar stretch',
+                    tooltip: _canSwapSide
+                        ? 'Switch side'
+                        : 'Disabled',
                     label: 'Swap',
-                    onTap: _swap,
+                    onTap: _canSwapSide ? _swap : null,
                   ),
                   AppPlayerButton(
                     icon: paused

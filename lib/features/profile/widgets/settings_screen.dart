@@ -169,38 +169,38 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: [
                   Text('Timing', style: AppTextStyle.titleMedium),
                   14.verticalSpace,
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Extra hold time', style: AppTextStyle.titleSmall),
-                            Text(
-                              'Added to every stretch',
-                              style: AppTextStyle.meta.copyWith(
-                                color: colors.ink2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      AppStepper(
-                        valueLabel:
-                            '${settings.extraHoldSeconds >= 0 ? '+' : ''}'
-                            '${settings.extraHoldSeconds}s',
-                        onDecrement: settings.extraHoldSeconds <=
-                                minExtraHoldSeconds
-                            ? null
-                            : () => notifier.stepExtraHold(-holdStepSeconds),
-                        onIncrement: settings.extraHoldSeconds >=
-                                maxExtraHoldSeconds
-                            ? null
-                            : () => notifier.stepExtraHold(holdStepSeconds),
-                      ),
-                    ],
-                  ),
-                  16.verticalSpace,
+                  // Row(
+                  //   children: [
+                  //     Expanded(
+                  //       child: Column(
+                  //         crossAxisAlignment: CrossAxisAlignment.start,
+                  //         children: [
+                  //           Text('Extra hold time', style: AppTextStyle.titleSmall),
+                  //           Text(
+                  //             'Added to every stretch',
+                  //             style: AppTextStyle.meta.copyWith(
+                  //               color: colors.ink2,
+                  //             ),
+                  //           ),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //     AppStepper(
+                  //       valueLabel:
+                  //           '${settings.extraHoldSeconds >= 0 ? '+' : ''}'
+                  //           '${settings.extraHoldSeconds}s',
+                  //       onDecrement: settings.extraHoldSeconds <=
+                  //               minExtraHoldSeconds
+                  //           ? null
+                  //           : () => notifier.stepExtraHold(-holdStepSeconds),
+                  //       onIncrement: settings.extraHoldSeconds >=
+                  //               maxExtraHoldSeconds
+                  //           ? null
+                  //           : () => notifier.stepExtraHold(holdStepSeconds),
+                  //     ),
+                  //   ],
+                  // ),
+                  // 16.verticalSpace,
                   Text(
                     'Extra time to change position',
                     style: AppTextStyle.label.copyWith(color: colors.ink2),

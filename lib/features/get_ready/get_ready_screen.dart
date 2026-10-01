@@ -165,6 +165,7 @@ class GetReadyScreenState extends State<GetReadyScreen> {
                         AppSettingRow(
                           title: 'Calm background music',
                           subtitle: 'Gets quieter whenever the voice speaks',
+                          showDivider: false,
                           trailing: AppSwitch(
                             value: musicOn,
                             onChanged: (value) =>
@@ -172,20 +173,20 @@ class GetReadyScreenState extends State<GetReadyScreen> {
                             semanticLabel: 'Background music',
                           ),
                         ),
-                        AppSettingRow(
-                          title: 'Hold time',
-                          subtitle: 'For this session',
-                          showDivider: false,
-                          trailing: AppStepper(
-                            valueLabel: '${holdSeconds}s',
-                            onDecrement: holdSeconds <= _minHoldSeconds
-                                ? null
-                                : () => _adjustHold(-_holdStepSeconds),
-                            onIncrement: holdSeconds >= _maxHoldSeconds
-                                ? null
-                                : () => _adjustHold(_holdStepSeconds),
-                          ),
-                        ),
+                        // AppSettingRow(
+                        //   title: 'Hold time',
+                        //   subtitle: 'For this session',
+                        //   showDivider: false,
+                        //   trailing: AppStepper(
+                        //     valueLabel: '${holdSeconds}s',
+                        //     onDecrement: holdSeconds <= _minHoldSeconds
+                        //         ? null
+                        //         : () => _adjustHold(-_holdStepSeconds),
+                        //     onIncrement: holdSeconds >= _maxHoldSeconds
+                        //         ? null
+                        //         : () => _adjustHold(_holdStepSeconds),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
