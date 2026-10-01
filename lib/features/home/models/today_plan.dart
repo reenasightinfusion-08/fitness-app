@@ -70,6 +70,13 @@ class StretchPreview {
   /// is done on each side. Mirrors the backend's `totalHoldSeconds`.
   int get totalHoldSeconds => holdSeconds * repCount * (isEachSide ? 2 : 1);
 
+  /// How the hold reads in a list, e.g. "30s", "30s each side", "40s × 2 each side".
+  /// The hold is per side, so this is where "each side" gets said out loud.
+  String get holdLabel {
+    final reps = repCount > 1 ? ' × $repCount' : '';
+    return '${holdSeconds}s$reps${isEachSide ? ' each side' : ''}';
+  }
+
   /// Used by the routine builder to adjust just the hold time or rep count
   /// of a picked stretch without rebuilding the rest of it by hand.
   StretchPreview copyWith({
@@ -94,6 +101,7 @@ class StretchPreview {
 @immutable
 class RoutineSummary {
   const RoutineSummary({
+    this.id,
     required this.name,
     required this.stretches,
     int? minutes,
@@ -152,6 +160,7 @@ class RoutineSummary {
     final totalSeconds = json['totalSeconds'] as int? ?? 0;
 
     return RoutineSummary(
+      id: json['_id'] as String?,
       name: json['name'] as String? ?? 'Untitled Routine',
       totalSeconds: totalSeconds,
       stretches: stretches,
@@ -163,6 +172,9 @@ class RoutineSummary {
     );
   }
 
+  /// The server's routine id, used to begin it and save progress. Null for
+  /// demo and unsaved routines, which can be played but not resumed.
+  final String? id;
   final String name;
   final int totalSeconds;
   final List<StretchPreview> stretches;

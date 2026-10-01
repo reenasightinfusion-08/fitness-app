@@ -6,11 +6,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
+import 'package:fitness_app/features/explore/models/explore_data.dart';
+import 'package:fitness_app/features/home/models/active_routine_model.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/session_complete/session_complete_screen.dart';
 import 'package:fitness_app/features/stretch_detail/models/stretch_guide.dart';
 import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
-import 'package:fitness_app/features/session_player/widgets/stretch_media_player.dart';
 import 'package:fitness_app/services/audio_service.dart';
 
 enum _StepKind { getReady, hold, switchSides }
@@ -104,6 +105,8 @@ class SessionPlayerScreen extends StatefulWidget {
     this.holdSecondsOverride,
     this.guideMode = GuideMode.voice,
     this.musicOn = true,
+    this.startStretchIndex = 0,
+    this.onProgress,
   });
 
   final RoutineSummary plan;
@@ -119,17 +122,25 @@ class SessionPlayerScreen extends StatefulWidget {
   /// Whether to start the calm background drone for this session.
   final bool musicOn;
 
+  /// Which stretch to begin at: 0 for a fresh session, or the number of
+  /// stretches already done when resuming a paused one.
+  final int startStretchIndex;
+
+  /// Told how many stretches are done each time the user reaches a new one, and
+  /// the full count at the end, so the server can resume or complete the routine.
+  final StretchProgressCallback? onProgress;
+
   @override
-  State<SessionPlayerScreen> createState() => _SessionPlayerScreenState();
+  State<SessionPlayerScreen> createState() => SessionPlayerScreenState();
 }
 
-class _SessionPlayerScreenState extends State<SessionPlayerScreen> {
+class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   late final List<_SessionStep> steps = _buildSteps(
     widget.plan,
     widget.holdSecondsOverride,
   );
-  late int remaining = steps.first.durationSeconds;
-  int stepIndex = 0;
+  late int stepIndex = startStepIndex();
+  late int remaining = steps[stepIndex].durationSeconds;
   bool paused = false;
   Timer? _ticker;
   bool _tenFired = false;
@@ -138,6 +149,20 @@ class _SessionPlayerScreenState extends State<SessionPlayerScreen> {
   /// replace one stretch for this session without mutating [widget.plan]
   /// itself — mirrors the prototype's `S.items[st.i]={...}`.
   late final List<StretchPreview> _stretches = List.of(widget.plan.stretches);
+
+  /// The first beat of the stretch to resume at, or the very start when that
+  /// stretch doesn't exist (e.g. the routine changed since it was saved).
+  int startStepIndex() {
+    final index = steps.indexWhere(
+      (step) => step.stretchIndex == widget.startStretchIndex,
+    );
+    return index < 0 ? 0 : index;
+  }
+
+  /// Reports that every stretch before the current one is done. Called on
+  /// entering a stretch (not on every beat), so a save happens once per stretch.
+  void reportProgress() =>
+      widget.onProgress?.call(currentStep.stretchIndex);
 
   _SessionStep get currentStep => steps[stepIndex];
   StretchPreview get currentStretch => _stretches[currentStep.stretchIndex];
@@ -151,6 +176,7 @@ class _SessionPlayerScreenState extends State<SessionPlayerScreen> {
   @override
   void initState() {
     super.initState();
+    reportProgress();
     _startTicker();
     unawaited(_prepareAudio());
   }
@@ -246,22 +272,26 @@ class _SessionPlayerScreenState extends State<SessionPlayerScreen> {
       _finish();
       return;
     }
+    final previousStretch = currentStep.stretchIndex;
     stepIndex += 1;
     remaining = steps[stepIndex].durationSeconds;
+    if (currentStep.stretchIndex != previousStretch) reportProgress();
     _announceStep();
   }
 
   void _goBack() {
     setState(() {
+      final previousStretch = currentStep.stretchIndex;
       stepIndex = stepIndex > 0 ? stepIndex - 1 : 0;
       remaining = steps[stepIndex].durationSeconds;
+      if (currentStep.stretchIndex != previousStretch) reportProgress();
       _announceStep();
     });
   }
 
   void _finish() {
     _ticker?.cancel();
-    AudioService.instance.stopSpeaking();
+    widget.onProgress?.call(_stretches.length);
     AudioService.instance.stopMusic();
     AudioService.instance.gong();
     Navigator.of(context).pushReplacement(
@@ -272,46 +302,68 @@ class _SessionPlayerScreenState extends State<SessionPlayerScreen> {
   }
 
   void _exit() {
-    AudioService.instance.stopSpeaking();
     AudioService.instance.stopMusic();
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  void _togglePause() {
-    setState(() {
-      paused = !paused;
-      if (paused) {
-        AudioService.instance.pauseVoice();
-        AudioService.instance.pauseMusic();
-      } else {
-        AudioService.instance.resumeVoice();
-        AudioService.instance.resumeMusic();
-      }
-    });
-  }
+  void _togglePause() => setState(() => paused = !paused);
 
   void _addFifteen() => setState(() => remaining += 15);
 
-  bool get _canSwapSide =>
-      currentStretch.isEachSide && currentStep.kind == _StepKind.hold;
-
-  /// Toggles between First and Second side for each-side stretches during hold phase.
+  /// Replaces the current stretch with the best-matching alternative that
+  /// isn't already in this session — mirrors the prototype's `plSwap()` /
+  /// `bestAlt()`: most shared body areas wins, ties broken by matching
+  /// position (standing/seated/floor).
   void _swap() {
-    if (!_canSwapSide) return;
+    final current = currentStretch;
+    final currentAreas = ExploreDemoData.stretches
+        .firstWhere(
+          (s) => s.pose == current.pose,
+          orElse: () => ExploreStretch(
+            name: current.name,
+            pose: current.pose,
+            areas: const [],
+          ),
+        )
+        .areas;
+    final usedPoses = _stretches.map((s) => s.pose).toSet();
 
-    final targetSide = currentStep.side == 'First' ? 'Second' : 'First';
-    final targetIndex = steps.indexWhere(
-      (s) => s.stretchIndex == currentStep.stretchIndex && s.side == targetSide,
-    );
-
-    if (targetIndex != -1) {
-      setState(() {
-        stepIndex = targetIndex;
-        remaining = steps[stepIndex].durationSeconds;
-        _announceStep();
-      });
-      AppSnackBar.show(context, 'Switched to $targetSide side');
+    ExploreStretch? best;
+    var bestScore = 0;
+    for (final candidate in ExploreDemoData.stretches) {
+      if (usedPoses.contains(candidate.pose)) continue;
+      final overlap = candidate.areas.where(currentAreas.contains).length;
+      if (overlap == 0) continue;
+      final samePosition =
+          StretchLibrary.guideFor(candidate.pose)?.position == current.position;
+      final score = overlap * 3 + (samePosition ? 1 : 0);
+      if (score > bestScore) {
+        bestScore = score;
+        best = candidate;
+      }
     }
+
+    if (best == null) {
+      AppSnackBar.show(
+        context,
+        'No similar stretch available for this one. Try skip instead.',
+      );
+      return;
+    }
+
+    final guide = StretchLibrary.guideFor(best.pose);
+    setState(() {
+      _stretches[currentStep.stretchIndex] = StretchPreview(
+        name: best!.name,
+        pose: best.pose,
+        holdSeconds: current.holdSeconds,
+        position: guide?.position ?? current.position,
+        isEachSide: guide?.isEachSide ?? current.isEachSide,
+        feelCue: guide?.feel,
+      );
+      remaining = currentStep.durationSeconds;
+    });
+    AppSnackBar.show(context, 'Swapped to ${best.name}.');
   }
 
   /// Pauses the timer (like tapping pause) while the stretch-info sheet is
@@ -319,11 +371,7 @@ class _SessionPlayerScreenState extends State<SessionPlayerScreen> {
   /// prototype's `stretchInfo()`.
   void _showStretchInfo() {
     final wasPaused = paused;
-    if (!wasPaused) {
-      AudioService.instance.pauseVoice();
-      AudioService.instance.pauseMusic();
-      setState(() => paused = true);
-    }
+    if (!wasPaused) setState(() => paused = true);
     StretchDetailSheet.open(
       context,
       name: currentStretch.name,
@@ -332,18 +380,13 @@ class _SessionPlayerScreenState extends State<SessionPlayerScreen> {
       note: 'Timer paused while you read.',
     ).then((_) {
       if (!mounted || wasPaused) return;
-      AudioService.instance.resumeVoice();
-      AudioService.instance.resumeMusic();
-      setState(() {
-        paused = false;
-      });
+      setState(() => paused = false);
     });
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
-    AudioService.instance.stopSpeaking();
     AudioService.instance.stopMusic();
     super.dispose();
   }
@@ -357,6 +400,10 @@ class _SessionPlayerScreenState extends State<SessionPlayerScreen> {
     final nextStretch = step.stretchIndex + 1 < _stretches.length
         ? _stretches[step.stretchIndex + 1]
         : null;
+
+    final stretchThumbUrl = stretch.model?.thumbnailUrl;
+    final hasStretchThumb =
+        stretchThumbUrl != null && stretchThumbUrl.trim().isNotEmpty;
 
     final nextThumbUrl = nextStretch?.model?.thumbnailUrl;
     final hasNextThumb =
@@ -426,12 +473,26 @@ class _SessionPlayerScreenState extends State<SessionPlayerScreen> {
                       width: 220.w,
                       child: ClipRRect(
                         borderRadius: AppBorderRadius.hero,
-                        child: StretchMediaPlayer(
-                          key: ValueKey('${step.stretchIndex}_${stretch.name}'),
-                          videoUrl: stretch.model?.videoUrl,
-                          thumbnailUrl: stretch.model?.thumbnailUrl,
-                          pose: stretch.pose,
-                        ),
+                        child: hasStretchThumb
+                            ? Image.network(
+                                stretchThumbUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    AnimatedStretchFigure(
+                                  pose: stretch.pose,
+                                  nearColor: colors.playerInk,
+                                  farColor: colors.playerDim,
+                                  groundColor:
+                                      colors.playerInk.withValues(alpha: 0.14),
+                                ),
+                              )
+                            : AnimatedStretchFigure(
+                                pose: stretch.pose,
+                                nearColor: colors.playerInk,
+                                farColor: colors.playerDim,
+                                groundColor:
+                                    colors.playerInk.withValues(alpha: 0.14),
+                              ),
                       ),
                     ),
                     Text(
@@ -529,11 +590,9 @@ class _SessionPlayerScreenState extends State<SessionPlayerScreen> {
                   ),
                   AppPlayerButton(
                     icon: Icons.swap_horiz_rounded,
-                    tooltip: _canSwapSide
-                        ? 'Switch side'
-                        : 'Disabled',
+                    tooltip: 'Swap for a similar stretch',
                     label: 'Swap',
-                    onTap: _canSwapSide ? _swap : null,
+                    onTap: _swap,
                   ),
                   AppPlayerButton(
                     icon: paused

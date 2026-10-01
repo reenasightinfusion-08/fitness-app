@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/greeting.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
+import 'package:fitness_app/features/home/models/active_routine_model.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/progress/models/progress_data.dart';
+import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
 
 /// Matches the prototype's `screens.progress`: streak/minutes/session
 /// stats, a month calendar, where-you've-stretched body map, flexibility
@@ -19,7 +22,7 @@ class ProgressView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final now = DateTime.now();
-    final sessions = ProgressDemoData.sessions(now);
+    final historyAsync = ref.watch(routineHistoryProvider);
 
     // The areas marked tight or sore during setup — same source the
     // prototype's body map reads from (`acct().profile.pain`).
@@ -134,30 +137,60 @@ class ProgressView extends ConsumerWidget {
         24.verticalSpace,
         Text('History', style: AppTextStyle.sectionTitle),
         10.verticalSpace,
-        if (sessions.isEmpty)
-          const AppEmptyState(
-            icon: Icons.history_rounded,
-            title: 'No sessions yet',
-            message: 'Your finished sessions show up here.',
-          )
-        else
-          AppCard(
-            variant: AppCardVariant.list,
-            child: Column(
-              children: [
-                for (final session in sessions)
-                  AppSettingRow(
-                    title: session.title,
-                    subtitle:
-                        '${friendlyDate(session.date)} · '
-                        '${session.stretchCount} stretches',
-                    trailing: AppTag(label: '${session.minutes} min'),
-                    showDivider: session != sessions.last,
-                  ),
-              ],
-            ),
+        historyAsync.when(
+          data: (history) => _HistoryList(history: history),
+          loading: () => Padding(
+            padding: EdgeInsets.symmetric(vertical: 32.h),
+            child: const Center(child: AppLoader()),
           ),
+          error: (error, stack) => const AppEmptyState(
+            icon: Icons.cloud_off_rounded,
+            title: "Couldn't load history",
+            message: 'Check your connection and try again.',
+          ),
+        ),
       ],
+    );
+  }
+}
+
+/// Scrollable list of completed routines, newest first. Falls back to an empty
+/// state when the user hasn't finished a routine yet (new accounts, demo mode).
+class _HistoryList extends StatelessWidget {
+  const _HistoryList({required this.history});
+
+  final List<ActiveRoutineModel> history;
+
+  @override
+  Widget build(BuildContext context) {
+    if (history.isEmpty) {
+      return const AppEmptyState(
+        icon: Icons.history_rounded,
+        title: 'No sessions yet',
+        message: 'Your finished sessions show up here.',
+      );
+    }
+    return AppCard(
+      variant: AppCardVariant.list,
+      child: Column(
+        children: [
+          for (final record in history)
+            AppSettingRow(
+              title: record.routine.name,
+              subtitle:
+                  '${record.completedAt == null ? '' : friendlyDate(record.completedAt!) + ' · '}'
+                  '${record.routine.stretches.length} stretches',
+              trailing: AppTag(label: '${record.routine.minutes} min'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      RoutineDetailScreen(routine: record.routine),
+                ),
+              ),
+              showDivider: record != history.last,
+            ),
+        ],
+      ),
     );
   }
 }

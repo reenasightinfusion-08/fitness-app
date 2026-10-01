@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
@@ -12,20 +14,33 @@ import 'package:fitness_app/services/audio_service.dart' show GuideMode;
 /// right before a session starts — guidance style, background music, and
 /// how long to hold each stretch this time. "Begin" hands off to the
 /// session player.
-class GetReadyScreen extends StatefulWidget {
-  const GetReadyScreen({super.key, required this.plan});
+class GetReadyScreen extends ConsumerStatefulWidget {
+  const GetReadyScreen({
+    super.key,
+    required this.plan,
+    this.source = 'user',
+    this.routineType = 'system',
+  });
 
   final RoutineSummary plan;
 
+  /// 'plan' when started from today's plan, so finishing it counts as the
+  /// day's plan being done; 'user' for a routine the person picked themselves.
+  final String source;
+
+  /// 'system' for the app's routines, 'custom' for ones the user built.
+  final String routineType;
+
   @override
-  State<GetReadyScreen> createState() => GetReadyScreenState();
+  ConsumerState<GetReadyScreen> createState() => GetReadyScreenState();
 }
 
-class GetReadyScreenState extends State<GetReadyScreen> {
+class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
   static const int _minHoldSeconds = 15;
   static const int _maxHoldSeconds = 120;
   static const int _holdStepSeconds = 5;
 
+  bool isStarting = false;
   GuideMode guideMode = GuideMode.voice;
   bool musicOn = true;
   late int holdSeconds = widget.plan.stretches.first.holdSeconds;
@@ -45,16 +60,33 @@ class GetReadyScreenState extends State<GetReadyScreen> {
     ),
   );
 
-  void _begin() => Navigator.of(context).pushReplacement(
-    MaterialPageRoute(
-      builder: (_) => SessionPlayerScreen(
-        plan: widget.plan,
-        holdSecondsOverride: holdSeconds,
-        guideMode: guideMode,
-        musicOn: musicOn,
+  /// Records the routine as begun on the server first, so the player can save
+  /// progress from its very first stretch. If that can't be done the session
+  /// still plays, it just can't be resumed later.
+  Future<void> begin() async {
+    if (isStarting) return;
+    setState(() => isStarting = true);
+    final container = ProviderScope.containerOf(context);
+    final navigator = Navigator.of(context);
+    final onProgress = await beginTrackedRoutine(
+      container,
+      widget.plan,
+      routineType: widget.routineType,
+      source: widget.source,
+    );
+    if (!mounted) return;
+    navigator.pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => SessionPlayerScreen(
+          plan: widget.plan,
+          holdSecondsOverride: holdSeconds,
+          guideMode: guideMode,
+          musicOn: musicOn,
+          onProgress: onProgress,
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -204,7 +236,8 @@ class GetReadyScreenState extends State<GetReadyScreen> {
                 AppButton(
                   label: 'Begin',
                   icon: Icons.play_arrow_rounded,
-                  onPressed: _begin,
+                  isLoading: isStarting,
+                  onPressed: begin,
                 ),
               ],
             ),

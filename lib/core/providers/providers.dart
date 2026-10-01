@@ -1,7 +1,11 @@
+export 'package:fitness_app/core/providers/active_routine_provider.dart';
 export 'package:fitness_app/core/providers/app_flow_provider.dart';
 export 'package:fitness_app/core/providers/auth_service_provider.dart';
 export 'package:fitness_app/core/providers/custom_routines_provider.dart';
 export 'package:fitness_app/core/providers/favorites_provider.dart';
 export 'package:fitness_app/core/providers/pending_auth_provider.dart';
 export 'package:fitness_app/core/providers/routines_provider.dart';
+export 'package:fitness_app/core/providers/stretches_provider.dart';
 export 'package:fitness_app/core/providers/theme_mode_provider.dart';
+export 'package:fitness_app/core/providers/todays_plan_provider.dart';
+export 'package:fitness_app/core/providers/plan_overview_provider.dart';

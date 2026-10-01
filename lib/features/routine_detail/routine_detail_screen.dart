@@ -17,9 +17,17 @@ import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
 /// toggle writes to [favoritesProvider], keyed by [RoutineSummary.name],
 /// so a routine favourited here shows up in the Mine tab's Favourites list.
 class RoutineDetailScreen extends ConsumerWidget {
-  const RoutineDetailScreen({super.key, required this.routine});
+  const RoutineDetailScreen({
+    super.key,
+    required this.routine,
+    this.routineType = 'system',
+  });
 
   final RoutineSummary routine;
+
+  /// 'custom' for a routine the user built, so starting it is tracked against
+  /// their own routines rather than the app's.
+  final String routineType;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -202,7 +210,10 @@ class RoutineDetailScreen extends ConsumerWidget {
                   icon: Icons.play_arrow_rounded,
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => GetReadyScreen(plan: routine),
+                      builder: (_) => GetReadyScreen(
+                        plan: routine,
+                        routineType: routineType,
+                      ),
                     ),
                   ),
                 ),

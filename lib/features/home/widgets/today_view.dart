@@ -7,8 +7,11 @@ import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/greeting.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/get_ready/get_ready_screen.dart';
+import 'package:fitness_app/features/home/models/active_routine_model.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
+import 'package:fitness_app/features/home/widgets/stretch_thumbnail.dart';
 import 'package:fitness_app/features/home/widgets/today_plan_card.dart';
+import 'package:fitness_app/features/home/widgets/todays_plan_error_card.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
 
@@ -22,6 +25,10 @@ class TodayView extends ConsumerWidget {
     final colors = context.colors;
     final profile = ref.watch(onboardingProfileProvider);
     final routinesAsync = ref.watch(routinesProvider);
+    final planAsync = ref.watch(todaysPlanProvider);
+    final planActive = ref.watch(todaysPlanActiveProvider).valueOrNull;
+    final pausedUser = ref.watch(pausedUserRoutinesProvider).valueOrNull ?? const [];
+    final paused = pausedUser.isNotEmpty ? pausedUser.first : null;
     final firstName = profile.name.isEmpty ? 'Runner' : profile.name;
     final now = DateTime.now();
 
@@ -52,34 +59,56 @@ class TodayView extends ConsumerWidget {
           ],
         ),
         18.verticalSpace,
-        AppResumeBanner(
-          title: 'Morning reset',
-          subtitle: 'Stretch 2 of 5: ${TodayDemoData.pausedSession.name}',
-          thumbnail: AppThumb(
-            isOnDark: true,
-            child: StretchFigure(pose: TodayDemoData.pausedSession.pose),
-          ),
-          onResume: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) =>
-                  const SessionPlayerScreen(plan: TodayDemoData.todaysPlan),
+        if (paused != null) ...[
+          ResumeRoutineBanner(active: paused),
+          18.verticalSpace,
+        ],
+        planAsync.when(
+          data: (todaysPlan) => TodayPlanCard(
+            plan: todaysPlan.routine,
+            isCompleted: todaysPlan.completedToday,
+            resumeFromStretch: planActive != null && planActive.completedStretch > 0
+                ? planActive.completedStretch
+                : null,
+            onStart: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    GetReadyScreen(plan: todaysPlan.routine, source: 'plan'),
+              ),
+            ),
+            onResume: planActive == null
+                ? null
+                : () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SessionPlayerScreen(
+                        plan: planActive.routine,
+                        startStretchIndex: planActive.completedStretch,
+                        onProgress: trackProgress(
+                          ProviderScope.containerOf(context),
+                          planActive,
+                        ),
+                      ),
+                    ),
+                  ),
+            onRestart: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    GetReadyScreen(plan: todaysPlan.routine, source: 'plan'),
+              ),
+            ),
+            onSeeStretches: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => RoutineDetailScreen(routine: todaysPlan.routine),
+              ),
             ),
           ),
-        ),
-        18.verticalSpace,
-        TodayPlanCard(
-          plan: TodayDemoData.todaysPlan,
-          onStart: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => GetReadyScreen(plan: TodayDemoData.todaysPlan),
+          loading: () => AppCard(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 32.h),
+              child: const Center(child: AppLoader()),
             ),
           ),
-          onSeeStretches: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) =>
-                  RoutineDetailScreen(routine: TodayDemoData.todaysPlan),
-            ),
-          ),
+          error: (error, stack) => TodaysPlanErrorCard(error: error),
         ),
         24.verticalSpace,
         Text('Quick picks', style: AppTextStyle.sectionTitle),
@@ -148,6 +177,41 @@ class TodayView extends ConsumerWidget {
         10.verticalSpace,
         AppCard(child: AppWeekStrip(days: TodayDemoData.weekStrip(now))),
       ],
+    );
+  }
+}
+
+/// The "Paused session" card for a routine the user began and didn't finish.
+/// Resuming jumps straight into the player at the stretch they stopped at.
+class ResumeRoutineBanner extends StatelessWidget {
+  const ResumeRoutineBanner({super.key, required this.active});
+
+  final ActiveRoutineModel active;
+
+  @override
+  Widget build(BuildContext context) {
+    final next = active.nextStretch;
+    final total = active.routine.stretches.length;
+    return AppResumeBanner(
+      title: active.routine.name,
+      subtitle: next == null
+          ? '$total stretches'
+          : 'Stretch ${active.completedStretch + 1} of $total: ${next.name}',
+      thumbnail: next == null
+          ? null
+          : StretchThumbnail(stretch: next, isOnDark: true),
+      onResume: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SessionPlayerScreen(
+            plan: active.routine,
+            startStretchIndex: active.completedStretch,
+            onProgress: trackProgress(
+              ProviderScope.containerOf(context),
+              active,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

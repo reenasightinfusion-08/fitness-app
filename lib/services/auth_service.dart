@@ -63,7 +63,9 @@ class AuthService {
     }
 
     _resolvedHost = _liveProductionHost;
-    debugPrint('[AuthService] Defaulting to live production at $_liveProductionHost');
+    debugPrint(
+      '[AuthService] Defaulting to live production at $_liveProductionHost',
+    );
     return _liveProductionHost;
   }
 
@@ -113,6 +115,104 @@ class AuthService {
   Future<Map<String, dynamic>> updateMe(Map<String, dynamic> updates) =>
       _authedPatch('/users/me', updates);
 
+  /// Today's routine for the signed-in user, picked by the server from the
+  /// profile saved during onboarding.
+  ///
+  /// Sends the phone's local date and UTC offset so "today" (and "done
+  /// today") follow the user's clock rather than the server's. Throws
+  /// [AuthException] with the server's reason, e.g. when no routine is safe
+  /// for the profile, or when the server can't be reached.
+  Future<Map<String, dynamic>> getTodaysPlan() async {
+    final now = DateTime.now();
+    final date = now.toIso8601String().substring(0, 10);
+    try {
+      return await _authedGet(
+        '/plans/today?date=$date&tzOffset=${now.timeZoneOffset.inMinutes}',
+      );
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      debugPrint('[AuthService] today\'s plan request failed: $e');
+      _resolvedHost = null;
+      throw AuthException("Couldn't reach the server. Check your connection.");
+    }
+  }
+
+  /// Runs a signed-in request and turns a network failure into the same
+  /// friendly [AuthException] as the other calls, so screens handle one error type.
+  Future<T> _reachable<T>(Future<T> Function() request) async {
+    try {
+      return await request();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      debugPrint('[AuthService] request failed: $e');
+      _resolvedHost = null;
+      throw AuthException("Couldn't reach the server. Check your connection.");
+    }
+  }
+
+  /// The plan behind today's routine: how many days it has and the routine for
+  /// each. Same `date` / `tzOffset` as [getTodaysPlan].
+  Future<Map<String, dynamic>> getPlanOverview() {
+    final now = DateTime.now();
+    final date = now.toIso8601String().substring(0, 10);
+    return _reachable(
+      () => _authedGet(
+        '/plans/overview?date=$date&tzOffset=${now.timeZoneOffset.inMinutes}',
+      ),
+    );
+  }
+
+  /// Begins a routine so it can be resumed later. [source] is 'plan' when the
+  /// user started it from today's plan, which is what marks the plan as done.
+  Future<void> beginRoutine({
+    required String routineId,
+    required String routineType,
+    required String source,
+  }) => _reachable(() async {
+    await _authedPost('/active-routines', {
+      'routineId': routineId,
+      'routineType': routineType,
+      'source': source,
+    });
+  });
+
+  /// Routines the user began and hasn't finished, each with its stretches and
+  /// how far they got.
+  Future<List<dynamic>> getCurrentRoutines() =>
+      _reachable(() => _authedGetList('/active-routines/current'));
+
+  /// Completed routines for the signed-in user, newest first. Each entry has
+  /// no `stretches` field — the server strips it so history stays small.
+  Future<List<dynamic>> getRoutineHistory() =>
+      _reachable(() => _authedGetList('/active-routines/history'));
+
+  /// Saves how many stretches are done; reaching the total completes the routine.
+  Future<void> saveRoutineProgress(String id, int completedStretch) =>
+      _reachable(() async {
+        await _authedPatch('/active-routines/$id/progress', {
+          'completedStretch': completedStretch,
+        });
+      });
+
+  /// The signed-in user's own routines, newest first, each with its stretches
+  /// populated.
+  Future<List<dynamic>> getCustomRoutines() =>
+      _reachable(() => _authedGetList('/custom-routines'));
+
+  /// Saves a routine built in the routine builder. The server replies with no
+  /// data, so fetch the list again to get the stored record.
+  Future<void> createCustomRoutine(Map<String, dynamic> routine) =>
+      _reachable(() async {
+        await _authedPost('/custom-routines', routine);
+      });
+
+  /// Permanently deletes one of the user's routines.
+  Future<void> deleteCustomRoutine(String id) => _reachable(() async {
+    await _authedDelete('/custom-routines/$id');
+  });
+
   Future<Map<String, dynamic>> _post(
     String path,
     Map<String, dynamic> body,
@@ -157,6 +257,35 @@ class AuthService {
     return _decode(response);
   }
 
+  Future<List<dynamic>> _authedGetList(String path) async {
+    final host = await _getHost();
+    final auth = await _authHeader();
+    if (auth == null) throw AuthException('Not signed in');
+
+    final response = await http
+        .get(Uri.parse('$host/api$path'), headers: {'Authorization': auth})
+        .timeout(const Duration(seconds: 10));
+    return (_data(response) as List?) ?? <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> _authedPost(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final host = await _getHost();
+    final auth = await _authHeader();
+    if (auth == null) throw AuthException('Not signed in');
+
+    final response = await http
+        .post(
+          Uri.parse('$host/api$path'),
+          headers: {'Content-Type': 'application/json', 'Authorization': auth},
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 10));
+    return _decode(response);
+  }
+
   Future<Map<String, dynamic>> _authedPatch(
     String path,
     Map<String, dynamic> body,
@@ -175,10 +304,25 @@ class AuthService {
     return _decode(response);
   }
 
+  Future<Map<String, dynamic>> _authedDelete(String path) async {
+    final host = await _getHost();
+    final auth = await _authHeader();
+    if (auth == null) throw AuthException('Not signed in');
+
+    final response = await http
+        .delete(Uri.parse('$host/api$path'), headers: {'Authorization': auth})
+        .timeout(const Duration(seconds: 10));
+    return _decode(response);
+  }
+
   /// Every endpoint replies `{ success, message, data }`. Returns `data`
   /// as a map (empty when null) and throws [AuthException] with `message`
   /// on failure.
-  Map<String, dynamic> _decode(http.Response response) {
+  Map<String, dynamic> _decode(http.Response response) =>
+      (_data(response) as Map<String, dynamic>?) ?? <String, dynamic>{};
+
+  /// The raw `data` of a reply (a map, a list or null), after the same error check.
+  Object? _data(http.Response response) {
     final body = response.body.isEmpty
         ? <String, dynamic>{}
         : jsonDecode(response.body) as Map<String, dynamic>;
@@ -187,6 +331,6 @@ class AuthService {
       debugPrint('[AuthService] Server returned error: $message');
       throw AuthException(message);
     }
-    return (body['data'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+    return body['data'];
   }
 }

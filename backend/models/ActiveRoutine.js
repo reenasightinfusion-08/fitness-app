@@ -12,6 +12,9 @@ const activeRoutineSchema = new mongoose.Schema(
     routineType: { type: String, enum: ['system', 'custom'], required: true },
     routineId: { type: mongoose.Schema.Types.ObjectId, required: true },
 
+    // 'plan' = started from today's plan card, 'user' = picked by the user.
+    source: { type: String, enum: ['plan', 'user'], default: 'user' },
+
     // Copied when the routine begins, so editing or deleting the source
     // routine can't break an attempt that is already in progress.
     routineName: { type: String, required: true },

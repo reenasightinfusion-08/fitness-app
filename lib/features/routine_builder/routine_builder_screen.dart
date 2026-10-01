@@ -10,11 +10,15 @@ import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/explore/models/explore_data.dart';
 import 'package:fitness_app/features/get_ready/get_ready_screen.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
+import 'package:fitness_app/features/home/widgets/stretch_thumbnail.dart';
+import 'package:fitness_app/features/stretch_detail/models/stretch_model.dart';
+import 'package:fitness_app/services/auth_service.dart';
+import 'package:fitness_app/services/stretch_service.dart' show StretchServiceException;
 
 /// Matches the prototype's `screens.builder`: name a routine, add stretches
 /// from the library, drag to reorder and tune each hold time, then save —
-/// it lands in the Mine tab's "Built by you" section, or straight into
-/// Get ready with "Save & start".
+/// it is stored on the server and lands in the Mine tab's "Built by you"
+/// section, or goes straight into Get ready with "Save & start".
 class RoutineBuilderScreen extends ConsumerStatefulWidget {
   const RoutineBuilderScreen({super.key, this.initialRoutine});
 
@@ -47,6 +51,8 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
     widget.initialRoutine?.stretches ?? const [],
   );
   late int? _transitionSeconds = widget.initialRoutine?.transitionSeconds;
+  bool _isSaving = false;
+  bool _startAfterSave = false;
 
   String get _initialName {
     final source = widget.initialRoutine;
@@ -65,7 +71,7 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
 
   Future<void> _openPicker() async {
     final existingNames = _items.map((item) => item.name).toSet();
-    final picked = await AppBottomSheet.show<List<ExploreStretch>>(
+    final picked = await AppBottomSheet.show<List<StretchModel>>(
       context,
       child: _StretchPickerSheet(excludeNames: existingNames),
     );
@@ -73,7 +79,7 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
     setState(() {
       _items.addAll([
         for (final stretch in picked)
-          StretchPreview(name: stretch.name, pose: stretch.pose),
+          stretch.toPreview().copyWith(model: stretch),
       ]);
     });
   }
@@ -117,21 +123,44 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
     );
   }
 
-  void _save() {
-    final routine = _buildRoutine();
-    if (routine == null) return;
-    ref.read(customRoutinesProvider.notifier).add(routine);
-    Navigator.of(context).pop();
-    AppSnackBar.showSuccess(context, 'Routine saved.');
-  }
+  /// Saves the routine on the server. With [startAfter], goes on to Get ready
+  /// using the stored routine (its server id is what lets progress be saved).
+  Future<void> _submit({required bool startAfter}) async {
+    final draft = _buildRoutine();
+    if (draft == null || _isSaving) return;
+    setState(() {
+      _isSaving = true;
+      _startAfterSave = startAfter;
+    });
 
-  void _saveAndStart() {
-    final routine = _buildRoutine();
-    if (routine == null) return;
-    ref.read(customRoutinesProvider.notifier).add(routine);
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => GetReadyScreen(plan: routine)),
-    );
+    final RoutineSummary? saved;
+    try {
+      saved = await ref.read(customRoutinesProvider.notifier).create(draft);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      AppSnackBar.showError(
+        context,
+        error is AuthException
+            ? error.message
+            : "Couldn't save your routine. Try again.",
+      );
+      return;
+    }
+    if (!mounted) return;
+
+    final navigator = Navigator.of(context);
+    if (startAfter && saved != null) {
+      final plan = saved;
+      navigator.pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => GetReadyScreen(plan: plan, routineType: 'custom'),
+        ),
+      );
+      return;
+    }
+    navigator.pop();
+    AppSnackBar.showSuccess(context, 'Routine saved.');
   }
 
   @override
@@ -244,7 +273,10 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
                       child: AppButton(
                         label: 'Save',
                         variant: AppButtonVariant.secondary,
-                        onPressed: _save,
+                        isLoading: _isSaving && !_startAfterSave,
+                        onPressed: _isSaving
+                            ? null
+                            : () => _submit(startAfter: false),
                       ),
                     ),
                     10.horizontalSpace,
@@ -252,7 +284,10 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
                       child: AppButton(
                         label: 'Save & start',
                         icon: Icons.play_arrow_rounded,
-                        onPressed: _items.isEmpty ? null : _saveAndStart,
+                        isLoading: _isSaving && _startAfterSave,
+                        onPressed: _items.isEmpty || _isSaving
+                            ? null
+                            : () => _submit(startAfter: true),
                       ),
                     ),
                   ],
@@ -317,17 +352,28 @@ class _BuilderItemTile extends StatelessWidget {
                 ),
               ),
               6.horizontalSpace,
-              AppThumb(
-                size: AppThumbSize.small,
-                child: StretchFigure(pose: item.pose),
-              ),
+              StretchThumbnail(stretch: item, size: AppThumbSize.small),
               10.horizontalSpace,
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.name, style: AppTextStyle.titleMedium),
+                    Text.rich(
+                      TextSpan(
+                        text: item.name,
+                        children: [
+                          if (item.isEachSide)
+                            TextSpan(
+                              text: '  · each side',
+                              style: AppTextStyle.meta.copyWith(
+                                color: colors.ink2,
+                              ),
+                            ),
+                        ],
+                      ),
+                      style: AppTextStyle.titleMedium,
+                    ),
                     6.verticalSpace,
                     FittedBox(
                       fit: BoxFit.scaleDown,
@@ -355,15 +401,6 @@ class _BuilderItemTile extends StatelessWidget {
                                 ? null
                                 : onRepsIncrement,
                           ),
-                          if (item.isEachSide) ...[
-                            6.horizontalSpace,
-                            Text(
-                              'each side',
-                              style: AppTextStyle.meta.copyWith(
-                                color: colors.ink2,
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -384,8 +421,9 @@ class _BuilderItemTile extends StatelessWidget {
 }
 
 /// Matches the prototype's `pickerList()` sheet: search, an area filter,
-/// and a checkable list of stretches to add.
-class _StretchPickerSheet extends StatefulWidget {
+/// and a checkable list of stretches to add — the real library from
+/// [stretchesProvider], since saved routines reference stretches by id.
+class _StretchPickerSheet extends ConsumerStatefulWidget {
   const _StretchPickerSheet({required this.excludeNames});
 
   /// Names already in the routine being built, hidden so they can't be
@@ -393,10 +431,11 @@ class _StretchPickerSheet extends StatefulWidget {
   final Set<String> excludeNames;
 
   @override
-  State<_StretchPickerSheet> createState() => _StretchPickerSheetState();
+  ConsumerState<_StretchPickerSheet> createState() =>
+      _StretchPickerSheetState();
 }
 
-class _StretchPickerSheetState extends State<_StretchPickerSheet> {
+class _StretchPickerSheetState extends ConsumerState<_StretchPickerSheet> {
   final _searchController = TextEditingController();
   String _query = '';
   String? _area;
@@ -408,9 +447,9 @@ class _StretchPickerSheetState extends State<_StretchPickerSheet> {
     super.dispose();
   }
 
-  List<ExploreStretch> get _filtered {
+  List<StretchModel> _filtered(List<StretchModel> library) {
     final query = _query.trim().toLowerCase();
-    return ExploreDemoData.stretches.where((stretch) {
+    return library.where((stretch) {
       if (widget.excludeNames.contains(stretch.name)) return false;
       if (_area != null && !stretch.areas.contains(_area)) return false;
       if (query.isEmpty) return true;
@@ -420,7 +459,8 @@ class _StretchPickerSheetState extends State<_StretchPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final results = _filtered;
+    final library = ref.watch(stretchesProvider);
+    final results = _filtered(library.valueOrNull ?? const []);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -453,7 +493,22 @@ class _StretchPickerSheetState extends State<_StretchPickerSheet> {
           ],
         ),
         14.verticalSpace,
-        if (results.isEmpty)
+        if (library.isLoading)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 24.h),
+            child: const Center(child: AppLoader()),
+          )
+        else if (library.hasError)
+          AppEmptyState(
+            icon: Icons.cloud_off_rounded,
+            title: "Couldn't load stretches",
+            message: library.error is StretchServiceException
+                ? library.error.toString()
+                : 'Check your connection and try again.',
+            actionLabel: 'Try again',
+            onAction: () => ref.invalidate(stretchesProvider),
+          )
+        else if (results.isEmpty)
           const AppEmptyState(
             icon: Icons.search_off_rounded,
             title: 'No stretches match',
@@ -463,10 +518,10 @@ class _StretchPickerSheetState extends State<_StretchPickerSheet> {
           for (final stretch in results)
             _PickerRow(
               stretch: stretch,
-              isSelected: _selected.contains(stretch.name),
+              isSelected: _selected.contains(stretch.id),
               onTap: () => setState(() {
-                if (!_selected.remove(stretch.name)) {
-                  _selected.add(stretch.name);
+                if (!_selected.remove(stretch.id)) {
+                  _selected.add(stretch.id);
                 }
               }),
             ),
@@ -478,9 +533,10 @@ class _StretchPickerSheetState extends State<_StretchPickerSheet> {
                     'stretch${_selected.length == 1 ? '' : 'es'}',
           onPressed: _selected.isEmpty
               ? null
-              : () => Navigator.of(context).pop([
-                  for (final stretch in ExploreDemoData.stretches)
-                    if (_selected.contains(stretch.name)) stretch,
+              : () => Navigator.of(context).pop(<StretchModel>[
+                  for (final stretch
+                      in library.valueOrNull ?? const <StretchModel>[])
+                    if (_selected.contains(stretch.id)) stretch,
                 ]),
         ),
       ],
@@ -495,7 +551,7 @@ class _PickerRow extends StatelessWidget {
     required this.onTap,
   });
 
-  final ExploreStretch stretch;
+  final StretchModel stretch;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -535,9 +591,9 @@ class _PickerRow extends StatelessWidget {
                       : null,
                 ),
                 10.horizontalSpace,
-                AppThumb(
+                StretchThumbnail(
+                  stretch: stretch.toPreview().copyWith(model: stretch),
                   size: AppThumbSize.small,
-                  child: StretchFigure(pose: stretch.pose),
                 ),
                 10.horizontalSpace,
                 Expanded(

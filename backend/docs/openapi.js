@@ -59,7 +59,7 @@ module.exports = {
     { url: 'https://fitness-backend-eight.vercel.app', description: 'Production' },
     { url: 'http://localhost:4000', description: 'Local' },
   ],
-  tags: [{ name: 'Health' }, { name: 'Auth' }, { name: 'Users' }, { name: 'Stretches' }, { name: 'Routines' }, { name: 'Custom Routines' }, { name: 'Active Routines' }],
+  tags: [{ name: 'Health' }, { name: 'Auth' }, { name: 'Users' }, { name: 'Stretches' }, { name: 'Routines' }, { name: 'Custom Routines' }, { name: 'Active Routines' }, { name: 'Plans' }],
   components: {
     securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } },
     schemas: {
@@ -325,10 +325,11 @@ module.exports = {
           user: { type: 'string', description: 'Owner (User _id).' },
           routineType: { type: 'string', enum: ['system', 'custom'], description: 'system = Routine collection, custom = CustomRoutine collection.' },
           routineId: { type: 'string', description: 'The source routine\'s _id.' },
+          source: { type: 'string', enum: ['plan', 'user'], description: 'plan = started from today\'s plan card, user = picked by the user.' },
           routineName: { type: 'string', description: 'Copied when the routine begins.', example: 'Morning Stretch' },
           stretches: {
             type: 'array',
-            description: 'Snapshot taken at Begin, in play order. `stretch` is the full stretch on Current. Omitted from History.',
+            description: 'Snapshot taken at Begin, in play order. `stretch` is the full stretch on Current and History.',
             items: { $ref: '#/components/schemas/Routine/properties/stretches/items' },
           },
           totalStretch: { type: 'integer', example: 5 },
@@ -660,6 +661,69 @@ module.exports = {
         },
       },
     },
+    '/api/plans/today': {
+      get: {
+        tags: ['Plans'],
+        summary: 'Today\'s routine for the signed-in user',
+        description: 'From the user\'s saved plan, built from their onboarding answers: the routines that match the user\'s body areas or goals become days of the plan, ordered best match first. Safety rules (no floor / no kneeling, moderate or serious injuries, pregnancy, recent surgery) are never bypassed, and if nothing fits equipment, level and time those are relaxed. The plan is saved and rebuilt when the answers or the matching routines change; day 1 is the day it was built.',
+        security: auth,
+        parameters: [
+          { name: 'date', in: 'query', required: false, description: 'The user\'s local date. Defaults to today at tzOffset.', schema: { type: 'string', example: '2026-10-01' } },
+          { name: 'tzOffset', in: 'query', required: false, description: 'Minutes from UTC (IST = 330). Defaults to 0.', schema: { type: 'integer', example: 330 } },
+        ],
+        responses: {
+          200: okResponse('Today\'s routine, in the same shape as GET /api/routines/{id}, plus completedToday', {
+            allOf: [
+              { $ref: '#/components/schemas/Routine' },
+              { type: 'object', properties: { reason: { type: 'string', description: 'Why this routine is on the user\'s plan.' }, planDays: { type: 'integer' }, todayDay: { type: 'integer' }, completedToday: { type: 'boolean', description: 'The user completed a routine started from today\'s plan (source plan) on this date.' } } },
+            ],
+          }, 'Today\'s plan fetched'),
+          400: err('Bad date or tzOffset', 'date must be a real date as YYYY-MM-DD'),
+          401: err('Missing or invalid token', 'No token provided'),
+          404: err('No routine is safe for this profile', 'No routine fits your profile yet'),
+          500: serverErr,
+        },
+      },
+    },
+    '/api/plans/overview': {
+      get: {
+        tags: ['Plans'],
+        summary: 'The user\'s whole plan: how many days, and the routine for each',
+        description: 'The rotation behind GET /api/plans/today. `planDays` routines, one per day, repeating in order; `todayDay` says which day today is. Same rules, date and tzOffset as /today.',
+        security: auth,
+        parameters: [
+          { name: 'date', in: 'query', required: false, description: 'The user\'s local date. Defaults to today at tzOffset.', schema: { type: 'string', example: '2026-10-01' } },
+          { name: 'tzOffset', in: 'query', required: false, description: 'Minutes from UTC (IST = 330). Defaults to 0.', schema: { type: 'integer', example: 330 } },
+        ],
+        responses: {
+          200: okResponse('The plan', {
+            type: 'object',
+            properties: {
+              planDays: { type: 'integer', example: 4 },
+              todayDay: { type: 'integer', description: '1-based day of the plan that today is.', example: 2 },
+              summary: { type: 'string', description: 'One or two sentences on what the plan is for (AI plans only).' },
+              source: { type: 'string', enum: ['rules'], description: 'How the plan was built.' },
+              days: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    day: { type: 'integer', example: 1 },
+                    isToday: { type: 'boolean' },
+                    reason: { type: 'string', description: 'Why this routine is on the plan.' },
+                    routine: { $ref: '#/components/schemas/Routine' },
+                  },
+                },
+              },
+            },
+          }, 'Plan overview fetched'),
+          400: err('Bad date or tzOffset', 'date must be a real date as YYYY-MM-DD'),
+          401: err('Missing or invalid token', 'No token provided'),
+          404: err('No routine is safe for this profile', 'No routine fits your profile yet'),
+          500: serverErr,
+        },
+      },
+    },
     '/api/active-routines': {
       post: {
         tags: ['Active Routines'],
@@ -672,12 +736,13 @@ module.exports = {
           properties: {
             routineId: { type: 'string', example: '6abb8c45bce3ed8ed19eb011' },
             routineType: { type: 'string', enum: ['system', 'custom'] },
+            source: { type: 'string', enum: ['plan', 'user'], default: 'user', description: 'Send plan when started from today\'s plan card (system routines only). Starting an already in-progress routine as plan marks it as the plan\'s.' },
           },
-        }, { routineId: '6abb8c45bce3ed8ed19eb011', routineType: 'system' }),
+        }, { routineId: '6abb8c45bce3ed8ed19eb011', routineType: 'system', source: 'plan' }),
         responses: {
           200: okResponse('This routine was already in progress; nothing is returned in data', nullData, 'Routine already in progress'),
           201: okResponse('Started. The record is saved; read it with GET /current.', nullData, 'Routine started'),
-          400: err('Missing routineId, or routineType is not system / custom', "routineType must be 'system' or 'custom'"),
+          400: err('Missing routineId, routineType is not system / custom, or source is invalid', "routineType must be 'system' or 'custom'"),
           401: err('Missing or invalid token', 'No token provided'),
           404: err('Routine not found (custom routines must belong to the user)', 'Routine not found'),
           500: serverErr,

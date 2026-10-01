@@ -52,7 +52,9 @@ class StretchService {
     }
 
     _resolvedHost = _liveProductionHost;
-    debugPrint('[StretchService] Defaulting to live production at $_liveProductionHost');
+    debugPrint(
+      '[StretchService] Defaulting to live production at $_liveProductionHost',
+    );
     return _liveProductionHost;
   }
 
@@ -76,7 +78,9 @@ class StretchService {
     }
 
     if (response.statusCode >= 400) {
-      throw StretchServiceException('Server returned HTTP ${response.statusCode}');
+      throw StretchServiceException(
+        'Server returned HTTP ${response.statusCode}',
+      );
     }
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;

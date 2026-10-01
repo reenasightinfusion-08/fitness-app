@@ -53,6 +53,7 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
     );
     if (!confirmed) return;
     await ref.read(authServiceProvider).logout();
+    ref.invalidate(customRoutinesProvider);
     if (!context.mounted) return;
     ref.read(appFlowProvider.notifier).showWelcome();
     AppSnackBar.show(context, 'Account deleted.');
@@ -154,6 +155,7 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
               variant: AppButtonVariant.secondary,
               onPressed: () async {
                 await ref.read(authServiceProvider).logout();
+                ref.invalidate(customRoutinesProvider);
                 if (context.mounted) {
                   ref.read(appFlowProvider.notifier).showWelcome();
                 }

@@ -67,6 +67,8 @@ class OnboardingSetupScreenState
   Future<void> advance() async {
     if (isEditMode) {
       await _syncProfile();
+      ref.invalidate(todaysPlanProvider);
+      ref.invalidate(planOverviewProvider);
       if (mounted) Navigator.of(context).pop();
       return;
     }
