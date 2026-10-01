@@ -424,5 +424,130 @@ class ExploreDemoData {
       pose: StretchPoses.torsotwist,
       areas: ['spine', 'upperback'],
     ),
+    ExploreStretch(
+      name: 'Overhead Triceps Stretch',
+      pose: StretchPoses.overheadtriceps,
+      areas: ['shoulders', 'upperback'],
+    ),
+    ExploreStretch(
+      name: 'Clasped-Hands Chest Opener',
+      pose: StretchPoses.chestclasp,
+      areas: ['chest', 'shoulders'],
+    ),
+    ExploreStretch(
+      name: 'Neck Forward Stretch',
+      pose: StretchPoses.neckforward,
+      areas: ['neck', 'upperback'],
+    ),
+    ExploreStretch(
+      name: 'Chin Tuck',
+      pose: StretchPoses.chintuck,
+      areas: ['neck'],
+    ),
+    ExploreStretch(
+      name: 'Standing Hamstring Stretch',
+      pose: StretchPoses.standhamstring,
+      areas: ['hamstrings', 'calves'],
+    ),
+    ExploreStretch(
+      name: 'Bent-Knee Calf Stretch',
+      pose: StretchPoses.soleus,
+      areas: ['calves'],
+    ),
+    ExploreStretch(
+      name: 'Standing Figure-4',
+      pose: StretchPoses.standfig4,
+      areas: ['hips', 'glutes'],
+    ),
+    ExploreStretch(
+      name: 'Wall Lat Stretch',
+      pose: StretchPoses.walllat,
+      areas: ['shoulders', 'upperback'],
+    ),
+    ExploreStretch(
+      name: 'High Lunge Reach',
+      pose: StretchPoses.highlunge,
+      areas: ['hips', 'quads'],
+    ),
+    ExploreStretch(
+      name: 'Pyramid Pose',
+      pose: StretchPoses.pyramid,
+      areas: ['hamstrings', 'calves'],
+    ),
+    ExploreStretch(
+      name: 'Leg Swings',
+      pose: StretchPoses.legswing,
+      areas: ['hamstrings', 'hips'],
+    ),
+    ExploreStretch(
+      name: 'Upper-Back Hug Stretch',
+      pose: StretchPoses.hugstretch,
+      areas: ['upperback', 'shoulders'],
+    ),
+    ExploreStretch(
+      name: 'Wrist Extensor Stretch',
+      pose: StretchPoses.wristext,
+      areas: ['wrists'],
+    ),
+    ExploreStretch(
+      name: 'Deep Squat Hold',
+      pose: StretchPoses.squat,
+      areas: ['hips', 'lowerback'],
+    ),
+    ExploreStretch(
+      name: 'Seated Single-Leg Hamstring Stretch',
+      pose: StretchPoses.seatedsingle,
+      areas: ['hamstrings', 'lowerback'],
+    ),
+    ExploreStretch(
+      name: 'Chair Forward Fold',
+      pose: StretchPoses.chairfold,
+      areas: ['hamstrings', 'lowerback'],
+    ),
+    ExploreStretch(
+      name: 'Seated Cat-Cow',
+      pose: StretchPoses.chaircatcow,
+      areas: ['spine', 'lowerback', 'upperback'],
+    ),
+    ExploreStretch(
+      name: 'Sphinx Pose',
+      pose: StretchPoses.sphinx,
+      areas: ['lowerback', 'spine', 'chest'],
+    ),
+    ExploreStretch(
+      name: 'Happy Baby Pose',
+      pose: StretchPoses.happybaby,
+      areas: ['hips', 'lowerback'],
+    ),
+    ExploreStretch(
+      name: 'Puppy Pose',
+      pose: StretchPoses.puppy,
+      areas: ['shoulders', 'upperback', 'spine'],
+    ),
+    ExploreStretch(
+      name: 'Prone Quad Stretch',
+      pose: StretchPoses.pronequad,
+      areas: ['quads', 'hips'],
+    ),
+    ExploreStretch(
+      name: 'Camel Pose',
+      pose: StretchPoses.camel,
+      areas: ['chest', 'spine', 'quads'],
+    ),
+    ExploreStretch(
+      name: 'Rocking Hip Stretch',
+      pose: StretchPoses.rockback,
+      areas: ['hips', 'lowerback'],
+    ),
+    ExploreStretch(
+      name: 'Supine Full-Body Reach',
+      pose: StretchPoses.supinereach,
+      areas: ['spine', 'shoulders', 'chest'],
+    ),
+    ExploreStretch(
+      name: 'Reverse Tabletop',
+      pose: StretchPoses.tabletop,
+      areas: ['chest', 'shoulders', 'wrists'],
+    ),
   ];
 }

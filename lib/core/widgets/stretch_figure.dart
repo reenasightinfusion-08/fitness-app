@@ -176,6 +176,113 @@ class StretchPoses {
     73, 54, 91,
   ]);
 
+  // Added poses (same 0-100 grid and joint order as above).
+  static const overheadtriceps = StretchPose([
+    50, 16, 50, 26, 50, 54, 54, 7.4, 44.7, 19.2, 64.6,
+    13.8, 51.8, 5.8, 48.7, 73, 50, 91.9, 51.3, 73, 50, 91.9,
+  ]);
+  static const chestclasp = StretchPose([
+    49.1, 16.1, 48, 26.1, 50, 54, 37.1, 41.6, 29.6, 54.6, 36.3,
+    41, 28.2, 53.6, 48.7, 73, 50, 91.9, 51.3, 73, 50, 91.9,
+    -2,
+  ]);
+  static const neckforward = StretchPose([
+    59.1, 21.8, 50, 26, 50, 54, 48.3, 44.9, 47.8, 59.9, 46.7,
+    44.7, 45.4, 59.7, 48.7, 73, 50, 91.9, 51.3, 73, 50, 91.9,
+  ]);
+  static const chintuck = StretchPose([
+    47.2, 16.4, 50, 26, 50, 54, 48.3, 44.9, 47.8, 59.9, 46.7,
+    44.7, 45.4, 59.7, 48.7, 73, 50, 91.9, 51.3, 73, 50, 91.9,
+  ]);
+  static const standhamstring = StretchPose([
+    63.1, 33.5, 56, 40.6, 38, 62, 51.1, 58.9, 48.5, 73.7, 50.1,
+    58.6, 46.8, 73.2, 49.7, 77, 61.4, 91.9, 44.5, 79.9, 29.9, 92.1,
+  ]);
+  static const soleus = StretchPose([
+    55.8, 21.3, 53.2, 31, 46, 58, 71.1, 37.5, 84.1, 30, 70.5,
+    39, 83.5, 31.5, 56.9, 73.6, 52, 91.9, 38, 75.2, 41.3, 93.9,
+  ]);
+  static const standfig4 = StretchPose([
+    53.9, 20.8, 51.8, 30.6, 46, 58, 68.3, 40.1, 82.4, 35, 66.4,
+    42.8, 80.9, 38.9, 55.5, 74.5, 48.4, 92.1, 64.7, 61.3, 51.3, 74.7,
+  ]);
+  static const walllat = StretchPose([
+    66.5, 52.4, 57.4, 48.2, 30, 54, 76.1, 44.9, 91, 43.6, 75.8,
+    43.6, 90.7, 41.5, 28.3, 72.9, 26.7, 91.9, 30, 73, 28.3, 91.9,
+    -2,
+  ]);
+  static const highlunge = StretchPose([
+    50, 27, 50, 37, 50, 65, 57.1, 19.4, 61.3, 5, 59.5,
+    20.5, 64.6, 6.5, 67.2, 73, 67.2, 92, 36.3, 78.2, 22.7, 91.4,
+  ]);
+  static const pyramid = StretchPose([
+    81.6, 60.6, 72.9, 55.6, 45, 58, 71.2, 74.5, 70.7, 89.5, 69.6,
+    74.3, 67.8, 89.2, 55.1, 74.1, 65.1, 90.2, 34.9, 74.1, 24.9, 90.2,
+  ]);
+  static const legswing = StretchPose([
+    44.7, 16, 45, 26, 46, 54, 35.5, 42.5, 32.9, 57.2, 57.2,
+    40.6, 64.7, 53.6, 63.2, 62, 80.4, 70.1, 46, 73, 46, 92,
+  ]);
+  static const hugstretch = StretchPose([
+    57, 17.4, 52, 26.1, 50, 54, 68.4, 35.6, 54.8, 29.2, 64.2,
+    40.6, 50.1, 35.5, 48.7, 73, 50, 91.9, 51.3, 73, 50, 91.9,
+    3,
+  ]);
+  static const wristext = StretchPose([
+    50, 16, 50, 26, 50, 54, 69, 26, 84, 26, 67.9,
+    32.5, 80.1, 23.9, 48.7, 73, 50, 91.9, 51.3, 73, 50, 91.9,
+  ]);
+  static const squat = StretchPose([
+    44.8, 40.3, 42.2, 50, 35, 77, 51.7, 66.4, 54.4, 51.6, 48.7,
+    67.8, 51.4, 53, 53.7, 73.7, 48.8, 92.1, 53.9, 75.3, 49, 93.7,
+  ]);
+  static const seatedsingle = StretchPose([
+    60.7, 63.8, 52.1, 68.8, 30, 86, 67.6, 79.7, 79.1, 89.3, 67,
+    80.5, 78, 90.7, 51, 86, 72, 86, 48.2, 75.5, 32.1, 89,
+  ]);
+  static const chairfold = StretchPose([
+    69.9, 78.4, 62.2, 72, 38, 58, 71.7, 88.5, 86.7, 89.8, 70.3,
+    89.2, 85.1, 91.3, 57, 59, 57, 91, 57, 59, 57, 91,
+  ]);
+  static const chaircatcow = StretchPose([
+    45.7, 22.2, 44, 32, 44, 60, 55.2, 47.4, 64, 59.5, 56.2,
+    46.6, 65.9, 58, 63, 60, 63, 90, 63, 60, 63, 90,
+    -4,
+  ]);
+  static const sphinx = StretchPose([
+    78.5, 71.8, 68.7, 73.9, 44, 87, 68.7, 88.9, 83.7, 88.9, 68.2,
+    88.8, 83.2, 89.4, 25, 87, 6, 87, 25, 87, 6, 87,
+  ]);
+  static const happybaby = StretchPose([
+    80, 86, 70, 86, 42, 86, 61.7, 68.9, 55.1, 55.4, 61.1,
+    69.2, 54, 56, 56.6, 73.8, 54.9, 54.9, 54.2, 71.4, 50.9, 52.7,
+  ]);
+  static const puppy = StretchPose([
+    66.4, 84.7, 60, 77, 34, 62, 76.8, 85.9, 91.6, 88, 76.4,
+    86.5, 91.2, 89.1, 34, 88, 18, 88, 34, 88, 18, 88,
+  ]);
+  static const pronequad = StretchPose([
+    77.8, 83, 67.8, 84.1, 40, 87, 49.8, 78.2, 35.5, 73.6, 86.7,
+    86.7, 71.7, 85.4, 21, 87, 34.4, 73.6, 21, 87, 2, 87,
+  ]);
+  static const camel = StretchPose([
+    19.1, 36, 28.2, 40.2, 48, 60, 28.9, 61.2, 29.5, 78.2, 27.5,
+    61.2, 26.9, 78.2, 48, 88, 30.1, 81.5, 48, 88, 30.1, 81.5,
+    -3,
+  ]);
+  static const rockback = StretchPose([
+    65.9, 68.7, 55.9, 69.6, 28, 72, 56.6, 88.5, 56.6, 89.5, 57.2,
+    88.5, 57.2, 89.5, 33.8, 88, 15.8, 88, 33.8, 88, 15.8, 88,
+  ]);
+  static const supinereach = StretchPose([
+    76, 87, 66, 87, 38, 87, 85, 87, 100, 87, 85,
+    87.7, 100, 88.2, 19, 87, 0, 87, 19, 87, 0, 87,
+  ]);
+  static const tabletop = StretchPose([
+    12, 63.1, 22, 64, 50, 64, 22, 79, 22, 92, 21.5,
+    79, 21, 92, 69, 64, 69, 92, 69, 64, 69, 92,
+  ]);
+
   /// Looks a pose up by the `poseKey` the backend stores for each stretch —
   /// the key is the constant's own name, so the two can never drift apart.
   static const byKey = <String, StretchPose>{
@@ -209,6 +316,31 @@ class StretchPoses {
     'bridge': bridge,
     'halfsplit': halfsplit,
     'torsotwist': torsotwist,
+    'overheadtriceps': overheadtriceps,
+    'chestclasp': chestclasp,
+    'neckforward': neckforward,
+    'chintuck': chintuck,
+    'standhamstring': standhamstring,
+    'soleus': soleus,
+    'standfig4': standfig4,
+    'walllat': walllat,
+    'highlunge': highlunge,
+    'pyramid': pyramid,
+    'legswing': legswing,
+    'hugstretch': hugstretch,
+    'wristext': wristext,
+    'squat': squat,
+    'seatedsingle': seatedsingle,
+    'chairfold': chairfold,
+    'chaircatcow': chaircatcow,
+    'sphinx': sphinx,
+    'happybaby': happybaby,
+    'puppy': puppy,
+    'pronequad': pronequad,
+    'camel': camel,
+    'rockback': rockback,
+    'supinereach': supinereach,
+    'tabletop': tabletop,
   };
 
   // The three poses the prototype gives an authored second frame to
@@ -222,6 +354,19 @@ class StretchPoses {
     47, 17, 50, 27, 50, 55, 44, 34, 54, 40, 62, 32, 72, 38, 47, 73, 46, 91, 53,
     73, 54, 91,
   ]);
+  static const chintuckB = StretchPose([
+    51, 16.1, 50, 26, 50, 54, 48.3, 44.9, 47.8, 59.9, 46.7,
+    44.7, 45.4, 59.7, 48.7, 73, 50, 91.9, 51.3, 73, 50, 91.9,
+  ]);
+  static const legswingB = StretchPose([
+    44.7, 16, 45, 26, 46, 54, 57.2, 40.6, 64.7, 53.6, 35.5,
+    42.5, 32.9, 57.2, 39.5, 71.9, 31.5, 89.1, 46, 73, 46, 92,
+  ]);
+  static const chaircatcowB = StretchPose([
+    50.4, 24.3, 44, 32, 44, 60, 55.2, 47.4, 64, 59.5, 56.2,
+    46.6, 65.9, 58, 63, 60, 63, 90, 63, 60, 63, 90,
+    6,
+  ]);
   static const bandpullB = StretchPose([
     50, 17, 50, 27, 50, 55, 36, 29, 20, 31, 64, 29, 80, 31, 47, 73, 46, 91, 53,
     73, 54, 91,
@@ -233,6 +378,9 @@ class StretchPoses {
     catcow: catcowB,
     torsotwist: torsotwistB,
     bandpull: bandpullB,
+    chintuck: chintuckB,
+    legswing: legswingB,
+    chaircatcow: chaircatcowB,
   };
 }
 
