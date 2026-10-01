@@ -38,11 +38,13 @@ class AppTileCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               thumbnail ?? const AppThumb(),
-              10.verticalSpace,
+             6.verticalSpace,
+              Spacer(),
               Text(
                 title,
                 style: AppTextStyle.titleSmall.copyWith(
                   fontWeight: FontWeight.w700,
+                  height: 1.2
                 ),
               ),
               if (meta != null)
@@ -50,6 +52,7 @@ class AppTileCard extends StatelessWidget {
                   meta!,
                   style: AppTextStyle.meta.copyWith(color: colors.ink2),
                 ),
+             Spacer(),
             ],
           ),
         ),

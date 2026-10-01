@@ -1,4 +1,6 @@
+import 'package:fitness_app/features/explore/models/explore_data.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
+import 'package:fitness_app/features/onboarding_setup/models/onboarding_options.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -51,6 +53,21 @@ class StretchDetailSheet extends StatelessWidget {
     final guide = model?.toGuide() ?? (pose != null ? StretchLibrary.guideFor(pose!) : null);
     final hasThumb = model?.thumbnailUrl != null && model!.thumbnailUrl!.trim().isNotEmpty;
 
+    final matches = ExploreDemoData.stretches.where(
+      (s) => s.pose == effectivePose || s.name == effectiveName,
+    );
+    final rawAreas = model?.areas.isNotEmpty == true
+        ? model!.areas
+        : (matches.isNotEmpty ? matches.first.areas : const <String>[]);
+
+    final areaLabels = rawAreas.map((areaKey) {
+      final match = ExploreDemoData.areas.firstWhere(
+        (a) => a.key.toLowerCase() == areaKey.toLowerCase(),
+        orElse: () => ExploreArea(areaKey, areaKey),
+      );
+      return match.label;
+    }).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -97,17 +114,47 @@ class StretchDetailSheet extends StatelessWidget {
           ),
           20.verticalSpace,
         ] else ...[
-          8.verticalSpace,
-          Wrap(
-            spacing: 6.w,
-            runSpacing: 6.h,
+          if (areaLabels.isNotEmpty) ...[
+            8.verticalSpace,
+            Wrap(
+              spacing: 6.w,
+              runSpacing: 6.h,
+              children: [
+                for (final area in areaLabels) AppTag(label: area),
+              ],
+            ),
+          ],
+          12.verticalSpace,
+          Row(
             children: [
-              AppTag(label: guide.position.label),
-              if (guide.isEachSide) const AppTag(label: 'Both sides'),
-              if (guide.isDynamic) const AppTag(label: 'Moving'),
-              AppTag(label: guide.level.label),
-              for (final item in guide.equipment) AppTag(label: item),
-              if (guide.isKneeling) const AppTag(label: 'Kneeling'),
+              Expanded(
+                child: AppFactTile(
+                  label: 'Position',
+                  value: guide.position.label,
+                ),
+              ),
+              8.horizontalSpace,
+              Expanded(
+                child: AppFactTile(
+                  label: 'Level',
+                  value: guide.level.label,
+                ),
+              ),
+              8.horizontalSpace,
+              Expanded(
+                child: AppFactTile(
+                  label: 'Equipment',
+                  value: guide.equipment.isEmpty
+                      ? 'None'
+                      : guide.equipment.map((item) {
+                          final trimmed = item.trim();
+                          if (trimmed.isEmpty) return trimmed;
+                          final mapped = equipmentLabels[trimmed.toLowerCase()];
+                          if (mapped != null) return mapped;
+                          return '${trimmed[0].toUpperCase()}${trimmed.substring(1)}';
+                        }).join(', '),
+                ),
+              ),
             ],
           ),
           16.verticalSpace,

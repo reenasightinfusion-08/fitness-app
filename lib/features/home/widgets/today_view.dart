@@ -92,19 +92,21 @@ class TodayView extends ConsumerWidget {
               children: [
                 for (var i = 0; i < quickPicks.length; i += 2) ...[
                   if (i > 0) 10.verticalSpace,
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _QuickPickTile(routine: quickPicks[i]),
-                      ),
-                      10.horizontalSpace,
-                      Expanded(
-                        child: i + 1 < quickPicks.length
-                            ? _QuickPickTile(routine: quickPicks[i + 1])
-                            : const SizedBox.shrink(),
-                      ),
-                    ],
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: _QuickPickTile(routine: quickPicks[i]),
+                        ),
+                        10.horizontalSpace,
+                        Expanded(
+                          child: i + 1 < quickPicks.length
+                              ? _QuickPickTile(routine: quickPicks[i + 1])
+                              : const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ],

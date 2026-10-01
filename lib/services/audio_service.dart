@@ -36,6 +36,7 @@ class AudioService {
     for (final name in _sfxNames) name: AudioPlayer(playerId: 'sfx_$name'),
   };
   final AudioPlayer _music = AudioPlayer(playerId: 'music');
+  final AudioPlayer _voicePlayer = AudioPlayer(playerId: 'voice_tts');
   final FlutterTts _tts = FlutterTts();
 
   bool _initialized = false;
@@ -96,6 +97,20 @@ class AudioService {
     await _music.stop();
   }
 
+  Future<void> pauseMusic() async {
+    if (!_musicOn) return;
+    try {
+      await _music.pause();
+    } catch (_) {}
+  }
+
+  Future<void> resumeMusic() async {
+    if (!_musicOn) return;
+    try {
+      await _music.resume();
+    } catch (_) {}
+  }
+
   /// Lower music under speech, matches duck() in the original.
   Future<void> duck(bool on) async {
     if (!_musicOn) return;
@@ -124,12 +139,38 @@ class AudioService {
 
   // --- TTS, matches speak() ---
   Future<void> speak(String text, {double rate = 1.0}) async {
+    try {
+      await _voicePlayer.stop();
+      await _tts.stop();
+    } catch (_) {}
     await duck(true);
     await _tts.setSpeechRate((0.5 * rate).clamp(0.3, 0.7));
     try {
-      await _tts.speak(text);
-    } catch (_) {}
+      final res = await _tts.synthesizeToFile(text, 'cue.wav');
+      if (res == 1) {
+        await _voicePlayer.play(AssetSource('audio/cue.wav'));
+      } else {
+        await _tts.speak(text);
+      }
+    } catch (_) {
+      try {
+        await _tts.speak(text);
+      } catch (_) {}
+    }
     await duck(false);
+  }
+
+  Future<void> pauseVoice() async {
+    try {
+      await _voicePlayer.pause();
+      await _tts.stop();
+    } catch (_) {}
+  }
+
+  Future<void> resumeVoice() async {
+    try {
+      await _voicePlayer.resume();
+    } catch (_) {}
   }
 
   /// Cuts off whatever [speak] is currently saying — e.g. the Settings
@@ -137,6 +178,7 @@ class AudioService {
   /// Safe to call even when nothing is speaking.
   Future<void> stopSpeaking() async {
     try {
+      await _voicePlayer.stop();
       await _tts.stop();
     } catch (_) {}
     await duck(false);

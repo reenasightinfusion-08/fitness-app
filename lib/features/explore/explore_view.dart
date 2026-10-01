@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/app_validators.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/explore/models/explore_data.dart';
+import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
 import 'package:fitness_app/features/stretch_detail/models/stretch_model.dart';
 import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
@@ -14,14 +15,14 @@ import 'package:fitness_app/services/stretch_service.dart';
 /// Matches the prototype's `screens.explore`: search, a "Safe for me"
 /// toggle, area/time filter chips, matching routine cards and the full
 /// stretch library.
-class ExploreView extends StatefulWidget {
+class ExploreView extends ConsumerStatefulWidget {
   const ExploreView({super.key});
 
   @override
-  State<ExploreView> createState() => _ExploreViewState();
+  ConsumerState<ExploreView> createState() => _ExploreViewState();
 }
 
-class _ExploreViewState extends State<ExploreView> {
+class _ExploreViewState extends ConsumerState<ExploreView> {
   final _searchController = TextEditingController();
   final _stretchService = StretchService();
 
@@ -82,11 +83,32 @@ class _ExploreViewState extends State<ExploreView> {
     );
   }
 
-  List<ExploreRoutine> get _filteredRoutines => ExploreDemoData.routines
-      .where((r) => _matchesQuery(r.name, r.areas))
-      .where((r) => _area == null || r.areas.contains(_area))
-      .where((r) => _time.matches(r.minutes))
-      .toList();
+  List<String> _routineAreas(RoutineSummary routine) {
+    final set = <String>{};
+    for (final preview in routine.stretches) {
+      if (preview.model?.areas.isNotEmpty == true) {
+        set.addAll(preview.model!.areas);
+      } else {
+        final matches = ExploreDemoData.stretches.where(
+          (s) => s.pose == preview.pose || s.name == preview.name,
+        );
+        if (matches.isNotEmpty) {
+          set.addAll(matches.first.areas);
+        }
+      }
+    }
+    return set.toList();
+  }
+
+  List<RoutineSummary> _filterRoutineSummaries(List<RoutineSummary> list) {
+    return list.where((r) {
+      final areas = _routineAreas(r);
+      final matchesQ = _matchesQuery(r.name, areas);
+      final matchesArea = _area == null || areas.contains(_area);
+      final matchesTime = _time.matches(r.minutes);
+      return matchesQ && matchesArea && matchesTime;
+    }).toList();
+  }
 
   List<StretchModel> get _filteredStretches => _apiStretches
       .where((s) => _matchesQuery(s.name, s.areas))
@@ -96,8 +118,8 @@ class _ExploreViewState extends State<ExploreView> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final routines = _filteredRoutines;
     final stretches = _filteredStretches;
+    final routinesAsync = ref.watch(routinesProvider);
 
     return ListView(
       padding: AppInsets.page,
@@ -154,32 +176,84 @@ class _ExploreViewState extends State<ExploreView> {
           ],
         ),
         20.verticalSpace,
-        if (routines.isEmpty)
-          const AppEmptyState(
-            icon: Icons.search_off_rounded,
-            title: 'No routines match',
-            message: 'Try a different area or time.',
-          )
-        else
-          for (var i = 0; i < routines.length; i++) ...[
-            if (i > 0) 10.verticalSpace,
-            AppRoutineCard(
-              title: routines[i].name,
-              meta: routines[i].meta,
-              isLocked: routines[i].isPremium,
-              thumbnail: AppThumb(
-                size: AppThumbSize.large,
-                child: StretchFigure(pose: routines[i].previewPose),
-              ),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => RoutineDetailScreen(
-                    routine: routines[i].toRoutineSummary(),
-                  ),
+        routinesAsync.when(
+          data: (apiRoutines) {
+            final routines = _filterRoutineSummaries(apiRoutines);
+            if (routines.isEmpty) {
+              return const AppEmptyState(
+                icon: Icons.search_off_rounded,
+                title: 'No routines match',
+                message: 'Try a different area or time.',
+              );
+            }
+            return Column(
+              children: [
+                for (var i = 0; i < routines.length; i++) ...[
+                  if (i > 0) 10.verticalSpace,
+                  () {
+                    final routine = routines[i];
+                    final firstStretch = routine.stretches.isNotEmpty
+                        ? routine.stretches.first
+                        : null;
+                    final pose = firstStretch?.pose ?? StretchPoses.neutral;
+                    final thumbUrl = firstStretch?.model?.thumbnailUrl;
+                    final hasThumb =
+                        thumbUrl != null && thumbUrl.trim().isNotEmpty;
+
+                    return AppRoutineCard(
+                      title: routine.name,
+                      meta:
+                          '${routine.durationText} · ${routine.stretches.length} stretches',
+                      isLocked: false,
+                      thumbnail: AppThumb(
+                        size: AppThumbSize.large,
+                        child: hasThumb
+                            ? ClipRRect(
+                                borderRadius: AppBorderRadius.md,
+                                child: Image.network(
+                                  thumbUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      StretchFigure(pose: pose),
+                                ),
+                              )
+                            : StretchFigure(pose: pose),
+                      ),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => RoutineDetailScreen(
+                            routine: routine,
+                          ),
+                        ),
+                      ),
+                    );
+                  }(),
+                ],
+              ],
+            );
+          },
+          loading: () => Padding(
+            padding: EdgeInsets.symmetric(vertical: 24.h),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (err, stack) => Padding(
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Failed to load routines from server.',
+                  style: AppTextStyle.bodySmall.copyWith(color: colors.danger),
                 ),
-              ),
+                4.verticalSpace,
+                TextButton(
+                  onPressed: () => ref.invalidate(routinesProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
             ),
-          ],
+          ),
+        ),
         24.verticalSpace,
         Text(
           'Stretch library · ${_isLoadingStretches ? '...' : stretches.length}',

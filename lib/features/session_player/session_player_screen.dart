@@ -10,6 +10,7 @@ import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/session_complete/session_complete_screen.dart';
 import 'package:fitness_app/features/stretch_detail/models/stretch_guide.dart';
 import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
+import 'package:fitness_app/features/session_player/widgets/stretch_media_player.dart';
 import 'package:fitness_app/services/audio_service.dart';
 
 enum _StepKind { getReady, hold, switchSides }
@@ -119,10 +120,10 @@ class SessionPlayerScreen extends StatefulWidget {
   final bool musicOn;
 
   @override
-  State<SessionPlayerScreen> createState() => SessionPlayerScreenState();
+  State<SessionPlayerScreen> createState() => _SessionPlayerScreenState();
 }
 
-class SessionPlayerScreenState extends State<SessionPlayerScreen> {
+class _SessionPlayerScreenState extends State<SessionPlayerScreen> {
   late final List<_SessionStep> steps = _buildSteps(
     widget.plan,
     widget.holdSecondsOverride,
@@ -260,6 +261,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
 
   void _finish() {
     _ticker?.cancel();
+    AudioService.instance.stopSpeaking();
     AudioService.instance.stopMusic();
     AudioService.instance.gong();
     Navigator.of(context).pushReplacement(
@@ -270,11 +272,23 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   }
 
   void _exit() {
+    AudioService.instance.stopSpeaking();
     AudioService.instance.stopMusic();
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  void _togglePause() => setState(() => paused = !paused);
+  void _togglePause() {
+    setState(() {
+      paused = !paused;
+      if (paused) {
+        AudioService.instance.pauseVoice();
+        AudioService.instance.pauseMusic();
+      } else {
+        AudioService.instance.resumeVoice();
+        AudioService.instance.resumeMusic();
+      }
+    });
+  }
 
   void _addFifteen() => setState(() => remaining += 15);
 
@@ -305,7 +319,11 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   /// prototype's `stretchInfo()`.
   void _showStretchInfo() {
     final wasPaused = paused;
-    if (!wasPaused) setState(() => paused = true);
+    if (!wasPaused) {
+      AudioService.instance.pauseVoice();
+      AudioService.instance.pauseMusic();
+      setState(() => paused = true);
+    }
     StretchDetailSheet.open(
       context,
       name: currentStretch.name,
@@ -314,13 +332,18 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
       note: 'Timer paused while you read.',
     ).then((_) {
       if (!mounted || wasPaused) return;
-      setState(() => paused = false);
+      AudioService.instance.resumeVoice();
+      AudioService.instance.resumeMusic();
+      setState(() {
+        paused = false;
+      });
     });
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
+    AudioService.instance.stopSpeaking();
     AudioService.instance.stopMusic();
     super.dispose();
   }
@@ -334,10 +357,6 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
     final nextStretch = step.stretchIndex + 1 < _stretches.length
         ? _stretches[step.stretchIndex + 1]
         : null;
-
-    final stretchThumbUrl = stretch.model?.thumbnailUrl;
-    final hasStretchThumb =
-        stretchThumbUrl != null && stretchThumbUrl.trim().isNotEmpty;
 
     final nextThumbUrl = nextStretch?.model?.thumbnailUrl;
     final hasNextThumb =
@@ -407,26 +426,12 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                       width: 220.w,
                       child: ClipRRect(
                         borderRadius: AppBorderRadius.hero,
-                        child: hasStretchThumb
-                            ? Image.network(
-                                stretchThumbUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    AnimatedStretchFigure(
-                                  pose: stretch.pose,
-                                  nearColor: colors.playerInk,
-                                  farColor: colors.playerDim,
-                                  groundColor:
-                                      colors.playerInk.withValues(alpha: 0.14),
-                                ),
-                              )
-                            : AnimatedStretchFigure(
-                                pose: stretch.pose,
-                                nearColor: colors.playerInk,
-                                farColor: colors.playerDim,
-                                groundColor:
-                                    colors.playerInk.withValues(alpha: 0.14),
-                              ),
+                        child: StretchMediaPlayer(
+                          key: ValueKey('${step.stretchIndex}_${stretch.name}'),
+                          videoUrl: stretch.model?.videoUrl,
+                          thumbnailUrl: stretch.model?.thumbnailUrl,
+                          pose: stretch.pose,
+                        ),
                       ),
                     ),
                     Text(
