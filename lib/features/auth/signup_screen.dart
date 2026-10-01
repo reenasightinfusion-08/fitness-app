@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/app_validators.dart';
@@ -47,10 +45,9 @@ class SignupScreenState extends ConsumerState<SignupScreen> {
     final email = emailController.text.trim();
     setState(() => isLoading = true);
     try {
-      await ref.read(authServiceProvider).signup(
-        email: email,
-        password: passwordController.text,
-      );
+      await ref
+          .read(authServiceProvider)
+          .signup(email: email, password: passwordController.text);
       if (!mounted) return;
       ref.read(pendingAuthProvider.notifier).start(email);
       ref.read(appFlowProvider.notifier).showVerifyEmail();
@@ -59,7 +56,12 @@ class SignupScreenState extends ConsumerState<SignupScreen> {
       if (mounted) AppSnackBar.showError(context, e.message);
     } catch (e, stack) {
       debugPrint('[SignupScreen] Unexpected error: $e\n$stack');
-      if (mounted) AppSnackBar.showError(context, 'Unexpected error occurred. Check debug console.');
+      if (mounted) {
+        AppSnackBar.showError(
+          context,
+          'Unexpected error occurred. Check debug console.',
+        );
+      }
     } finally {
       if (mounted) setState(() => isLoading = false);
     }

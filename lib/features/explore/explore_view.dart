@@ -226,14 +226,12 @@ class _ExploreViewState extends State<ExploreView> {
               crossAxisCount: 3,
               mainAxisSpacing: 8.h,
               crossAxisSpacing: 8.w,
-              childAspectRatio: 0.82,
+              childAspectRatio: 0.78,
             ),
             itemBuilder: (context, index) => _LibraryTile(
               stretch: stretches[index],
-              onTap: () => StretchDetailSheet.open(
-                context,
-                model: stretches[index],
-              ),
+              onTap: () =>
+                  StretchDetailSheet.open(context, model: stretches[index]),
             ),
           ),
       ],
@@ -253,7 +251,8 @@ class _LibraryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final hasThumb = stretch.thumbnailUrl != null && stretch.thumbnailUrl!.trim().isNotEmpty;
+    final hasThumb =
+        stretch.thumbnailUrl != null && stretch.thumbnailUrl!.trim().isNotEmpty;
 
     return Material(
       color: colors.surface,
@@ -265,33 +264,37 @@ class _LibraryTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 10.h),
+          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 16.h),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
-                width: 64.r,
-                height: 64.r,
+                width: 80.r,
+                height: 80.r,
                 child: hasThumb
                     ? ClipRRect(
-                        borderRadius: AppBorderRadius.lg,
+                        borderRadius: AppBorderRadius.md,
                         child: Image.network(
                           stretch.thumbnailUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => StretchFigure(pose: stretch.pose),
+                          errorBuilder: (context, error, stackTrace) =>
+                              StretchFigure(pose: stretch.pose),
                         ),
                       )
                     : StretchFigure(pose: stretch.pose),
               ),
               6.verticalSpace,
-              Text(
-                stretch.name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.caption.copyWith(
-                  fontWeight: FontWeight.w600,
-                  height: 1.2,
+              Expanded(
+                child: Center(
+                  child: Text(
+                    stretch.name,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyle.caption.copyWith(
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                    ),
+                  ),
                 ),
               ),
             ],
