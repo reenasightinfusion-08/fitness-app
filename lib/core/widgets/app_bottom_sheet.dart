@@ -26,18 +26,22 @@ class AppBottomSheet {
         if (isScrollable) {
           return DraggableScrollableSheet(
             initialChildSize: 0.85,
-            minChildSize: 0.2,
+            minChildSize: 0.0,
             maxChildSize: 0.95,
             expand: false,
             snap: true,
             shouldCloseOnMinExtent: true,
             builder: (context, scrollController) => AppSheetBody(
               scrollController: scrollController,
+              isScrollable: true,
               child: child,
             ),
           );
         }
-        return AppSheetBody(child: child);
+        return AppSheetBody(
+          isScrollable: false,
+          child: child,
+        );
       },
     );
   }
@@ -65,41 +69,39 @@ class AppBottomSheet {
 }
 
 class AppSheetBody extends StatelessWidget {
-  const AppSheetBody({super.key, required this.child, this.scrollController});
+  const AppSheetBody({
+    super.key,
+    required this.child,
+    this.scrollController,
+    this.isScrollable = false,
+  });
 
   final Widget child;
   final ScrollController? scrollController;
+  final bool isScrollable;
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    controller: scrollController,
-    padding: EdgeInsets.fromLTRB(
+  Widget build(BuildContext context) {
+    final padding = EdgeInsets.fromLTRB(
       18.w,
       8.h,
       18.w,
       22.h + MediaQuery.viewInsetsOf(context).bottom,
-    ),
-    child: Column(
+    );
+
+    final content = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onVerticalDragUpdate: (details) {
-            if (details.primaryDelta! > 4) {
-              Navigator.of(context).pop();
-            }
-          },
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 4.h),
-            child: Center(
-              child: Container(
-                width: 42.w,
-                height: 5.h,
-                decoration: BoxDecoration(
-                  color: context.colors.line,
-                  borderRadius: AppBorderRadius.pill,
-                ),
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          child: Center(
+            child: Container(
+              width: 42.w,
+              height: 5.h,
+              decoration: BoxDecoration(
+                color: context.colors.line,
+                borderRadius: AppBorderRadius.pill,
               ),
             ),
           ),
@@ -107,8 +109,22 @@ class AppSheetBody extends StatelessWidget {
         14.verticalSpace,
         child,
       ],
-    ),
-  );
+    );
+
+    if (isScrollable) {
+      return SingleChildScrollView(
+        controller: scrollController,
+        physics: const ClampingScrollPhysics(),
+        padding: padding,
+        child: content,
+      );
+    }
+
+    return Padding(
+      padding: padding,
+      child: content,
+    );
+  }
 }
 
 class AppConfirmSheet extends StatelessWidget {
