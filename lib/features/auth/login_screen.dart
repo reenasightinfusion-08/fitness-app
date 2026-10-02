@@ -50,14 +50,22 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
         email: emailController.text.trim(),
         password: passwordController.text,
       );
+      bool isOnboardingComplete = false;
       try {
         final res = await authService.getMe();
         final userData = (res['user'] ?? res['data'] ?? res) as Map<String, dynamic>;
+        isOnboardingComplete = userData['onboardingComplete'] == true;
         if (mounted) {
           ref.read(onboardingProfileProvider.notifier).loadFromApi(userData);
         }
       } catch (_) {}
-      if (mounted) ref.read(appFlowProvider.notifier).enterApp();
+      if (mounted) {
+        if (isOnboardingComplete) {
+          ref.read(appFlowProvider.notifier).enterApp();
+        } else {
+          ref.read(appFlowProvider.notifier).showOnboarding();
+        }
+      }
     } on AuthException catch (e) {
       if (mounted) AppSnackBar.showError(context, e.message);
     } finally {

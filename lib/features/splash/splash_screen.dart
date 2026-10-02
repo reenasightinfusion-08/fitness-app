@@ -29,10 +29,12 @@ class SplashScreenState extends ConsumerState<SplashScreen> {
       final authService = ref.read(authServiceProvider);
       final hasSession = await authService.hasSession();
       if (!mounted) return;
+      bool isOnboardingComplete = false;
       if (hasSession) {
         try {
           final res = await authService.getMe();
           final userData = (res['user'] ?? res['data'] ?? res) as Map<String, dynamic>;
+          isOnboardingComplete = userData['onboardingComplete'] == true;
           if (mounted) {
             ref.read(onboardingProfileProvider.notifier).loadFromApi(userData);
           }
@@ -42,7 +44,15 @@ class SplashScreenState extends ConsumerState<SplashScreen> {
       }
       if (!mounted) return;
       final flow = ref.read(appFlowProvider.notifier);
-      hasSession ? flow.enterApp() : flow.finishSplash();
+      if (hasSession) {
+        if (isOnboardingComplete) {
+          flow.enterApp();
+        } else {
+          flow.showOnboarding();
+        }
+      } else {
+        flow.finishSplash();
+      }
     });
   }
 
