@@ -42,4 +42,5 @@ export 'package:fitness_app/core/widgets/app_thumb.dart';
 export 'package:fitness_app/core/widgets/app_tile_card.dart';
 export 'package:fitness_app/core/widgets/app_top_bar.dart';
 export 'package:fitness_app/core/widgets/app_week_strip.dart';
+export 'package:fitness_app/core/widgets/app_swipeable_card.dart';
 export 'package:fitness_app/core/widgets/stretch_figure.dart';

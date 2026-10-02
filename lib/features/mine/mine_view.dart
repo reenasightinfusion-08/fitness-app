@@ -269,26 +269,10 @@ class _CustomRoutineCard extends StatelessWidget {
   final VoidCallback onDelete;
 
   @override
-  Widget build(BuildContext context) => Dismissible(
-    key: ValueKey(routine.id ?? routine.name),
-    direction: DismissDirection.endToStart,
-    background: Container(
-      alignment: Alignment.centerRight,
-      padding: EdgeInsets.symmetric(horizontal: 20.w),
-      decoration: BoxDecoration(
-        color: context.colors.danger,
-        borderRadius: AppBorderRadius.xxl,
-      ),
-      child: Icon(Icons.delete_outline_rounded, color: AppColors.white),
-    ),
-    confirmDismiss: (_) => AppBottomSheet.confirm(
-      context,
-      title: 'Delete this routine?',
-      message: '"${routine.name}" will be removed. This can\'t be undone.',
-      confirmLabel: 'Delete routine',
-      isDestructive: true,
-    ),
-    onDismissed: (_) => onDelete(),
+  Widget build(BuildContext context) => AppSwipeableCard(
+    onDelete: onDelete,
+    confirmTitle: 'Delete this routine?',
+    confirmMessage: '"${routine.name}" will be removed. This can\'t be undone.',
     child: _RoutineCard(routine: routine, routineType: 'custom'),
   );
 }
