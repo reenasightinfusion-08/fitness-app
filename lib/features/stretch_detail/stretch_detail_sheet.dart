@@ -37,6 +37,7 @@ class StretchDetailSheet extends StatelessWidget {
     String? note,
   }) => AppBottomSheet.show(
     context,
+    isScrollable: true,
     child: StretchDetailSheet(
       name: name,
       pose: pose,

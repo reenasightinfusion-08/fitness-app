@@ -73,6 +73,7 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
     final existingNames = _items.map((item) => item.name).toSet();
     final picked = await AppBottomSheet.show<List<StretchModel>>(
       context,
+      isScrollable: true,
       child: _StretchPickerSheet(excludeNames: existingNames),
     );
     if (picked == null || picked.isEmpty) return;

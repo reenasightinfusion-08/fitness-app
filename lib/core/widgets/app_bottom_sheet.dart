@@ -7,27 +7,38 @@ import 'package:fitness_app/core/widgets/app_button.dart';
 class AppBottomSheet {
   const AppBottomSheet._();
 
-  static Future<T?> show<T>(BuildContext context, {required Widget child}) {
+  static Future<T?> show<T>(
+    BuildContext context, {
+    required Widget child,
+    bool isScrollable = false,
+  }) {
     final colors = context.colors;
     return showModalBottomSheet<T>(
       context: context,
-      isScrollControlled: true,
+      isScrollControlled: isScrollable,
       enableDrag: true,
       isDismissible: true,
       useSafeArea: true,
       backgroundColor: colors.surface,
       barrierColor: colors.scrim,
       shape: RoundedRectangleBorder(borderRadius: AppBorderRadius.sheet),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.3,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => AppSheetBody(
-          scrollController: scrollController,
-          child: child,
-        ),
-      ),
+      builder: (context) {
+        if (isScrollable) {
+          return DraggableScrollableSheet(
+            initialChildSize: 0.85,
+            minChildSize: 0.2,
+            maxChildSize: 0.95,
+            expand: false,
+            snap: true,
+            shouldCloseOnMinExtent: true,
+            builder: (context, scrollController) => AppSheetBody(
+              scrollController: scrollController,
+              child: child,
+            ),
+          );
+        }
+        return AppSheetBody(child: child);
+      },
     );
   }
 
@@ -72,13 +83,24 @@ class AppSheetBody extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: Container(
-            width: 42.w,
-            height: 5.h,
-            decoration: BoxDecoration(
-              color: context.colors.line,
-              borderRadius: AppBorderRadius.pill,
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onVerticalDragUpdate: (details) {
+            if (details.primaryDelta! > 4) {
+              Navigator.of(context).pop();
+            }
+          },
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 4.h),
+            child: Center(
+              child: Container(
+                width: 42.w,
+                height: 5.h,
+                decoration: BoxDecoration(
+                  color: context.colors.line,
+                  borderRadius: AppBorderRadius.pill,
+                ),
+              ),
             ),
           ),
         ),
