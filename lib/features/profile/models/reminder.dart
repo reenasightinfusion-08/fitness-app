@@ -40,6 +40,25 @@ class ReminderEntry {
   /// [DateTime.weekday] values this reminder fires on.
   final Set<int> days;
 
+  factory ReminderEntry.fromJson(String id, Map<String, dynamic> json) {
+    final time = json['time'] as Map<String, dynamic>? ?? const {};
+    return ReminderEntry(
+      id: id,
+      time: TimeOfDay(
+        hour: time['hour'] as int? ?? 8,
+        minute: time['minute'] as int? ?? 0,
+      ),
+      isOn: json['isOn'] as bool? ?? true,
+      days: Set<int>.from(json['days'] as List? ?? weekdayDisplayOrder),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'time': {'hour': time.hour, 'minute': time.minute},
+    'isOn': isOn,
+    'days': (days.toList()..sort()),
+  };
+
   ReminderEntry copyWith({TimeOfDay? time, bool? isOn, Set<int>? days}) =>
       ReminderEntry(
         id: id,

@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/onboarding_setup/models/onboarding_options.dart';
 import 'package:fitness_app/features/onboarding_setup/models/onboarding_profile.dart';
 import 'package:fitness_app/features/onboarding_setup/onboarding_setup_screen.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
+import 'package:fitness_app/services/auth_service.dart';
 
 /// Matches the prototype's `screens.editprofile`: every answer from the
 /// 10-step setup, editable one row at a time. Tapping a row jumps into
@@ -22,6 +24,20 @@ class EditProfileScreen extends ConsumerWidget {
       builder: (_) => OnboardingSetupScreen(editStepIndex: step),
     ),
   );
+
+  Future<void> _undo(
+    BuildContext context,
+    WidgetRef ref,
+    HurtStretch stretch,
+  ) async {
+    try {
+      await ref
+          .read(hurtStretchesProvider.notifier)
+          .setHurt(stretch.id, stretch.name, false);
+    } on AuthException catch (e) {
+      if (context.mounted) AppSnackBar.show(context, e.message);
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -62,12 +78,9 @@ class EditProfileScreen extends ConsumerWidget {
             20.verticalSpace,
             Text('Stretches you said hurt', style: AppTextStyle.sectionTitle),
             10.verticalSpace,
-            const AppEmptyState(
-              icon: Icons.info_outline_rounded,
-              title: 'None yet',
-              message:
-                  "After a session, mark anything that hurt and we'll "
-                  'leave it out of your plans.',
+            _HurtStretchesList(
+              stretches: ref.watch(hurtStretchesProvider).valueOrNull ?? const [],
+              onUndo: (stretch) => _undo(context, ref, stretch),
             ),
           ],
         ),
@@ -154,4 +167,46 @@ class _ProfileRow {
   final String fallback;
 
   String get value => rawValue.trim().isEmpty ? fallback : rawValue;
+}
+
+/// The stretches marked as hurt after a session, each with an undo, or the
+/// empty state when there are none.
+class _HurtStretchesList extends StatelessWidget {
+  const _HurtStretchesList({required this.stretches, required this.onUndo});
+
+  final List<HurtStretch> stretches;
+  final ValueChanged<HurtStretch> onUndo;
+
+  @override
+  Widget build(BuildContext context) {
+    if (stretches.isEmpty) {
+      return const AppEmptyState(
+        icon: Icons.info_outline_rounded,
+        title: 'None yet',
+        message:
+            "After a session, mark anything that hurt and we'll "
+            'leave it out of your plans.',
+      );
+    }
+    return AppCard(
+      variant: AppCardVariant.list,
+      child: Column(
+        children: [
+          for (final stretch in stretches)
+            AppSettingRow(
+              title: stretch.name,
+              subtitle: 'Left out of your plans',
+              trailing: AppButton(
+                label: 'Undo',
+                variant: AppButtonVariant.secondary,
+                size: AppButtonSize.small,
+                isExpanded: false,
+                onPressed: () => onUndo(stretch),
+              ),
+              showDivider: stretch != stretches.last,
+            ),
+        ],
+      ),
+    );
+  }
 }

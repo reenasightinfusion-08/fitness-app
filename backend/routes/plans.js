@@ -38,6 +38,7 @@ const profileOf = (user) => ({
   minutesPerDay: user.minutesPerDay, equipment: user.equipment, equipmentNone: user.equipmentNone,
   noKneel: user.noKneel, noFloor: user.noFloor, injurySeverity: user.injurySeverity,
   isPregnant: user.isPregnant, hadRecentSurgery: user.hadRecentSurgery, flexibilityLevel: user.flexibilityLevel,
+  hurtStretches: (user.hurtStretches || []).map((h) => String(h.stretch)).sort(),
 });
 
 // The user's saved plan, built the first time and rebuilt when their answers or

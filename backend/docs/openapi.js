@@ -134,8 +134,31 @@ module.exports = {
               },
             },
           },
+          hurtStretches: {
+            type: 'array',
+            description: 'Stretches the user marked as painful after a session; routines containing them are left out of the plan. Change it with PUT/DELETE /api/users/me/hurt-stretches/{stretchId}.',
+            items: {
+              type: 'object',
+              properties: {
+                stretch: { type: 'string', description: 'The stretch\'s _id.' },
+                name: { type: 'string' },
+              },
+            },
+          },
+          reminders: { type: 'array', description: 'Saved stretch reminders. Read and change them with /api/users/me/reminders.', items: { $ref: '#/components/schemas/Reminder' } },
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      Reminder: {
+        type: 'object',
+        properties: {
+          time: {
+            type: 'object',
+            properties: { hour: { type: 'number', example: 8 }, minute: { type: 'number', example: 0 } },
+          },
+          isOn: { type: 'boolean', example: true },
+          days: { type: 'array', description: '1 = Monday ... 7 = Sunday', items: { type: 'number' }, example: [1, 2, 3, 4, 5, 6, 7] },
         },
       },
       UserUpdate: {
@@ -482,6 +505,77 @@ module.exports = {
           400: err('Validation error', 'Cast to Number failed for value "abc" (type string) at path "age"'),
           401: err('Missing or invalid token', 'Invalid or expired token'),
           404: err('User not found', 'User not found'),
+          500: serverErr,
+        },
+      },
+      delete: {
+        tags: ['Users'],
+        summary: 'Permanently delete the signed-in account and all of its data',
+        description: 'Removes the user\'s plan (userplans), routine progress and history (activeroutines), custom routines (customroutines) and the user itself (users, which also holds favorites and reminders). Cannot be undone.',
+        security: auth,
+        responses: {
+          200: okResponse('Account deleted', nullData, 'Account deleted'),
+          401: err('Missing or invalid token', 'No token provided'),
+          404: err('User not found (already deleted)', 'User not found'),
+          500: serverErr,
+        },
+      },
+    },
+    '/api/users/me/reminders': {
+      get: {
+        tags: ['Users'],
+        summary: 'Get the signed-in user\'s stretch reminders',
+        description: 'Before the user first saves reminders, this returns one reminder built from the onboarding answer (reminderOn / reminderTime), every day.',
+        security: auth,
+        responses: {
+          200: okResponse('Reminders', { type: 'object', properties: { reminders: { type: 'array', items: { $ref: '#/components/schemas/Reminder' } } } }, 'Reminders fetched'),
+          401: err('Missing or invalid token', 'No token provided'),
+          404: err('User not found', 'User not found'),
+          500: serverErr,
+        },
+      },
+      put: {
+        tags: ['Users'],
+        summary: 'Replace the signed-in user\'s stretch reminders',
+        description: 'At most 10. The app schedules each one as a repeating local notification on the phone.',
+        security: auth,
+        requestBody: jsonBody(
+          { type: 'object', properties: { reminders: { type: 'array', items: { $ref: '#/components/schemas/Reminder' } } } },
+          { reminders: [{ time: { hour: 8, minute: 0 }, isOn: true, days: [1, 2, 3, 4, 5] }] },
+        ),
+        responses: {
+          200: okResponse('Saved reminders', { type: 'object', properties: { reminders: { type: 'array', items: { $ref: '#/components/schemas/Reminder' } } } }, 'Reminders saved'),
+          400: err('Invalid reminders', 'Each reminder needs time.hour (0-23) and time.minute (0-59)'),
+          401: err('Missing or invalid token', 'No token provided'),
+          404: err('User not found', 'User not found'),
+          500: serverErr,
+        },
+      },
+    },
+    '/api/users/me/hurt-stretches/{stretchId}': {
+      put: {
+        tags: ['Users'],
+        summary: 'Mark a stretch as one that hurt (idempotent)',
+        description: 'Routines containing it are left out of the user\'s plan, which is rebuilt on the next plan request. The list is on GET /api/users/me as `hurtStretches`.',
+        security: auth,
+        parameters: [{ name: 'stretchId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          200: okResponse('Marked (or already marked)', nullData, 'Marked as hurt'),
+          400: err('Not a valid id', 'Invalid stretch id'),
+          401: err('Missing or invalid token', 'No token provided'),
+          404: err('No such stretch', 'Stretch not found'),
+          500: serverErr,
+        },
+      },
+      delete: {
+        tags: ['Users'],
+        summary: 'Undo marking a stretch as hurt (idempotent)',
+        security: auth,
+        parameters: [{ name: 'stretchId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          200: okResponse('Removed (or was not marked)', nullData, 'Removed from hurt stretches'),
+          400: err('Not a valid id', 'Invalid stretch id'),
+          401: err('Missing or invalid token', 'No token provided'),
           500: serverErr,
         },
       },

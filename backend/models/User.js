@@ -55,6 +55,43 @@ const userSchema = new mongoose.Schema(
 
     onboardingComplete: { type: Boolean, default: false },
 
+    // --- reminders ---
+    // The daily stretch reminders the phone schedules as local notifications. Absent until
+    // the user first saves them; GET /api/users/me/reminders then falls back to the
+    // onboarding answer (reminderOn / reminderTime). `days` are 1 (Mon) to 7 (Sun).
+    reminders: {
+      type: [
+        new mongoose.Schema(
+          {
+            time: {
+              hour: { type: Number, min: 0, max: 23, required: true },
+              minute: { type: Number, min: 0, max: 59, required: true },
+            },
+            isOn: { type: Boolean, default: true },
+            days: { type: [Number], default: [1, 2, 3, 4, 5, 6, 7] },
+          },
+          { _id: false },
+        ),
+      ],
+      default: undefined,
+    },
+
+    // --- stretches that hurt ---
+    // Stretches the user marked as painful after a session. The plan builder leaves any
+    // routine containing one out. Changed through PUT/DELETE /api/users/me/hurt-stretches/:stretchId.
+    hurtStretches: {
+      type: [
+        new mongoose.Schema(
+          {
+            stretch: { type: mongoose.Schema.Types.ObjectId, ref: 'Stretch', required: true },
+            name: { type: String, required: true },
+          },
+          { _id: false },
+        ),
+      ],
+      default: [],
+    },
+
     // --- favourites ---
     // The routines (library or custom) the user hearted, oldest first. `routineId` is the
     // routine's own _id; `routineType` says which collection it is in, as on ActiveRoutine.

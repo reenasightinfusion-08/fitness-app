@@ -87,6 +87,8 @@ function rulesFor(user) {
     noKneel: !!user.noKneel || hurt('knee'),
     avoidPoses: new Set(user.isPregnant ? PREGNANCY_AVOID : []),
     avoidAreas: new Set(severe.flatMap((key) => INJURY_AREAS[key] || [])),
+    // Stretches the user marked as painful after a session.
+    avoidStretchIds: new Set((user.hurtStretches || []).map((h) => String(h.stretch))),
     onlyBeginner,
     maxRank: onlyBeginner ? 1 : Math.min(3, Math.max(1, user.flexibilityLevel || 1)),
     // A wall and a chair are in every home, so they never count as equipment.
@@ -107,7 +109,8 @@ function isSafe(routine, rules) {
     (s) =>
       !(rules.noFloor && s.position === 'floor') &&
       !(rules.noKneel && s.isKneeling) &&
-      !rules.avoidPoses.has(s.poseKey),
+      !rules.avoidPoses.has(s.poseKey) &&
+      !rules.avoidStretchIds.has(String(s._id)),
   );
 }
 

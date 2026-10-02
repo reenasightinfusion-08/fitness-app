@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
+import 'package:fitness_app/services/auth_service.dart';
 import 'package:fitness_app/features/progress/providers/progress_stats_provider.dart';
 
 enum SessionFeel { easy, right, hard }
@@ -43,6 +46,55 @@ class SessionCompleteScreenState
     extends ConsumerState<SessionCompleteScreen> {
   SessionFeel? feel;
   final Set<String> hurtNames = {};
+
+  /// The routine's stretches by name, so a tapped chip can find the saved
+  /// stretch behind it. Demo routines have no saved stretches (no `model`).
+  Map<String, String> get _stretchIds => {
+    for (final s in widget.plan.stretches)
+      if (s.model != null) s.name: s.model!.id,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_showAlreadyMarked());
+  }
+
+  /// Pre-selects stretches the user marked as hurt before, so tapping one
+  /// again undoes it.
+  Future<void> _showAlreadyMarked() async {
+    final List<HurtStretch> marked;
+    try {
+      marked = await ref.read(hurtStretchesProvider.future);
+    } catch (_) {
+      return;
+    }
+    if (!mounted) return;
+    final ids = _stretchIds;
+    setState(() {
+      for (final h in marked) {
+        for (final entry in ids.entries) {
+          if (entry.value == h.id) hurtNames.add(entry.key);
+        }
+      }
+    });
+  }
+
+  /// Flips a chip and saves it right away, so it counts even if the user
+  /// leaves without pressing Done.
+  Future<void> _toggleHurt(String name) async {
+    final nowHurt = !hurtNames.contains(name);
+    setState(() => nowHurt ? hurtNames.add(name) : hurtNames.remove(name));
+    final id = _stretchIds[name];
+    if (id == null) return;
+    try {
+      await ref.read(hurtStretchesProvider.notifier).setHurt(id, name, nowHurt);
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      setState(() => nowHurt ? hurtNames.remove(name) : hurtNames.add(name));
+      AppSnackBar.show(context, e.message);
+    }
+  }
 
   void _notBuiltYet() =>
       AppSnackBar.show(context, "That screen isn't built yet.");
@@ -145,11 +197,7 @@ class SessionCompleteScreenState
                                 label: name,
                                 isCompact: true,
                                 isSelected: hurtNames.contains(name),
-                                onTap: () => setState(
-                                  () => hurtNames.contains(name)
-                                      ? hurtNames.remove(name)
-                                      : hurtNames.add(name),
-                                ),
+                                onTap: () => _toggleHurt(name),
                               ),
                           ],
                         ),

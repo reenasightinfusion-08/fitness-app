@@ -11,6 +11,8 @@ import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/profile/models/profile_data.dart';
 import 'package:fitness_app/features/profile/providers/premium_provider.dart';
+import 'package:fitness_app/features/profile/providers/reminders_provider.dart';
+import 'package:fitness_app/services/reminder_notification_service.dart';
 
 /// Matches the prototype's `screens.account`: sign-in details, a change
 /// password form, subscription status, and the two exits — log out and
@@ -52,12 +54,24 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
       isDestructive: true,
     );
     if (!confirmed) return;
-    await ref.read(authServiceProvider).logout();
+    try {
+      await ref.read(authServiceProvider).deleteAccount();
+    } on AuthException catch (e) {
+      if (mounted) AppSnackBar.show(context, e.message);
+      return;
+    }
     ref.invalidate(customRoutinesProvider);
     ref.invalidate(favoritesProvider);
+    ref.invalidate(remindersProvider);
+    ref.invalidate(hurtStretchesProvider);
+    ref.invalidate(onboardingProfileProvider);
+    ref.invalidate(premiumProvider);
+    await ReminderNotificationService.instance.cancelAll();
     if (!context.mounted) return;
-    ref.read(appFlowProvider.notifier).showWelcome();
-    AppSnackBar.show(context, 'Account deleted.');
+    final messenger = ScaffoldMessenger.of(context);
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    ref.read(appFlowProvider.notifier).showSignup();
+    messenger.showSnackBar(const SnackBar(content: Text('Account deleted.')));
   }
 
   @override
@@ -158,6 +172,9 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
                 await ref.read(authServiceProvider).logout();
                 ref.invalidate(customRoutinesProvider);
                 ref.invalidate(favoritesProvider);
+                ref.invalidate(remindersProvider);
+                ref.invalidate(hurtStretchesProvider);
+                await ReminderNotificationService.instance.cancelAll();
                 if (context.mounted) {
                   ref.read(appFlowProvider.notifier).showWelcome();
                 }

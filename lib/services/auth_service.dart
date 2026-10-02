@@ -110,6 +110,41 @@ class AuthService {
 
   Future<void> logout() => _storage.delete(key: _tokenKey);
 
+  /// The saved stretch reminders, each `{ time: {hour, minute}, isOn, days }`.
+  Future<List<dynamic>> getReminders() => _reachable(() async {
+    final data = await _authedGet('/users/me/reminders');
+    return (data['reminders'] as List?) ?? <dynamic>[];
+  });
+
+  /// Replaces the saved reminders with [reminders] (their `toJson()` maps).
+  Future<void> saveReminders(List<Map<String, dynamic>> reminders) =>
+      _reachable(() async {
+        await _authedPut('/users/me/reminders', {'reminders': reminders});
+      });
+
+  /// Stretches the user marked as painful, each `{ stretch: id, name }`.
+  Future<List<dynamic>> getHurtStretches() => _reachable(() async {
+    final me = await _authedGet('/users/me');
+    return (me['hurtStretches'] as List?) ?? <dynamic>[];
+  });
+
+  Future<void> addHurtStretch(String stretchId) => _reachable(() async {
+    await _authedPut('/users/me/hurt-stretches/$stretchId');
+  });
+
+  Future<void> removeHurtStretch(String stretchId) => _reachable(() async {
+    await _authedDelete('/users/me/hurt-stretches/$stretchId');
+  });
+
+  /// Permanently deletes the signed-in account and all its data on the server,
+  /// then signs out on this phone. Throws [AuthException] if it couldn't be
+  /// deleted, in which case the user stays signed in.
+  Future<void> deleteAccount() => _reachable(() async {
+    if (!await hasSession()) return; // the sample account has nothing saved
+    await _authedDelete('/users/me');
+    await logout();
+  });
+
   Future<Map<String, dynamic>> getMe() => _authedGet('/users/me');
 
   Future<Map<String, dynamic>> updateMe(Map<String, dynamic> updates) =>
@@ -323,13 +358,23 @@ class AuthService {
     return _decode(response);
   }
 
-  Future<Map<String, dynamic>> _authedPut(String path) async {
+  Future<Map<String, dynamic>> _authedPut(
+    String path, [
+    Map<String, dynamic>? body,
+  ]) async {
     final host = await _getHost();
     final auth = await _authHeader();
     if (auth == null) throw AuthException('Not signed in');
 
     final response = await http
-        .put(Uri.parse('$host/api$path'), headers: {'Authorization': auth})
+        .put(
+          Uri.parse('$host/api$path'),
+          headers: {
+            'Authorization': auth,
+            if (body != null) 'Content-Type': 'application/json',
+          },
+          body: body == null ? null : jsonEncode(body),
+        )
         .timeout(const Duration(seconds: 10));
     return _decode(response);
   }

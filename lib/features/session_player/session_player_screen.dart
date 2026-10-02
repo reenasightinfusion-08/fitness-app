@@ -163,8 +163,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
 
   /// Reports that every stretch before the current one is done. Called on
   /// entering a stretch (not on every beat), so a save happens once per stretch.
-  void reportProgress() =>
-      widget.onProgress?.call(currentStep.stretchIndex);
+  void reportProgress() => widget.onProgress?.call(currentStep.stretchIndex);
 
   _SessionStep get currentStep => steps[stepIndex];
   StretchPreview get currentStretch => _stretches[currentStep.stretchIndex];
@@ -222,10 +221,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
       );
     }
     if (remaining <= 3 && remaining >= 1) {
-      AudioService.instance.cue(
-        CueKind.count,
-        mode: widget.guideMode,
-      );
+      AudioService.instance.cue(CueKind.count, mode: widget.guideMode);
     }
   }
 
@@ -435,8 +431,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
     final stretchThumbUrl = stretch.model?.thumbnailUrl;
 
     final nextThumbUrl = nextStretch?.model?.thumbnailUrl;
-    final hasNextThumb =
-        nextThumbUrl != null && nextThumbUrl.trim().isNotEmpty;
+    final hasNextThumb = nextThumbUrl != null && nextThumbUrl.trim().isNotEmpty;
 
     final cue = switch (step.kind) {
       _StepKind.getReady => stretch.setupCue,
@@ -544,33 +539,34 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                       child: nextStretch == null
                           ? null
                           : (hasNextThumb
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8.r),
-                                  child: Image.network(
-                                    nextThumbUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            CustomPaint(
-                                      painter: StretchFigurePainter(
-                                        pose: nextStretch.pose,
-                                        nearColor: colors.playerInk,
-                                        farColor: colors.playerDim,
-                                        groundColor: Colors.transparent,
-                                        showGround: false,
-                                      ),
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    child: Image.network(
+                                      nextThumbUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              CustomPaint(
+                                                painter: StretchFigurePainter(
+                                                  pose: nextStretch.pose,
+                                                  nearColor: colors.playerInk,
+                                                  farColor: colors.playerDim,
+                                                  groundColor:
+                                                      Colors.transparent,
+                                                  showGround: false,
+                                                ),
+                                              ),
                                     ),
-                                  ),
-                                )
-                              : CustomPaint(
-                                  painter: StretchFigurePainter(
-                                    pose: nextStretch.pose,
-                                    nearColor: colors.playerInk,
-                                    farColor: colors.playerDim,
-                                    groundColor: Colors.transparent,
-                                    showGround: false,
-                                  ),
-                                )),
+                                  )
+                                : CustomPaint(
+                                    painter: StretchFigurePainter(
+                                      pose: nextStretch.pose,
+                                      nearColor: colors.playerInk,
+                                      farColor: colors.playerDim,
+                                      groundColor: Colors.transparent,
+                                      showGround: false,
+                                    ),
+                                  )),
                     ),
                     12.horizontalSpace,
                     Expanded(
