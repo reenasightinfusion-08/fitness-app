@@ -13,7 +13,8 @@ import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/home/widgets/stretch_thumbnail.dart';
 import 'package:fitness_app/features/stretch_detail/models/stretch_model.dart';
 import 'package:fitness_app/services/auth_service.dart';
-import 'package:fitness_app/services/stretch_service.dart' show StretchServiceException;
+import 'package:fitness_app/services/stretch_service.dart'
+    show StretchServiceException;
 
 /// Matches the prototype's `screens.builder`: name a routine, add stretches
 /// from the library, drag to reorder and tune each hold time, then save —
@@ -91,10 +92,7 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
   });
 
   void _adjustHold(int index, int delta) => setState(() {
-    final next = (_items[index].holdSeconds + delta).clamp(
-      _minHold,
-      _maxHold,
-    );
+    final next = (_items[index].holdSeconds + delta).clamp(_minHold, _maxHold);
     _items[index] = _items[index].copyWith(holdSeconds: next);
   });
 
@@ -383,7 +381,7 @@ class _BuilderItemTile extends StatelessWidget {
                       child: Row(
                         children: [
                           AppStepper(
-                           isTransparent: true,
+                            isTransparent: true,
                             valueLabel: '${item.holdSeconds}s',
                             onDecrement: item.holdSeconds <= 10
                                 ? null
@@ -394,7 +392,7 @@ class _BuilderItemTile extends StatelessWidget {
                           ),
                           6.horizontalSpace,
                           AppStepper(
-                           isTransparent: true,
+                            isTransparent: true,
                             valueLabel: '×${item.repCount}',
                             onDecrement: item.repCount <= 1
                                 ? null
@@ -464,8 +462,14 @@ class _StretchPickerSheetState extends ConsumerState<_StretchPickerSheet> {
     final library = ref.watch(stretchesProvider);
     final results = _filtered(library.valueOrNull ?? const []);
 
+    // Fills the sheet (it opens at 85% of the space below the status bar,
+    // minus its own handle and padding), so the button sits at the bottom.
+    final media = MediaQuery.of(context);
+    final sheetHeight =
+        0.85 * (media.size.height - media.viewPadding.top) - 66.h;
+
     return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.70,
+      height: sheetHeight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -536,20 +540,19 @@ class _StretchPickerSheetState extends ConsumerState<_StretchPickerSheet> {
               ),
             ),
           ),
-          14.verticalSpace,
-          AppButton(
-            label: _selected.isEmpty
-                ? 'Add stretches'
-                : 'Add ${_selected.length} '
-                      'stretch${_selected.length == 1 ? '' : 'es'}',
-            onPressed: _selected.isEmpty
-                ? null
-                : () => Navigator.of(context).pop(<StretchModel>[
-                    for (final stretch
-                        in library.valueOrNull ?? const <StretchModel>[])
-                      if (_selected.contains(stretch.id)) stretch,
-                  ]),
-          ),
+          if (_selected.isNotEmpty) ...[
+            14.verticalSpace,
+            AppButton(
+              label:
+                  'Add ${_selected.length} '
+                  'stretch${_selected.length == 1 ? '' : 'es'}',
+              onPressed: () => Navigator.of(context).pop(<StretchModel>[
+                for (final stretch
+                    in library.valueOrNull ?? const <StretchModel>[])
+                  if (_selected.contains(stretch.id)) stretch,
+              ]),
+            ),
+          ],
         ],
       ),
     );
