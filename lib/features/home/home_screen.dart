@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/explore/explore_view.dart';
@@ -9,16 +11,14 @@ import 'package:fitness_app/features/profile/widgets/profile_view.dart';
 import 'package:fitness_app/features/progress/widgets/progress_view.dart';
 
 /// The app's real home: bottom-tabbed shell around the Today screen.
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => HomeScreenState();
+  ConsumerState<HomeScreen> createState() => HomeScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> {
-  int tabIndex = 0;
-
+class HomeScreenState extends ConsumerState<HomeScreen> {
   static const List<AppNavItemModel> navItems = [
     AppNavItemModel(
       icon: Icons.home_outlined,
@@ -50,6 +50,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final tabIndex = ref.watch(homeTabProvider).index;
     return Scaffold(
       backgroundColor: colors.ground,
       body: SafeArea(
@@ -68,7 +69,8 @@ class HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: AppBottomNav(
         items: navItems,
         currentIndex: tabIndex,
-        onTap: (index) => setState(() => tabIndex = index),
+        onTap: (index) =>
+            ref.read(homeTabProvider.notifier).show(HomeTab.values[index]),
       ),
     );
   }

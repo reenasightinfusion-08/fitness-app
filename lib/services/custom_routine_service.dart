@@ -31,6 +31,13 @@ class CustomRoutineService {
     });
   }
 
+  /// Whether every stretch of [routine] can be stored on the server.
+  bool canSave(RoutineSummary routine) =>
+      routine.stretches.isNotEmpty &&
+      routine.stretches.every(
+        (item) => item.model != null || _poseKeyOf(item.pose) != null,
+      );
+
   Future<void> delete(String id) => authService.deleteCustomRoutine(id);
 
   /// One routine item. The server needs the stretch's id or its `poseKey`;

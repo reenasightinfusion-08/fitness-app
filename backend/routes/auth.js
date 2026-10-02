@@ -5,6 +5,7 @@ const User = require('../models/User');
 const { sendCode } = require('../utils/mailer');
 const { OAuth2Client } = require('google-auth-library');
 const { ok, fail, asyncHandler } = require('../utils/response');
+const requireAuth = require('../middleware/auth');
 
 const sign = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES || '1h' });
@@ -205,5 +206,38 @@ router.post('/reset-password', async (req, res) => {
     fail(res, 500, 'Reset failed');
   }
 });
+
+// POST /api/auth/verify-reset-code { email, code }
+// Checks a reset code without using it up, so the app can show the new-password
+// step only after the code is right. reset-password still checks it again.
+router.post('/verify-reset-code', asyncHandler(async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const user = await User.findOne({
+    email,
+    resetCode: String(req.body.code || ''),
+    resetCodeExpires: { $gt: new Date() },
+  });
+  if (!user) return fail(res, 400, 'Invalid or expired code');
+  ok(res, null, 'Code verified');
+}));
+
+// POST /api/auth/change-password { currentPassword, newPassword }  (signed in)
+router.post('/change-password', requireAuth, asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!newPassword || newPassword.length < 8) {
+    return fail(res, 400, 'Password must be at least 8 characters');
+  }
+  const user = await User.findById(req.userId);
+  if (!user) return fail(res, 404, 'User not found');
+  if (!user.passwordHash) {
+    return fail(res, 400, 'This account has no password yet. Use "Forgot current password?" to set one.');
+  }
+  if (!(await bcrypt.compare(currentPassword || '', user.passwordHash))) {
+    return fail(res, 400, 'Current password is incorrect');
+  }
+  user.passwordHash = await bcrypt.hash(newPassword, 12);
+  await user.save();
+  ok(res, null, 'Password updated');
+}));
 
 module.exports = router;

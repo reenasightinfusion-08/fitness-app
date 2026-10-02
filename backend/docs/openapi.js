@@ -499,6 +499,39 @@ module.exports = {
         },
       },
     },
+    '/api/auth/verify-reset-code': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Check a password reset code without using it',
+        requestBody: jsonBody({
+          type: 'object',
+          required: ['email', 'code'],
+          properties: { email: emailProp, code: { type: 'string', example: '123456' } },
+        }),
+        responses: {
+          200: okResponse('Code is valid', nullData, 'Code verified'),
+          400: err('Invalid or expired code', 'Invalid or expired code'),
+        },
+      },
+    },
+    '/api/auth/change-password': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Change the password of the signed-in user',
+        security: auth,
+        requestBody: jsonBody({
+          type: 'object',
+          required: ['currentPassword', 'newPassword'],
+          properties: { currentPassword: { type: 'string' }, newPassword: { type: 'string', minLength: 8 } },
+        }),
+        responses: {
+          200: okResponse('Password updated', nullData, 'Password updated'),
+          400: err('Weak new password, wrong current password, or account without a password', 'Current password is incorrect'),
+          401: err('Missing or invalid token', 'No token provided'),
+          404: err('User not found', 'User not found'),
+        },
+      },
+    },
     '/api/users/me': {
       get: {
         tags: ['Users'],

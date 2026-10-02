@@ -118,6 +118,21 @@ class AuthService {
     'newPassword': newPassword,
   });
 
+  /// Checks a reset code without using it up.
+  Future<void> verifyResetCode({required String email, required String code}) =>
+      _post('/verify-reset-code', {'email': email, 'code': code});
+
+  /// Changes the signed-in user's password; the server checks [currentPassword].
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) => _reachable(() async {
+    await _authedPost('/auth/change-password', {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    });
+  });
+
   Future<bool> hasSession() async =>
       (await _storage.read(key: _tokenKey)) != null;
 

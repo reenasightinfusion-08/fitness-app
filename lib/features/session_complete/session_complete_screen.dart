@@ -47,7 +47,7 @@ class SessionCompleteScreenState
   SessionFeel? feel;
   final Set<String> hurtNames = {};
   bool isSaving = false;
-  bool isSaved = false;
+  bool canSave = false;
 
   /// The routine's stretches by name, so a tapped chip can find the saved
   /// stretch behind it. Demo routines have no saved stretches (no `model`).
@@ -60,6 +60,22 @@ class SessionCompleteScreenState
   void initState() {
     super.initState();
     unawaited(_showAlreadyMarked());
+    unawaited(_checkCanSave());
+  }
+
+  /// The save option only shows when the user is signed in, the routine is
+  /// not already one of theirs, and the server can store all its stretches.
+  Future<void> _checkCanSave() async {
+    final plan = widget.plan;
+    try {
+      if (!await ref.read(authServiceProvider).hasSession()) return;
+      if (!ref.read(customRoutineServiceProvider).canSave(plan)) return;
+      final existing = await ref.read(customRoutinesProvider.future);
+      if (plan.id != null && existing.any((r) => r.id == plan.id)) return;
+    } catch (_) {
+      return;
+    }
+    if (mounted) setState(() => canSave = true);
   }
 
   /// Pre-selects stretches the user marked as hurt before, so tapping one
@@ -98,23 +114,15 @@ class SessionCompleteScreenState
     }
   }
 
-  /// Saves this session's routine to "Built by you" in the Mine tab. A name
-  /// the user already has gets " (my version)" so the server accepts it.
+  /// Saves this session's routine to "Built by you" in the Mine tab, then
+  /// goes there. A name the user already has gets " (my version)" so the
+  /// server accepts it.
   Future<void> _saveAsMyRoutine() async {
-    if (isSaving || isSaved) return;
+    if (isSaving) return;
     setState(() => isSaving = true);
     final plan = widget.plan;
     try {
       final existing = await ref.read(customRoutinesProvider.future);
-      if (plan.id != null && existing.any((r) => r.id == plan.id)) {
-        if (!mounted) return;
-        setState(() {
-          isSaving = false;
-          isSaved = true;
-        });
-        AppSnackBar.show(context, 'Already in your routines.');
-        return;
-      }
       final taken = {for (final r in existing) r.name};
       var name = plan.name;
       for (var n = 1; taken.contains(name); n++) {
@@ -131,12 +139,6 @@ class SessionCompleteScreenState
               transitionSeconds: plan.transitionSeconds,
             ),
           );
-      if (!mounted) return;
-      setState(() {
-        isSaving = false;
-        isSaved = true;
-      });
-      AppSnackBar.showSuccess(context, 'Saved to your routines.');
     } catch (error) {
       if (!mounted) return;
       setState(() => isSaving = false);
@@ -146,7 +148,12 @@ class SessionCompleteScreenState
             ? error.message
             : "Couldn't save your routine. Try again.",
       );
+      return;
     }
+    if (!mounted) return;
+    AppSnackBar.showSuccess(context, 'Saved to your routines.');
+    ref.read(homeTabProvider.notifier).show(HomeTab.mine);
+    _finish();
   }
 
   /// A session can be launched either from the tabbed Home shell or from
@@ -263,12 +270,13 @@ class SessionCompleteScreenState
                   label: 'Done',
                   onPressed: _finish,
                 ),
-                AppButton(
-                  label: isSaved ? 'Saved to my routines' : 'Save as my routine',
-                  variant: AppButtonVariant.text,
-                  isLoading: isSaving,
-                  onPressed: isSaved ? null : _saveAsMyRoutine,
-                ),
+                if (canSave)
+                  AppButton(
+                    label: 'Save as my routine',
+                    variant: AppButtonVariant.text,
+                    isLoading: isSaving,
+                    onPressed: _saveAsMyRoutine,
+                  ),
               ],
             ),
           ],

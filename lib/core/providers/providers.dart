@@ -10,3 +10,4 @@ export 'package:fitness_app/core/providers/stretches_provider.dart';
 export 'package:fitness_app/core/providers/theme_mode_provider.dart';
 export 'package:fitness_app/core/providers/todays_plan_provider.dart';
 export 'package:fitness_app/core/providers/plan_overview_provider.dart';
+export 'package:fitness_app/core/providers/home_tab_provider.dart';
