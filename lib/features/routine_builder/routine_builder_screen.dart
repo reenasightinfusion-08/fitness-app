@@ -464,84 +464,94 @@ class _StretchPickerSheetState extends ConsumerState<_StretchPickerSheet> {
     final library = ref.watch(stretchesProvider);
     final results = _filtered(library.valueOrNull ?? const []);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('Add stretches', style: AppTextStyle.titleLarge),
-        14.verticalSpace,
-        AppTextField(
-          controller: _searchController,
-          validator: AppValidators.none,
-          variant: AppTextFieldVariant.search,
-          hint: 'Search stretches',
-          onChanged: (value) => setState(() => _query = value),
-        ),
-        12.verticalSpace,
-        AppChipGroup(
-          isScrollable: true,
-          children: [
-            AppChip(
-              label: 'All areas',
-              isSelected: _area == null,
-              onTap: () => setState(() => _area = null),
-            ),
-            for (final area in ExploreDemoData.areas)
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.70,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Add stretches', style: AppTextStyle.titleLarge),
+          14.verticalSpace,
+          AppTextField(
+            controller: _searchController,
+            validator: AppValidators.none,
+            variant: AppTextFieldVariant.search,
+            hint: 'Search stretches',
+            onChanged: (value) => setState(() => _query = value),
+          ),
+          12.verticalSpace,
+          AppChipGroup(
+            isScrollable: true,
+            children: [
               AppChip(
-                label: area.label,
-                isSelected: _area == area.key,
-                onTap: () => setState(() => _area = area.key),
+                label: 'All areas',
+                isSelected: _area == null,
+                onTap: () => setState(() => _area = null),
               ),
-          ],
-        ),
-        14.verticalSpace,
-        if (library.isLoading)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 24.h),
-            child: const Center(child: AppLoader()),
-          )
-        else if (library.hasError)
-          AppEmptyState(
-            icon: Icons.cloud_off_rounded,
-            title: "Couldn't load stretches",
-            message: library.error is StretchServiceException
-                ? library.error.toString()
-                : 'Check your connection and try again.',
-            actionLabel: 'Try again',
-            onAction: () => ref.invalidate(stretchesProvider),
-          )
-        else if (results.isEmpty)
-          const AppEmptyState(
-            icon: Icons.search_off_rounded,
-            title: 'No stretches match',
-            message: 'Try a different search or area.',
-          )
-        else
-          for (final stretch in results)
-            _PickerRow(
-              stretch: stretch,
-              isSelected: _selected.contains(stretch.id),
-              onTap: () => setState(() {
-                if (!_selected.remove(stretch.id)) {
-                  _selected.add(stretch.id);
-                }
-              }),
+              for (final area in ExploreDemoData.areas)
+                AppChip(
+                  label: area.label,
+                  isSelected: _area == area.key,
+                  onTap: () => setState(() => _area = area.key),
+                ),
+            ],
+          ),
+          14.verticalSpace,
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  if (library.isLoading)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24.h),
+                      child: const Center(child: AppLoader()),
+                    )
+                  else if (library.hasError)
+                    AppEmptyState(
+                      icon: Icons.cloud_off_rounded,
+                      title: "Couldn't load stretches",
+                      message: library.error is StretchServiceException
+                          ? library.error.toString()
+                          : 'Check your connection and try again.',
+                      actionLabel: 'Try again',
+                      onAction: () => ref.invalidate(stretchesProvider),
+                    )
+                  else if (results.isEmpty)
+                    const AppEmptyState(
+                      icon: Icons.search_off_rounded,
+                      title: 'No stretches match',
+                      message: 'Try a different search or area.',
+                    )
+                  else
+                    for (final stretch in results)
+                      _PickerRow(
+                        stretch: stretch,
+                        isSelected: _selected.contains(stretch.id),
+                        onTap: () => setState(() {
+                          if (!_selected.remove(stretch.id)) {
+                            _selected.add(stretch.id);
+                          }
+                        }),
+                      ),
+                ],
+              ),
             ),
-        18.verticalSpace,
-        AppButton(
-          label: _selected.isEmpty
-              ? 'Add stretches'
-              : 'Add ${_selected.length} '
-                    'stretch${_selected.length == 1 ? '' : 'es'}',
-          onPressed: _selected.isEmpty
-              ? null
-              : () => Navigator.of(context).pop(<StretchModel>[
-                  for (final stretch
-                      in library.valueOrNull ?? const <StretchModel>[])
-                    if (_selected.contains(stretch.id)) stretch,
-                ]),
-        ),
-      ],
+          ),
+          14.verticalSpace,
+          AppButton(
+            label: _selected.isEmpty
+                ? 'Add stretches'
+                : 'Add ${_selected.length} '
+                      'stretch${_selected.length == 1 ? '' : 'es'}',
+            onPressed: _selected.isEmpty
+                ? null
+                : () => Navigator.of(context).pop(<StretchModel>[
+                    for (final stretch
+                        in library.valueOrNull ?? const <StretchModel>[])
+                      if (_selected.contains(stretch.id)) stretch,
+                  ]),
+          ),
+        ],
+      ),
     );
   }
 }
