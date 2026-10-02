@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:fitness_app/core/theme/theme.dart';
@@ -13,14 +12,22 @@ class AppBottomSheet {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
+      enableDrag: true,
+      isDismissible: true,
       useSafeArea: true,
       backgroundColor: colors.surface,
       barrierColor: colors.scrim,
       shape: RoundedRectangleBorder(borderRadius: AppBorderRadius.sheet),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.3,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => AppSheetBody(
+          scrollController: scrollController,
+          child: child,
+        ),
       ),
-      builder: (context) => AppSheetBody(child: child),
     );
   }
 
@@ -47,12 +54,14 @@ class AppBottomSheet {
 }
 
 class AppSheetBody extends StatelessWidget {
-  const AppSheetBody({super.key, required this.child});
+  const AppSheetBody({super.key, required this.child, this.scrollController});
 
   final Widget child;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
+    controller: scrollController,
     padding: EdgeInsets.fromLTRB(
       18.w,
       8.h,
