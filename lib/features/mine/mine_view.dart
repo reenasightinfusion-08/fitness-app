@@ -59,10 +59,9 @@ class MineView extends ConsumerWidget {
       for (final routine in customRoutines)
         if (routine.id != null) routine.id,
     };
-    // The newest paused library routine shows in the Today banner; the rest
-    // live here, so a user can resume any one of them.
+    // All paused routines show here so the user can resume any of them.
     final otherPaused =
-        ref.watch(pausedUserRoutinesProvider).valueOrNull?.skip(1).toList() ??
+        ref.watch(pausedUserRoutinesProvider).valueOrNull ??
         const <ActiveRoutineModel>[];
     // A favourite is just an id; look it up among the library and custom routines.
     final byId = {
@@ -247,8 +246,7 @@ class _RoutineCard extends StatelessWidget {
   Widget build(BuildContext context) => AppRoutineCard(
     title: routine.name,
     meta:
-        '${routine.minutes} min · ${routine.stretches.length} stretches · '
-        '${routine.sequenceLabel}',
+        '${routine.durationText} · ${routine.stretches.length} stretches',
     thumbnail: StretchThumbnail(
       stretch: routine.stretches.first,
       size: AppThumbSize.large,

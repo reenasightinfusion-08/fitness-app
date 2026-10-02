@@ -145,7 +145,7 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                   ),
                   16.verticalSpace,
                   Text(
-                    '${widget.plan.name} · ${widget.plan.minutes} min',
+                    '${widget.plan.name} · ${widget.plan.durationText}',
                     style: AppTextStyle.eyebrow.copyWith(color: colors.ink3),
                   ),
                   4.verticalSpace,

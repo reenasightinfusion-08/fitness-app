@@ -46,7 +46,7 @@ class TodayPlanCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Today's plan · ${plan.minutes} min",
+            "Today's plan · ${plan.durationText}",
             style: AppTextStyle.eyebrow.copyWith(color: colors.ink3),
           ),
           2.verticalSpace,

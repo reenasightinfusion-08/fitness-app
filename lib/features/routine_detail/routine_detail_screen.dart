@@ -121,39 +121,43 @@ class RoutineDetailScreen extends ConsumerWidget {
                   ),
                   16.verticalSpace,
                   Text(routine.name, style: AppTextStyle.headline),
-                  if (routine.blurb != null) ...[
+                  if (routine.blurb != null && routine.blurb!.trim().isNotEmpty) ...[
                     6.verticalSpace,
                     Text(
-                      routine.blurb!,
+                      routine.blurb!.trim(),
                       style: AppTextStyle.bodyMedium.copyWith(
                         color: colors.ink2,
                       ),
                     ),
                   ],
                   16.verticalSpace,
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AppFactTile(
-                          label: 'Time',
-                          value: routine.durationText,
+                  IntrinsicHeight(
+
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: AppFactTile(
+                            label: 'Time',
+                            value: routine.durationText,
+                          ),
                         ),
-                      ),
-                      8.horizontalSpace,
-                      Expanded(
-                        child: AppFactTile(
-                          label: 'Level',
-                          value: routine.level.label,
+                        8.horizontalSpace,
+                        Expanded(
+                          child: AppFactTile(
+                            label: 'Level',
+                            value: routine.level.label,
+                          ),
                         ),
-                      ),
-                      8.horizontalSpace,
-                      Expanded(
-                        child: AppFactTile(
-                          label: 'Equipment',
-                          value: routine.equipmentLabel,
+                        8.horizontalSpace,
+                        Expanded(
+                          child: AppFactTile(
+                            label: 'Equipment',
+                            value: routine.equipmentLabel,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   12.verticalSpace,
                   Row(

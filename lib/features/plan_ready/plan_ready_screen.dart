@@ -207,7 +207,7 @@ class PlanDayCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Day ${day.day} · ${routine.minutes} min · ${routine.stretches.length} stretches',
+                  'Day ${day.day} · ${routine.durationText} · ${routine.stretches.length} stretches',
                   style: AppTextStyle.eyebrow.copyWith(color: colors.ink3),
                 ),
               ),

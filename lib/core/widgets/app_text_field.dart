@@ -21,6 +21,7 @@ class AppTextField extends StatefulWidget {
     this.variant = AppTextFieldVariant.normal,
     this.keyboardType,
     this.textInputAction,
+    this.textCapitalization = TextCapitalization.none,
     this.autofillHints,
     this.inputFormatters,
     this.maxLines = 1,
@@ -39,6 +40,7 @@ class AppTextField extends StatefulWidget {
   final AppTextFieldVariant variant;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
+  final TextCapitalization textCapitalization;
   final Iterable<String>? autofillHints;
   final List<TextInputFormatter>? inputFormatters;
   final int maxLines;
@@ -83,6 +85,7 @@ class AppTextFieldState extends State<AppTextField> {
           obscureText: isPassword && isObscured,
           keyboardType: isOtp ? TextInputType.number : widget.keyboardType,
           textInputAction: widget.textInputAction,
+          textCapitalization: widget.textCapitalization,
           autofillHints: isOtp
               ? const [AutofillHints.oneTimeCode]
               : widget.autofillHints,

@@ -12,6 +12,8 @@ class OnboardingProfileController extends Notifier<OnboardingProfile> {
   @override
   OnboardingProfile build() => const OnboardingProfile();
 
+  void reset() => state = const OnboardingProfile();
+
   void loadFromApi(Map<String, dynamic> json) =>
       state = OnboardingProfile.fromUserJson(json);
 

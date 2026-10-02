@@ -58,6 +58,7 @@ class BasicStep extends ConsumerWidget {
           label: 'First name',
           hint: 'What should we call you?',
           initialValue: profile.name,
+          textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
           validator: AppValidators.required,
           onChanged: controller.setName,

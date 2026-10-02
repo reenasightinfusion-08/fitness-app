@@ -18,10 +18,10 @@ class ExploreArea {
 /// keeps only the longer ones.
 enum ExploreTimeFilter {
   any('Any length'),
-  upTo5('5 min or less', maxMinutes: 6),
-  upTo10('Up to 10', maxMinutes: 11),
-  upTo15('Up to 15', maxMinutes: 16),
-  over15('15+ min', minMinutes: 16);
+  upTo5('5 min or less', maxMinutes: 5),
+  upTo10('Up to 10 min', maxMinutes: 10),
+  upTo15('Up to 15 min', maxMinutes: 15),
+  over15('15+ min', minMinutes: 15);
 
   const ExploreTimeFilter(this.label, {this.maxMinutes, this.minMinutes});
 

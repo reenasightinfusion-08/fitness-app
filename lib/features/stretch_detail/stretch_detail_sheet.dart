@@ -125,37 +125,40 @@ class StretchDetailSheet extends StatelessWidget {
             ),
           ],
           12.verticalSpace,
-          Row(
-            children: [
-              Expanded(
-                child: AppFactTile(
-                  label: 'Position',
-                  value: guide.position.label,
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: AppFactTile(
+                    label: 'Position',
+                    value: guide.position.label,
+                  ),
                 ),
-              ),
-              8.horizontalSpace,
-              Expanded(
-                child: AppFactTile(
-                  label: 'Level',
-                  value: guide.level.label,
+                8.horizontalSpace,
+                Expanded(
+                  child: AppFactTile(
+                    label: 'Level',
+                    value: guide.level.label,
+                  ),
                 ),
-              ),
-              8.horizontalSpace,
-              Expanded(
-                child: AppFactTile(
-                  label: 'Equipment',
-                  value: guide.equipment.isEmpty
-                      ? 'None'
-                      : guide.equipment.map((item) {
-                          final trimmed = item.trim();
-                          if (trimmed.isEmpty) return trimmed;
-                          final mapped = equipmentLabels[trimmed.toLowerCase()];
-                          if (mapped != null) return mapped;
-                          return '${trimmed[0].toUpperCase()}${trimmed.substring(1)}';
-                        }).join(', '),
+                8.horizontalSpace,
+                Expanded(
+                  child: AppFactTile(
+                    label: 'Equipment',
+                    value: guide.equipment.isEmpty
+                        ? 'None'
+                        : guide.equipment.map((item) {
+                            final trimmed = item.trim();
+                            if (trimmed.isEmpty) return trimmed;
+                            final mapped = equipmentLabels[trimmed.toLowerCase()];
+                            if (mapped != null) return mapped;
+                            return '${trimmed[0].toUpperCase()}${trimmed.substring(1)}';
+                          }).join(', '),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           16.verticalSpace,
           if (guide.feel.isNotEmpty) ...[

@@ -157,12 +157,17 @@ class RoutineSummary {
       orElse: () => RoutineLevel.beginner,
     );
 
-    final totalSeconds = json['totalSeconds'] as int? ?? 0;
+    final rawMinutes = (json['minutes'] as num?)?.toInt() ??
+        (json['durationMinutes'] as num?)?.toInt() ??
+        (json['duration'] as num?)?.toInt();
+    final totalSeconds = (json['totalSeconds'] as num?)?.toInt() ??
+        (rawMinutes != null ? rawMinutes * 60 : 0);
 
     return RoutineSummary(
       id: json['_id'] as String?,
       name: json['name'] as String? ?? 'Untitled Routine',
       totalSeconds: totalSeconds,
+      minutes: rawMinutes,
       stretches: stretches,
       blurb: json['description'] as String?,
       level: level,
@@ -179,14 +184,22 @@ class RoutineSummary {
   final int totalSeconds;
   final List<StretchPreview> stretches;
 
-  /// Computed minutes from totalSeconds (rounded up for full minute counts).
-  int get minutes => (totalSeconds / 60).ceil();
+  int get effectiveTotalSeconds {
+    if (totalSeconds > 0) return totalSeconds;
+    if (stretches.isNotEmpty) {
+      return stretches.fold<int>(0, (sum, item) => sum + item.totalHoldSeconds);
+    }
+    return 0;
+  }
 
-  /// Calculates whole minutes component from totalSeconds.
-  int get calculatedMinutes => totalSeconds ~/ 60;
+  /// Computed minutes from effectiveTotalSeconds (rounded up for full minute counts).
+  int get minutes => (effectiveTotalSeconds / 60).ceil();
 
-  /// Calculates remainder seconds component from totalSeconds.
-  int get calculatedSeconds => totalSeconds % 60;
+  /// Calculates whole minutes component from effectiveTotalSeconds.
+  int get calculatedMinutes => effectiveTotalSeconds ~/ 60;
+
+  /// Calculates remainder seconds component from effectiveTotalSeconds.
+  int get calculatedSeconds => effectiveTotalSeconds % 60;
 
   /// Formatted duration string for UI display (e.g. "2 min 30 sec", "1 min 20 sec", "45 sec").
   String get durationText {

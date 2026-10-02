@@ -6,6 +6,7 @@ import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/app_validators.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/auth/widgets/auth_social_buttons.dart';
+import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/services/auth_service.dart';
 
 /// Matches the prototype's `screens.signup`. Email/password are local
@@ -49,6 +50,7 @@ class SignupScreenState extends ConsumerState<SignupScreen> {
           .read(authServiceProvider)
           .signup(email: email, password: passwordController.text);
       if (!mounted) return;
+      ref.invalidate(onboardingProfileProvider);
       ref.read(pendingAuthProvider.notifier).start(email);
       ref.read(appFlowProvider.notifier).showVerifyEmail();
     } on AuthException catch (e) {

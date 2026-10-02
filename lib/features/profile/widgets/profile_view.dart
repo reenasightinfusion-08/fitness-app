@@ -109,6 +109,7 @@ class ProfileView extends ConsumerWidget {
           variant: AppButtonVariant.secondary,
           onPressed: () async {
             await ref.read(authServiceProvider).logout();
+            ref.invalidate(onboardingProfileProvider);
             ref.invalidate(customRoutinesProvider);
             ref.invalidate(favoritesProvider);
             ref.invalidate(remindersProvider);

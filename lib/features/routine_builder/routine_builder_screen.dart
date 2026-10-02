@@ -186,6 +186,7 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
                     validator: AppValidators.none,
                     label: 'Name',
                     hint: 'e.g. Post-run hips',
+                    textCapitalization: TextCapitalization.words,
                     textInputAction: TextInputAction.done,
                   ),
                   20.verticalSpace,
