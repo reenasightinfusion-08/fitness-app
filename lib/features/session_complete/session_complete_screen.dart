@@ -7,6 +7,7 @@ import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
+import 'package:fitness_app/features/progress/providers/progress_stats_provider.dart';
 
 enum SessionFeel { easy, right, hard }
 
@@ -75,7 +76,7 @@ class SessionCompleteScreenState
                 padding: AppInsets.page,
                 children: [
                   AppStreakBadge(
-                    days: TodayDemoData.currentStreakDays,
+                    days: ref.watch(progressStatsProvider).streakDays,
                     isLarge: true,
                   ),
                   14.verticalSpace,

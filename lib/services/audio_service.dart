@@ -224,7 +224,7 @@ class AudioService {
     switch (mode) {
       case GuideMode.voice:
         if (kind == CueKind.count) {
-          return text != null ? speak(text, rate: 1.4) : count();
+          return count();
         }
         if (text != null && text.isNotEmpty) return speak(text, rate: rate);
         return Future.value();

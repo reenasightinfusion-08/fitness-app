@@ -9,8 +9,26 @@ import 'package:fitness_app/core/utils/greeting.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/home/models/active_routine_model.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
+import 'package:fitness_app/features/profile/models/session_settings.dart';
+import 'package:fitness_app/features/profile/providers/session_settings_provider.dart';
 import 'package:fitness_app/features/progress/models/progress_data.dart';
+import 'package:fitness_app/features/progress/providers/progress_stats_provider.dart';
 import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
+
+const _monthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
 
 /// Matches the prototype's `screens.progress`: streak/minutes/session
 /// stats, a month calendar, where-you've-stretched body map, flexibility
@@ -21,7 +39,9 @@ class ProgressView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
-    final now = DateTime.now();
+    final stats = ref.watch(progressStatsProvider);
+    final now = stats.today;
+    final dayStartHour = ref.watch(sessionSettingsProvider).dayStartHour;
     final historyAsync = ref.watch(routineHistoryProvider);
 
     // The areas marked tight or sore during setup — same source the
@@ -38,21 +58,21 @@ class ProgressView extends ConsumerWidget {
           children: [
             Expanded(
               child: AppStatTile(
-                value: '${ProgressDemoData.currentStreakDays}',
+                value: '${stats.streakDays}',
                 label: 'day streak',
               ),
             ),
             8.horizontalSpace,
             Expanded(
               child: AppStatTile(
-                value: '${ProgressDemoData.minutesThisWeek}',
+                value: '${stats.minutesThisWeek}',
                 label: 'min this week',
               ),
             ),
             8.horizontalSpace,
             Expanded(
               child: AppStatTile(
-                value: '${ProgressDemoData.totalSessions}',
+                value: '${stats.totalSessions}',
                 label: 'sessions',
               ),
             ),
@@ -67,12 +87,12 @@ class ProgressView extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Last 5 weeks',
+                      _monthNames[now.month - 1],
                       style: AppTextStyle.titleMedium,
                     ),
                   ),
                   Text(
-                    'Days start at 5:00 am',
+                    'Days start at ${dayStartHourLabel(dayStartHour)}',
                     style: AppTextStyle.meta.copyWith(color: colors.ink2),
                   ),
                 ],
@@ -81,7 +101,7 @@ class ProgressView extends ConsumerWidget {
               AppCalendarGrid(
                 leadingBlankDays: DateTime(now.year, now.month, 1).weekday - 1,
                 dayCount: DateUtils.getDaysInMonth(now.year, now.month),
-                completedDays: ProgressDemoData.completedDaysInMonth(now),
+                completedDays: stats.completedDaysThisMonth,
                 today: now.day,
               ),
             ],

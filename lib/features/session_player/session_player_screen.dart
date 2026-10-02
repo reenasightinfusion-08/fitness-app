@@ -224,7 +224,6 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
     if (remaining <= 3 && remaining >= 1) {
       AudioService.instance.cue(
         CueKind.count,
-        text: '$remaining',
         mode: widget.guideMode,
       );
     }

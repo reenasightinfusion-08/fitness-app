@@ -10,6 +10,7 @@ import 'package:fitness_app/features/get_ready/get_ready_screen.dart';
 import 'package:fitness_app/features/home/models/active_routine_model.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/home/widgets/stretch_thumbnail.dart';
+import 'package:fitness_app/features/progress/providers/progress_stats_provider.dart';
 import 'package:fitness_app/features/home/widgets/today_plan_card.dart';
 import 'package:fitness_app/features/home/widgets/todays_plan_error_card.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
@@ -26,6 +27,8 @@ class TodayView extends ConsumerWidget {
     final profile = ref.watch(onboardingProfileProvider);
     final routinesAsync = ref.watch(routinesProvider);
     final planAsync = ref.watch(todaysPlanProvider);
+    final stats = ref.watch(progressStatsProvider);
+    final streakDays = stats.streakDays;
     final planActive = ref.watch(todaysPlanActiveProvider).valueOrNull;
     final pausedUser = ref.watch(pausedUserRoutinesProvider).valueOrNull ?? const [];
     final paused = pausedUser.isNotEmpty ? pausedUser.first : null;
@@ -55,7 +58,7 @@ class TodayView extends ConsumerWidget {
               ),
             ),
             8.horizontalSpace,
-            const AppStreakBadge(days: TodayDemoData.currentStreakDays),
+            AppStreakBadge(days: streakDays),
           ],
         ),
         18.verticalSpace,
@@ -175,7 +178,7 @@ class TodayView extends ConsumerWidget {
         24.verticalSpace,
         Text('This week', style: AppTextStyle.sectionTitle),
         10.verticalSpace,
-        AppCard(child: AppWeekStrip(days: TodayDemoData.weekStrip(now))),
+        AppCard(child: AppWeekStrip(days: stats.weekStrip())),
       ],
     );
   }
