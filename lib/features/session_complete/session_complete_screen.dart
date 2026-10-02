@@ -192,7 +192,7 @@ class SessionCompleteScreenState
                   Text('Nicely done.', style: AppTextStyle.headlineLarge),
                   6.verticalSpace,
                   Text(
-                    '${plan.name} · ${plan.minutes} min · '
+                    '${plan.name} · ${plan.durationText} · '
                     '${plan.stretches.length} stretches',
                     style: AppTextStyle.bodyMedium.copyWith(
                       color: colors.ink2,
