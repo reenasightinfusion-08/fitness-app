@@ -10,16 +10,6 @@ const Map<GuidanceMode, String> guidanceModeLabels = {
   GuidanceMode.silent: 'Silent',
 };
 
-/// Extra time added to every hold, in seconds — stepped by 5, matching
-/// the prototype's `holdPlus`.
-const int holdStepSeconds = 5;
-const int minExtraHoldSeconds = -15;
-const int maxExtraHoldSeconds = 30;
-
-/// The prototype's `transExtra` segments: standard, or +5s / +10s per
-/// transition.
-const List<int> transitionExtraOptions = [0, 5, 10];
-
 /// "My day starts at" — an hour past midnight (0–6), matching the
 /// prototype's late-night streak rule.
 const List<int> dayStartHourOptions = [0, 1, 2, 3, 4, 5, 6];
@@ -27,9 +17,8 @@ const List<int> dayStartHourOptions = [0, 1, 2, 3, 4, 5, 6];
 String dayStartHourLabel(int hour) =>
     hour == 0 ? '12:00 am (midnight)' : '$hour:00 am';
 
-/// Everything on the Session settings screen — mirrors the prototype's
-/// `acct().settings`. There's no backend yet, so this lives only for the
-/// session (in-memory, via [sessionSettingsProvider]).
+/// Everything on the Session settings screen. Kept on the user's account
+/// (`sessionSettings` on `/api/users/me`) so it follows them across devices.
 @immutable
 class SessionSettings {
   const SessionSettings({
@@ -37,10 +26,45 @@ class SessionSettings {
     this.voiceRate = 1.0,
     this.musicOn = true,
     this.showCalories = false,
-    this.extraHoldSeconds = 0,
-    this.extraTransitionSeconds = 0,
     this.dayStartHour = 0,
   });
+
+  factory SessionSettings.fromJson(Map<String, dynamic> json) {
+    final guidance = GuidanceMode.values.firstWhere(
+      (mode) => mode.name == json['guidance'],
+      orElse: () => GuidanceMode.voice,
+    );
+    final rate = (json['voiceRate'] as num?)?.toDouble() ?? 1.0;
+    final dayStart = (json['dayStartHour'] as num?)?.toInt() ?? 0;
+    return SessionSettings(
+      guidance: guidance,
+      voiceRate: rate.clamp(0.7, 1.3).toDouble(),
+      musicOn: json['musicOn'] != false,
+      showCalories: json['showCalories'] == true,
+      dayStartHour: dayStart.clamp(0, 6).toInt(),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is SessionSettings &&
+      other.guidance == guidance &&
+      other.voiceRate == voiceRate &&
+      other.musicOn == musicOn &&
+      other.showCalories == showCalories &&
+      other.dayStartHour == dayStartHour;
+
+  @override
+  int get hashCode =>
+      Object.hash(guidance, voiceRate, musicOn, showCalories, dayStartHour);
+
+  Map<String, dynamic> toJson() => {
+    'guidance': guidance.name,
+    'voiceRate': double.parse(voiceRate.toStringAsFixed(1)),
+    'musicOn': musicOn,
+    'showCalories': showCalories,
+    'dayStartHour': dayStartHour,
+  };
 
   final GuidanceMode guidance;
 
@@ -48,8 +72,6 @@ class SessionSettings {
   final double voiceRate;
   final bool musicOn;
   final bool showCalories;
-  final int extraHoldSeconds;
-  final int extraTransitionSeconds;
   final int dayStartHour;
 
   SessionSettings copyWith({
@@ -57,17 +79,12 @@ class SessionSettings {
     double? voiceRate,
     bool? musicOn,
     bool? showCalories,
-    int? extraHoldSeconds,
-    int? extraTransitionSeconds,
     int? dayStartHour,
   }) => SessionSettings(
     guidance: guidance ?? this.guidance,
     voiceRate: voiceRate ?? this.voiceRate,
     musicOn: musicOn ?? this.musicOn,
     showCalories: showCalories ?? this.showCalories,
-    extraHoldSeconds: extraHoldSeconds ?? this.extraHoldSeconds,
-    extraTransitionSeconds:
-        extraTransitionSeconds ?? this.extraTransitionSeconds,
     dayStartHour: dayStartHour ?? this.dayStartHour,
   );
 }

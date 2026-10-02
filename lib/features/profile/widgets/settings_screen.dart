@@ -11,8 +11,8 @@ import 'package:fitness_app/features/profile/models/session_settings.dart';
 import 'package:fitness_app/features/profile/providers/session_settings_provider.dart';
 import 'package:fitness_app/services/audio_service.dart';
 
-/// Matches the prototype's `screens.settings`: guidance, timing and
-/// streak-day preferences for a session.
+/// Matches the prototype's `screens.settings`: guidance and streak-day
+/// preferences for a session.
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -25,6 +25,47 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// true the button reads "Stop" so tapping it again cuts the voice off,
   /// instead of only ever offering to start it again.
   bool isSpeaking = false;
+  bool isSaving = false;
+
+  /// What the controls show. Nothing reaches the app until Save is pressed.
+  late SessionSettings draft = ref.read(sessionSettingsProvider);
+
+  bool get isDirty => draft != ref.read(sessionSettingsProvider);
+
+  void edit(SessionSettings next) => setState(() => draft = next);
+
+  Future<void> save() async {
+    if (isSaving) return;
+    setState(() => isSaving = true);
+    final synced = await ref
+        .read(sessionSettingsProvider.notifier)
+        .apply(draft);
+    if (!mounted) return;
+    setState(() => isSaving = false);
+    if (synced) {
+      AppSnackBar.showSuccess(context, 'Session settings saved.');
+    } else {
+      AppSnackBar.showError(
+        context,
+        "Saved on this device, but couldn't reach your account.",
+      );
+    }
+    Navigator.of(context).pop();
+  }
+
+  Future<void> leave() async {
+    if (isDirty) {
+      final discard = await AppBottomSheet.confirm(
+        context,
+        title: 'Discard changes?',
+        message: "You haven't saved your changes to Session settings.",
+        confirmLabel: 'Discard',
+        isDestructive: true,
+      );
+      if (!discard) return;
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
 
   /// Speaks a sample line through [AudioService], at the currently-selected
   /// rate — regardless of the Guidance mode, since testing the voice only
@@ -36,19 +77,19 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// left this button stuck. A timeout caps how long we wait: the voice
   /// still plays either way, but the button always recovers even if the
   /// platform never reports completion.
-  Future<void> testVoice(double rate) async {
+  Future<void> testSound(GuidanceMode mode, double rate) async {
     if (isSpeaking) return;
     setState(() => isSpeaking = true);
     try {
       await AudioService.instance.init();
       await AudioService.instance
-          .speak("Here's how your stretch cues will sound.", rate: rate)
-          .timeout(const Duration(seconds: 6), onTimeout: () {});
+          .preview(GuideMode.values.byName(mode.name), rate: rate)
+          .timeout(const Duration(seconds: 8), onTimeout: () {});
     } catch (_) {
       if (mounted) {
         AppSnackBar.showError(
           context,
-          "Couldn't play the voice. Check your device's text-to-speech.",
+          "Couldn't play the sample. Check your device's sound settings.",
         );
       }
     } finally {
@@ -64,18 +105,20 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final settings = ref.watch(sessionSettingsProvider);
-    final notifier = ref.read(sessionSettingsProvider.notifier);
+    final settings = draft;
 
     return Scaffold(
       backgroundColor: colors.ground,
-      appBar: AppTopBar(
-        title: 'Session settings',
-        onBack: () => Navigator.of(context).pop(),
-      ),
-      body: SafeArea(
-        top: false,
-        child: ListView(
+      appBar: AppTopBar(title: 'Session settings', onBack: leave),
+      body: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) leave();
+        },
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
           padding: AppInsets.page,
           children: [
             AppCard(
@@ -93,7 +136,7 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                     ],
                     value: settings.guidance,
-                    onChanged: notifier.setGuidance,
+                    onChanged: (mode) => edit(settings.copyWith(guidance: mode)),
                   ),
                   16.verticalSpace,
                   Text(
@@ -112,21 +155,31 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                       min: 0.7,
                       max: 1.3,
                       divisions: 6,
-                      onChanged: notifier.setVoiceRate,
+                      onChanged: (rate) => edit(settings.copyWith(voiceRate: rate)),
                     ),
                   ),
-                  AppButton(
-                    label: 'Test the voice',
-                    icon: isSpeaking
-                        ? Icons.pause_rounded
-                        : Icons.volume_up_rounded,
-                    variant: AppButtonVariant.secondary,
-                    size: AppButtonSize.small,
-                    isExpanded: false,
-                    onPressed: isSpeaking
-                        ? stopVoice
-                        : () => testVoice(settings.voiceRate),
-                  ),
+                  if (settings.guidance == GuidanceMode.silent)
+                    Text(
+                      'Silent plays no voice, tones or vibration.',
+                      style: AppTextStyle.meta.copyWith(color: colors.ink2),
+                    )
+                  else
+                    AppButton(
+                      label: switch (settings.guidance) {
+                        GuidanceMode.voice => 'Test the voice',
+                        GuidanceMode.beeps => 'Test the beeps',
+                        GuidanceMode.silent => '',
+                      },
+                      icon: isSpeaking
+                          ? Icons.pause_rounded
+                          : Icons.volume_up_rounded,
+                      variant: AppButtonVariant.secondary,
+                      size: AppButtonSize.small,
+                      isExpanded: false,
+                      onPressed: isSpeaking
+                          ? stopVoice
+                          : () => testSound(settings.guidance, settings.voiceRate),
+                    ),
                 ],
               ),
             ),
@@ -142,86 +195,23 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                         'own music also works; the app never stops it.',
                     trailing: AppSwitch(
                       value: settings.musicOn,
-                      onChanged: notifier.setMusicOn,
+                      onChanged: (value) => edit(settings.copyWith(musicOn: value)),
                       semanticLabel: 'Background music',
                     ),
-                    onTap: () => notifier.setMusicOn(!settings.musicOn),
+                    onTap: () => edit(settings.copyWith(musicOn: !settings.musicOn)),
                   ),
                   AppSettingRow(
                     title: 'Show calories',
                     subtitle: 'Off by default',
                     trailing: AppSwitch(
                       value: settings.showCalories,
-                      onChanged: notifier.setShowCalories,
+                      onChanged: (value) => edit(settings.copyWith(showCalories: value)),
                       semanticLabel: 'Show calories',
                     ),
-                    onTap: () =>
-                        notifier.setShowCalories(!settings.showCalories),
+                    onTap: () => edit(
+                      settings.copyWith(showCalories: !settings.showCalories),
+                    ),
                     showDivider: false,
-                  ),
-                ],
-              ),
-            ),
-            16.verticalSpace,
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('Timing', style: AppTextStyle.titleMedium),
-                  14.verticalSpace,
-                  // Row(
-                  //   children: [
-                  //     Expanded(
-                  //       child: Column(
-                  //         crossAxisAlignment: CrossAxisAlignment.start,
-                  //         children: [
-                  //           Text('Extra hold time', style: AppTextStyle.titleSmall),
-                  //           Text(
-                  //             'Added to every stretch',
-                  //             style: AppTextStyle.meta.copyWith(
-                  //               color: colors.ink2,
-                  //             ),
-                  //           ),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //     AppStepper(
-                  //       valueLabel:
-                  //           '${settings.extraHoldSeconds >= 0 ? '+' : ''}'
-                  //           '${settings.extraHoldSeconds}s',
-                  //       onDecrement: settings.extraHoldSeconds <=
-                  //               minExtraHoldSeconds
-                  //           ? null
-                  //           : () => notifier.stepExtraHold(-holdStepSeconds),
-                  //       onIncrement: settings.extraHoldSeconds >=
-                  //               maxExtraHoldSeconds
-                  //           ? null
-                  //           : () => notifier.stepExtraHold(holdStepSeconds),
-                  //     ),
-                  //   ],
-                  // ),
-                  // 16.verticalSpace,
-                  Text(
-                    'Extra time to change position',
-                    style: AppTextStyle.label.copyWith(color: colors.ink2),
-                  ),
-                  8.verticalSpace,
-                  AppSegmentedControl<int>(
-                    segments: [
-                      for (final v in transitionExtraOptions)
-                        AppSegmentModel(
-                          value: v,
-                          label: v == 0 ? 'Standard' : '+${v}s',
-                        ),
-                    ],
-                    value: settings.extraTransitionSeconds,
-                    onChanged: notifier.setExtraTransition,
-                  ),
-                  8.verticalSpace,
-                  Text(
-                    'Standard gives 6s for the same position and 15s from '
-                    'standing to the floor.',
-                    style: AppTextStyle.meta.copyWith(color: colors.ink2),
                   ),
                 ],
               ),
@@ -244,7 +234,7 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                     ],
                     onChanged: (hour) {
-                      if (hour != null) notifier.setDayStartHour(hour);
+                      if (hour != null) edit(settings.copyWith(dayStartHour: hour));
                     },
                   ),
                   8.verticalSpace,
@@ -255,6 +245,18 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+            ),
+            AppBottomActionBar(
+              children: [
+                AppButton(
+                  label: 'Save',
+                  isLoading: isSaving,
+                  onPressed: isDirty ? save : null,
+                ),
+              ],
             ),
           ],
         ),

@@ -16,7 +16,7 @@ const PROFILE_FIELDS = [
   'equipment', 'equipmentNone',
   'flexAnswers', 'flexibilityLevel',
   'minutesPerDay', 'timeOfDay', 'reminderOn', 'reminderTime',
-  'safetyAcknowledged', 'onboardingComplete',
+  'safetyAcknowledged', 'onboardingComplete', 'sessionSettings',
 ];
 
 const HIDDEN_FIELDS = '-passwordHash -verifyCode -resetCode -resetCodeExpires -lastCodeSentAt -__v';

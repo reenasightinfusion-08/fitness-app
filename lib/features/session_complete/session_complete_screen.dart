@@ -10,6 +10,8 @@ import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/services/auth_service.dart';
+import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
+import 'package:fitness_app/features/profile/providers/session_settings_provider.dart';
 import 'package:fitness_app/features/progress/providers/progress_stats_provider.dart';
 
 enum SessionFeel { easy, right, hard }
@@ -114,6 +116,15 @@ class SessionCompleteScreenState
     }
   }
 
+  /// Rough burn for light stretching (about 2.3 METs) at the user's weight,
+  /// or 70 kg when none is set.
+  int get estimatedCalories {
+    final weight =
+        double.tryParse(ref.read(onboardingProfileProvider).weightKg) ?? 70;
+    final hours = widget.plan.effectiveTotalSeconds / 3600;
+    return (2.3 * weight * hours).round().clamp(1, 9999);
+  }
+
   /// Saves this session's routine to "Built by you" in the Mine tab, then
   /// goes there. A name the user already has gets " (my version)" so the
   /// server accepts it.
@@ -198,6 +209,13 @@ class SessionCompleteScreenState
                       color: colors.ink2,
                     ),
                   ),
+                  if (ref.watch(sessionSettingsProvider).showCalories) ...[
+                    6.verticalSpace,
+                    Text(
+                      '≈ $estimatedCalories kcal burned (estimate)',
+                      style: AppTextStyle.meta.copyWith(color: colors.ink2),
+                    ),
+                  ],
                   24.verticalSpace,
                   AppCard(
                     child: Column(

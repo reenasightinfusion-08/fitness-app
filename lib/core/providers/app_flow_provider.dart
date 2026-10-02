@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:fitness_app/features/profile/providers/session_settings_provider.dart';
+
 import 'package:fitness_app/core/providers/auth_service_provider.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 
@@ -59,6 +61,7 @@ class AppFlowController extends Notifier<AppRoute> {
           (res['user'] ?? res['data'] ?? res) as Map<String, dynamic>;
       isOnboardingComplete = userData['onboardingComplete'] == true;
       ref.read(onboardingProfileProvider.notifier).loadFromApi(userData);
+      ref.read(sessionSettingsProvider.notifier).loadFromApi(userData);
     } catch (_) {}
     if (isOnboardingComplete) {
       enterApp();

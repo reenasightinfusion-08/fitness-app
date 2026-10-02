@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:fitness_app/features/profile/providers/session_settings_provider.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:fitness_app/core/providers/providers.dart';
@@ -37,6 +39,7 @@ class SplashScreenState extends ConsumerState<SplashScreen> {
           isOnboardingComplete = userData['onboardingComplete'] == true;
           if (mounted) {
             ref.read(onboardingProfileProvider.notifier).loadFromApi(userData);
+            ref.read(sessionSettingsProvider.notifier).loadFromApi(userData);
           }
         } catch (_) {
           // Soft fallback if network fails

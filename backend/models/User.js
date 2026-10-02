@@ -97,6 +97,15 @@ const userSchema = new mongoose.Schema(
     // --- favourites ---
     // The routines (library or custom) the user hearted, oldest first. `routineId` is the
     // routine's own _id; `routineType` says which collection it is in, as on ActiveRoutine.
+    // Session screen preferences, changed through PATCH /api/users/me.
+    sessionSettings: {
+      guidance: { type: String, enum: ['voice', 'beeps', 'silent'], default: 'voice' },
+      voiceRate: { type: Number, min: 0.7, max: 1.3, default: 1 },
+      musicOn: { type: Boolean, default: true },
+      showCalories: { type: Boolean, default: false },
+      dayStartHour: { type: Number, min: 0, max: 6, default: 0 },
+    },
+
     // Changed only through PUT/DELETE /api/users/me/favorites/:routineId.
     favorites: {
       type: [

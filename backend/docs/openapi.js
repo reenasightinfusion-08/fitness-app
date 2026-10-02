@@ -123,6 +123,17 @@ module.exports = {
           },
           safetyAcknowledged: { type: 'boolean' },
           onboardingComplete: { type: 'boolean' },
+          sessionSettings: {
+            type: 'object',
+            description: 'Session screen preferences.',
+            properties: {
+              guidance: { type: 'string', enum: ['voice', 'beeps', 'silent'], example: 'voice' },
+              voiceRate: { type: 'number', minimum: 0.7, maximum: 1.3, example: 1 },
+              musicOn: { type: 'boolean', example: true },
+              showCalories: { type: 'boolean', example: false },
+              dayStartHour: { type: 'integer', minimum: 0, maximum: 6, example: 0 },
+            },
+          },
           favorites: {
             type: 'array',
             description: 'Routines the user favourited, oldest first. Change it with PUT/DELETE /api/users/me/favorites/{routineId}.',
@@ -190,6 +201,17 @@ module.exports = {
           reminderTime: { $ref: '#/components/schemas/User/properties/reminderTime' },
           safetyAcknowledged: { type: 'boolean' },
           onboardingComplete: { type: 'boolean' },
+          sessionSettings: {
+            type: 'object',
+            description: 'Session screen preferences.',
+            properties: {
+              guidance: { type: 'string', enum: ['voice', 'beeps', 'silent'], example: 'voice' },
+              voiceRate: { type: 'number', minimum: 0.7, maximum: 1.3, example: 1 },
+              musicOn: { type: 'boolean', example: true },
+              showCalories: { type: 'boolean', example: false },
+              dayStartHour: { type: 'integer', minimum: 0, maximum: 6, example: 0 },
+            },
+          },
         },
       },
       StretchInput: {

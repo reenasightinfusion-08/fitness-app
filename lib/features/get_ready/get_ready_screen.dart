@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
+import 'package:fitness_app/features/profile/providers/session_settings_provider.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/session_player/session_player_screen.dart';
@@ -41,8 +42,10 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
   static const int _holdStepSeconds = 5;
 
   bool isStarting = false;
-  GuideMode guideMode = GuideMode.voice;
-  bool musicOn = true;
+  late GuideMode guideMode = GuideMode.values.byName(
+    ref.read(sessionSettingsProvider).guidance.name,
+  );
+  late bool musicOn = ref.read(sessionSettingsProvider).musicOn;
   late int holdSeconds = widget.plan.stretches.first.holdSeconds;
 
   String get _guideDescription => switch (guideMode) {
@@ -50,7 +53,7 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
       'Names each stretch, cues side switches, counts down the last 10 seconds.',
     GuideMode.beeps =>
       'A chime to start, a double chime to switch sides, ticks for 3-2-1.',
-    GuideMode.silent => 'Vibration only, where your phone supports it.',
+    GuideMode.silent => 'No voice, tones or vibration.',
   };
 
   void _adjustHold(int delta) => setState(
@@ -82,6 +85,7 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
           holdSecondsOverride: holdSeconds,
           guideMode: guideMode,
           musicOn: musicOn,
+          voiceRate: ref.read(sessionSettingsProvider).voiceRate,
           onProgress: onProgress,
         ),
       ),

@@ -34,6 +34,22 @@ class _SessionStep {
   final String? side;
 }
 
+/// Seconds to get into stretch [index]. A routine with its own time (builder's
+/// "Time to get into each stretch") always uses it. On Auto the first stretch
+/// gets 8s, then 6s when the position stays the same, 15s between standing and
+/// the floor, and 10s for any other change.
+int _getReadySeconds(RoutineSummary plan, int index) {
+  final fixed = plan.transitionSeconds;
+  if (fixed != null && fixed > 0) return fixed;
+  if (index == 0) return 8;
+  final from = plan.stretches[index - 1].position;
+  final to = plan.stretches[index].position;
+  if (from == to) return 6;
+  final standingToFloor =
+      {from, to}.containsAll({StretchPosition.standing, StretchPosition.floor});
+  return standingToFloor ? 15 : 10;
+}
+
 List<_SessionStep> _buildSteps(RoutineSummary plan, int? holdOverride) {
   final steps = <_SessionStep>[];
   for (var i = 0; i < plan.stretches.length; i++) {
@@ -43,7 +59,7 @@ List<_SessionStep> _buildSteps(RoutineSummary plan, int? holdOverride) {
       _SessionStep(
         kind: _StepKind.getReady,
         stretchIndex: i,
-        durationSeconds: 8,
+        durationSeconds: _getReadySeconds(plan, i),
       ),
     );
     if (stretch.isEachSide) {
@@ -105,6 +121,7 @@ class SessionPlayerScreen extends StatefulWidget {
     this.holdSecondsOverride,
     this.guideMode = GuideMode.voice,
     this.musicOn = true,
+    this.voiceRate = 1.0,
     this.startStretchIndex = 0,
     this.onProgress,
   });
@@ -121,6 +138,9 @@ class SessionPlayerScreen extends StatefulWidget {
 
   /// Whether to start the calm background drone for this session.
   final bool musicOn;
+
+  /// How fast the voice speaks, from Session settings (0.7–1.3).
+  final double voiceRate;
 
   /// Which stretch to begin at: 0 for a fresh session, or the number of
   /// stretches already done when resuming a paused one.
@@ -217,6 +237,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
         CueKind.ten,
         text: 'Ten seconds.',
         mode: widget.guideMode,
+        rate: widget.voiceRate,
       );
     }
     if (remaining <= 3 && remaining >= 1) {
@@ -230,6 +251,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   /// or stay still, a switch beat just says "Switch sides."
   void _announceStep() {
     _tenFired = false;
+    if (widget.musicOn) AudioService.instance.keepMusicPlaying();
     if (paused) {
       AudioService.instance.stopSpeaking();
       _announcePending = true;
@@ -246,6 +268,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
           CueKind.trans,
           text: '$pos ${stretch.setupCue}',
           mode: widget.guideMode,
+        rate: widget.voiceRate,
         );
         break;
       case _StepKind.hold:
@@ -260,6 +283,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
           CueKind.start,
           text: text,
           mode: widget.guideMode,
+        rate: widget.voiceRate,
         );
         break;
       case _StepKind.switchSides:
@@ -267,6 +291,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
           CueKind.switchSides,
           text: 'Switch sides.',
           mode: widget.guideMode,
+        rate: widget.voiceRate,
         );
         break;
     }

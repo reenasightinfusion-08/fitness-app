@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 /// How the session narrates itself — mirrors the prototype's
@@ -54,6 +53,19 @@ class AudioService {
   Future<void> init() async {
     if (_initialized) return;
     _initialized = true;
+    // Every player asks for audio focus by default, so each cue sound took it
+    // from the music, which then paused for good. Mixing leaves the music alone.
+    final mixContext = AudioContext(
+      android: const AudioContextAndroid(audioFocus: AndroidAudioFocus.none),
+      iOS: AudioContextIOS(category: AVAudioSessionCategory.ambient),
+    );
+    try {
+      await AudioPlayer.global.setAudioContext(mixContext);
+      await _music.setAudioContext(mixContext);
+      for (final player in _sfx.values) {
+        await player.setAudioContext(mixContext);
+      }
+    } catch (_) {}
     await _music.setReleaseMode(ReleaseMode.loop);
     await Future.wait([
       for (final entry in _sfx.entries)
@@ -62,6 +74,11 @@ class AudioService {
             .then((_) => entry.value.setSourceAsset('audio/sfx_${entry.key}.wav')),
     ]);
     await _tts.awaitSpeakCompletion(true);
+    try {
+      await _tts.setLanguage('en-US');
+      await _tts.setVolume(1.0);
+      await _tts.setPitch(1.0);
+    } catch (_) {}
     _tts.setProgressHandler((text, start, end, word) => _spokenOffset = start);
     _tts.setCompletionHandler(() => _utterance = null);
   }
@@ -102,6 +119,14 @@ class AudioService {
     _musicOn = false;
     await _fadeMusicTo(0, const Duration(milliseconds: 400));
     await _music.stop();
+  }
+
+  /// Restarts the music if something paused it, e.g. another app took audio focus.
+  Future<void> keepMusicPlaying() async {
+    if (!_musicOn || _paused) return;
+    try {
+      if (_music.state != PlayerState.playing) await _music.resume();
+    } catch (_) {}
   }
 
   Future<void> pauseMusic() async {
@@ -156,10 +181,17 @@ class AudioService {
     } catch (_) {}
     await duck(true);
     if (gen != _speechGen || _paused) return;
-    try {
-      await _tts.setSpeechRate((0.5 * rate).clamp(0.3, 0.7));
-      await _tts.speak(text);
-    } catch (_) {}
+    // The speech engine can still be starting up when the first cues arrive
+    // and then refuses them silently, so try again a couple of times.
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        await _tts.setSpeechRate((0.5 * rate).clamp(0.3, 0.7));
+        final result = await _tts.speak(text);
+        if (result == 1 || gen != _speechGen || _paused) break;
+      } catch (_) {}
+      await Future.delayed(const Duration(milliseconds: 350));
+      if (gen != _speechGen || _paused) break;
+    }
     if (gen == _speechGen) await duck(false);
   }
 
@@ -206,19 +238,10 @@ class AudioService {
     await duck(false);
   }
 
-  Future<void> _vibrate(List<void Function()> pulses, {int gapMs = 90}) async {
-    for (var i = 0; i < pulses.length; i++) {
-      try {
-        pulses[i]();
-      } catch (_) {}
-      if (i < pulses.length - 1) await Future.delayed(Duration(milliseconds: gapMs));
-    }
-  }
-
   /// Routes one narrated moment through whichever [GuideMode] the person
   /// picked on the Get Ready screen — a direct port of the prototype's
   /// `cue(kind, text)`: voice speaks [text] (count still just ticks),
-  /// beeps plays the matching tone, silent taps a haptic instead.
+  /// beeps plays the matching tone, silent plays nothing at all.
   Future<void> cue(CueKind kind, {String? text, required GuideMode mode, double rate = 1.0}) {
     if (_paused) return Future.value();
     switch (mode) {
@@ -242,18 +265,26 @@ class AudioService {
             return trans();
         }
       case GuideMode.silent:
-        switch (kind) {
-          case CueKind.start:
-            return _vibrate([HapticFeedback.mediumImpact]);
-          case CueKind.switchSides:
-            return _vibrate([HapticFeedback.lightImpact, HapticFeedback.lightImpact]);
-          case CueKind.ten:
-            return _vibrate([HapticFeedback.lightImpact]);
-          case CueKind.count:
-            return _vibrate([HapticFeedback.selectionClick]);
-          case CueKind.trans:
-            return _vibrate([HapticFeedback.heavyImpact]);
+        return Future.value();
+    }
+  }
+
+  /// A short sample of [mode] for the Settings screen: a spoken line, a
+  /// start tone then a 3-2-1 and a switch tone. Silent has nothing to play.
+  Future<void> preview(GuideMode mode, {double rate = 1.0}) async {
+    switch (mode) {
+      case GuideMode.voice:
+        await speak("Here's how your stretch cues will sound.", rate: rate);
+      case GuideMode.silent:
+        return;
+      case GuideMode.beeps:
+        await cue(CueKind.start, mode: mode);
+        await Future.delayed(const Duration(milliseconds: 900));
+        for (var i = 0; i < 3; i++) {
+          await cue(CueKind.count, mode: mode);
+          await Future.delayed(const Duration(milliseconds: 700));
         }
+        await cue(CueKind.switchSides, mode: mode);
     }
   }
 

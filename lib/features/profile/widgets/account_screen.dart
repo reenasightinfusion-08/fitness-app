@@ -11,6 +11,7 @@ import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profi
 import 'package:fitness_app/features/profile/models/profile_data.dart';
 import 'package:fitness_app/features/profile/providers/premium_provider.dart';
 import 'package:fitness_app/features/profile/providers/reminders_provider.dart';
+import 'package:fitness_app/features/profile/providers/session_settings_provider.dart';
 import 'package:fitness_app/features/profile/widgets/change_password_screen.dart';
 import 'package:fitness_app/services/reminder_notification_service.dart';
 
@@ -54,6 +55,7 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
     ref.invalidate(hurtStretchesProvider);
     ref.invalidate(onboardingProfileProvider);
     ref.invalidate(premiumProvider);
+    ref.invalidate(sessionSettingsProvider);
     await ReminderNotificationService.instance.cancelAll();
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -139,6 +141,7 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
                 ref.invalidate(favoritesProvider);
                 ref.invalidate(remindersProvider);
                 ref.invalidate(hurtStretchesProvider);
+                ref.invalidate(sessionSettingsProvider);
                 await ReminderNotificationService.instance.cancelAll();
                 if (context.mounted) {
                   ref.read(appFlowProvider.notifier).showWelcome();
