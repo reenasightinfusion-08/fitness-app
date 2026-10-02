@@ -54,6 +54,23 @@ const userSchema = new mongoose.Schema(
     safetyAcknowledged: { type: Boolean, default: false },
 
     onboardingComplete: { type: Boolean, default: false },
+
+    // --- favourites ---
+    // The routines (library or custom) the user hearted, oldest first. `routineId` is the
+    // routine's own _id; `routineType` says which collection it is in, as on ActiveRoutine.
+    // Changed only through PUT/DELETE /api/users/me/favorites/:routineId.
+    favorites: {
+      type: [
+        new mongoose.Schema(
+          {
+            routineId: { type: mongoose.Schema.Types.ObjectId, required: true },
+            routineType: { type: String, enum: ['system', 'custom'], required: true },
+          },
+          { _id: false },
+        ),
+      ],
+      default: [],
+    },
   },
   { timestamps: true },
 );

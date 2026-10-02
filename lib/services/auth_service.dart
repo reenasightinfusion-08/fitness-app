@@ -208,6 +208,25 @@ class AuthService {
         await _authedPost('/custom-routines', routine);
       });
 
+  /// Ids of the routines the user favourited, oldest first. The profile stores
+  /// each as `{ routineId, routineType }`.
+  Future<List<String>> getFavorites() => _reachable(() async {
+    final me = await _authedGet('/users/me');
+    return [
+      for (final entry in me['favorites'] as List? ?? const [])
+        if (entry is Map) entry['routineId'] as String else entry as String,
+    ];
+  });
+
+  /// Adds [routineId] (a library or custom routine) to the user's favorites.
+  Future<void> addFavorite(String routineId) => _reachable(() async {
+    await _authedPut('/users/me/favorites/$routineId');
+  });
+
+  Future<void> removeFavorite(String routineId) => _reachable(() async {
+    await _authedDelete('/users/me/favorites/$routineId');
+  });
+
   /// Permanently deletes one of the user's routines.
   Future<void> deleteCustomRoutine(String id) => _reachable(() async {
     await _authedDelete('/custom-routines/$id');
@@ -300,6 +319,17 @@ class AuthService {
           headers: {'Content-Type': 'application/json', 'Authorization': auth},
           body: jsonEncode(body),
         )
+        .timeout(const Duration(seconds: 10));
+    return _decode(response);
+  }
+
+  Future<Map<String, dynamic>> _authedPut(String path) async {
+    final host = await _getHost();
+    final auth = await _authHeader();
+    if (auth == null) throw AuthException('Not signed in');
+
+    final response = await http
+        .put(Uri.parse('$host/api$path'), headers: {'Authorization': auth})
         .timeout(const Duration(seconds: 10));
     return _decode(response);
   }

@@ -109,6 +109,7 @@ class ProfileView extends ConsumerWidget {
           onPressed: () async {
             await ref.read(authServiceProvider).logout();
             ref.invalidate(customRoutinesProvider);
+            ref.invalidate(favoritesProvider);
             if (context.mounted) {
               ref.read(appFlowProvider.notifier).showWelcome();
             }

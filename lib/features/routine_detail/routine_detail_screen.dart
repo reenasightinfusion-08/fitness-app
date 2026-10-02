@@ -10,12 +10,14 @@ import 'package:fitness_app/features/get_ready/get_ready_screen.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/routine_builder/routine_builder_screen.dart';
 import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
+import 'package:fitness_app/services/auth_service.dart';
 
 /// Matches the prototype's `screens.routine`: what a routine contains and
 /// why, before committing to it. Reached by tapping any routine card —
 /// a quick pick, today's plan, or (once built) a search result. The heart
-/// toggle writes to [favoritesProvider], keyed by [RoutineSummary.name],
-/// so a routine favourited here shows up in the Mine tab's Favourites list.
+/// toggle writes to [favoritesProvider] (saved on the user's profile, keyed by
+/// routine id), so a routine favourited here shows up in the Mine tab's
+/// Favourites list. Routines without a server id have no heart.
 class RoutineDetailScreen extends ConsumerWidget {
   const RoutineDetailScreen({
     super.key,
@@ -29,6 +31,24 @@ class RoutineDetailScreen extends ConsumerWidget {
   /// their own routines rather than the app's.
   final String routineType;
 
+  Future<void> _toggleFavorite(
+    BuildContext context,
+    WidgetRef ref,
+    String routineId,
+  ) async {
+    try {
+      await ref.read(favoritesProvider.notifier).toggle(routineId);
+    } catch (error) {
+      if (!context.mounted) return;
+      AppSnackBar.showError(
+        context,
+        error is AuthException
+            ? error.message
+            : "Couldn't update your favourites. Try again.",
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
@@ -36,20 +56,27 @@ class RoutineDetailScreen extends ConsumerWidget {
         routine.stretches.isNotEmpty ? routine.stretches.first : null;
     final thumbUrl = firstStretch?.model?.thumbnailUrl;
     final hasThumb = thumbUrl != null && thumbUrl.trim().isNotEmpty;
-    final isFavorite = ref.watch(favoritesProvider).contains(routine.name);
+    final routineId = routine.id;
+    final isFavorite =
+        routineId != null &&
+        (ref.watch(favoritesProvider).valueOrNull?.contains(routineId) ??
+            false);
 
     return Scaffold(
       backgroundColor: colors.ground,
       appBar: AppTopBar(
         onBack: () => Navigator.of(context).pop(),
-        trailing: AppIconButton(
-          icon: Icons.favorite_border_rounded,
-          activeIcon: Icons.favorite_rounded,
-          isActive: isFavorite,
-          tooltip: isFavorite ? 'Remove from favourites' : 'Add to favourites',
-          onPressed: () =>
-              ref.read(favoritesProvider.notifier).toggle(routine.name),
-        ),
+        trailing: routineId == null
+            ? null
+            : AppIconButton(
+                icon: Icons.favorite_border_rounded,
+                activeIcon: Icons.favorite_rounded,
+                isActive: isFavorite,
+                tooltip: isFavorite
+                    ? 'Remove from favourites'
+                    : 'Add to favourites',
+                onPressed: () => _toggleFavorite(context, ref, routineId),
+              ),
       ),
       body: SafeArea(
         top: false,

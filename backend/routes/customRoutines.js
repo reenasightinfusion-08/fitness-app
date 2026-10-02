@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const CustomRoutine = require('../models/CustomRoutine');
+const User = require('../models/User');
 const requireAuth = require('../middleware/auth');
 const { resolvePoseKeys, toResponse } = require('../utils/routineItems');
 const { ok, fail, asyncHandler } = require('../utils/response');
@@ -49,6 +50,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 router.delete('/:id', asyncHandler(async (req, res) => {
   const routine = await CustomRoutine.findOneAndDelete({ _id: req.params.id, user: req.userId });
   if (!routine) return fail(res, 404, 'Custom routine not found');
+  await User.updateOne({ _id: req.userId }, { $pull: { favorites: { routineId: routine._id } } });
   ok(res, null, 'Custom routine deleted');
 }));
 

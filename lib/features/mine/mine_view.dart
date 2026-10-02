@@ -6,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
-import 'package:fitness_app/features/explore/models/explore_data.dart';
 import 'package:fitness_app/features/home/models/active_routine_model.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/home/widgets/stretch_thumbnail.dart';
@@ -22,17 +21,6 @@ import 'package:fitness_app/services/auth_service.dart';
 /// [favoritesProvider].
 class MineView extends ConsumerWidget {
   const MineView({super.key});
-
-  /// Every routine the app currently knows about, searched by name to turn
-  /// a favourited id back into a [RoutineSummary] — there's no shared
-  /// routine repository yet, so Today's plan/quick picks and Explore's
-  /// list are each demo data of their own.
-  static List<RoutineSummary> _knownRoutines(List<RoutineSummary> custom) => [
-    TodayDemoData.todaysPlan,
-    ...TodayDemoData.quickPicks,
-    for (final routine in ExploreDemoData.routines) routine.toRoutineSummary(),
-    ...custom,
-  ];
 
   /// The card is already swiped away, so a failed delete puts it back and
   /// says why — from here rather than the card, which is gone by then.
@@ -62,7 +50,9 @@ class MineView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final favoriteIds = ref.watch(favoritesProvider);
+    final favoritesAsync = ref.watch(favoritesProvider);
+    final libraryRoutines =
+        ref.watch(routinesProvider).valueOrNull ?? const <RoutineSummary>[];
     final customAsync = ref.watch(customRoutinesProvider);
     final customRoutines = customAsync.valueOrNull ?? const <RoutineSummary>[];
     final customIds = {
@@ -74,10 +64,14 @@ class MineView extends ConsumerWidget {
     final otherPaused =
         ref.watch(pausedUserRoutinesProvider).valueOrNull?.skip(1).toList() ??
         const <ActiveRoutineModel>[];
-    final byName = {for (final r in _knownRoutines(customRoutines)) r.name: r};
+    // A favourite is just an id; look it up among the library and custom routines.
+    final byId = {
+      for (final r in [...libraryRoutines, ...customRoutines])
+        if (r.id != null) r.id!: r,
+    };
     final favorites = [
-      for (final id in favoriteIds)
-        if (byName[id] != null) byName[id]!,
+      for (final id in favoritesAsync.valueOrNull ?? const <String>[])
+        if (byId[id] != null) byId[id]!,
     ];
 
     return ListView(
@@ -136,7 +130,12 @@ class MineView extends ConsumerWidget {
         24.verticalSpace,
         Text('Favourites', style: AppTextStyle.sectionTitle),
         10.verticalSpace,
-        if (favorites.isEmpty)
+        if (favoritesAsync.isLoading && !favoritesAsync.hasValue)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 24.h),
+            child: const Center(child: AppLoader()),
+          )
+        else if (favorites.isEmpty)
           const AppEmptyState(
             icon: Icons.favorite_border_rounded,
             title: 'No favourites yet',

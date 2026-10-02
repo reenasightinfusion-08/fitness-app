@@ -123,6 +123,17 @@ module.exports = {
           },
           safetyAcknowledged: { type: 'boolean' },
           onboardingComplete: { type: 'boolean' },
+          favorites: {
+            type: 'array',
+            description: 'Routines the user favourited, oldest first. Change it with PUT/DELETE /api/users/me/favorites/{routineId}.',
+            items: {
+              type: 'object',
+              properties: {
+                routineId: { type: 'string', description: 'The routine\'s own _id.' },
+                routineType: { type: 'string', enum: ['system', 'custom'], description: 'system = Routine collection, custom = CustomRoutine collection.' },
+              },
+            },
+          },
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' },
         },
@@ -471,6 +482,34 @@ module.exports = {
           400: err('Validation error', 'Cast to Number failed for value "abc" (type string) at path "age"'),
           401: err('Missing or invalid token', 'Invalid or expired token'),
           404: err('User not found', 'User not found'),
+          500: serverErr,
+        },
+      },
+    },
+    '/api/users/me/favorites/{routineId}': {
+      put: {
+        tags: ['Users'],
+        summary: 'Add a routine to the signed-in user\'s favorites (idempotent)',
+        description: 'Accepts any active library routine or one of the user\'s own custom routines. The list is on GET /api/users/me as `favorites`.',
+        security: auth,
+        parameters: [{ name: 'routineId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          200: okResponse('Added (or already there)', nullData, 'Added to favorites'),
+          400: err('Not a valid id', 'Invalid routine id'),
+          401: err('Missing or invalid token', 'No token provided'),
+          404: err('No such routine, or it is another user\'s custom routine', 'Routine not found'),
+          500: serverErr,
+        },
+      },
+      delete: {
+        tags: ['Users'],
+        summary: 'Remove a routine from the signed-in user\'s favorites (idempotent)',
+        security: auth,
+        parameters: [{ name: 'routineId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          200: okResponse('Removed (or was not there)', nullData, 'Removed from favorites'),
+          400: err('Not a valid id', 'Invalid routine id'),
+          401: err('Missing or invalid token', 'No token provided'),
           500: serverErr,
         },
       },
