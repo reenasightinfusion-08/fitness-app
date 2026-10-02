@@ -11,7 +11,8 @@ import 'package:fitness_app/features/home/models/active_routine_model.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/profile/models/session_settings.dart';
 import 'package:fitness_app/features/profile/providers/session_settings_provider.dart';
-import 'package:fitness_app/features/progress/models/progress_data.dart';
+import 'package:fitness_app/features/onboarding_setup/models/onboarding_profile.dart';
+import 'package:fitness_app/features/progress/flexibility_check_screen.dart';
 import 'package:fitness_app/features/progress/providers/progress_stats_provider.dart';
 import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
 
@@ -46,7 +47,8 @@ class ProgressView extends ConsumerWidget {
 
     // The areas marked tight or sore during setup — same source the
     // prototype's body map reads from (`acct().profile.pain`).
-    final markedAreas = ref.watch(onboardingProfileProvider).painAreas;
+    final profile = ref.watch(onboardingProfileProvider);
+    final markedAreas = profile.painAreas;
     final heat = {for (final area in markedAreas) area: 1};
 
     return ListView(
@@ -134,7 +136,9 @@ class ProgressView extends ConsumerWidget {
                   children: [
                     Text('Flexibility level', style: AppTextStyle.titleMedium),
                     Text(
-                      ProgressDemoData.flexibilityLevel,
+                      flexibilityLevelLabels[calcFlexibilityLevel(
+                        profile.flexAnswers,
+                      )],
                       style: AppTextStyle.meta.copyWith(color: colors.ink2),
                     ),
                   ],
@@ -146,9 +150,10 @@ class ProgressView extends ConsumerWidget {
                 variant: AppButtonVariant.secondary,
                 size: AppButtonSize.small,
                 isExpanded: false,
-                onPressed: () => AppSnackBar.show(
-                  context,
-                  "That screen isn't built yet.",
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const FlexibilityCheckScreen(),
+                  ),
                 ),
               ),
             ],
