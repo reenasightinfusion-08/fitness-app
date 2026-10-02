@@ -10,6 +10,7 @@ import 'package:fitness_app/features/explore/models/explore_data.dart';
 import 'package:fitness_app/features/home/models/active_routine_model.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/session_complete/session_complete_screen.dart';
+import 'package:fitness_app/features/session_player/widgets/stretch_media_player.dart';
 import 'package:fitness_app/features/stretch_detail/models/stretch_guide.dart';
 import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
 import 'package:fitness_app/services/audio_service.dart';
@@ -144,6 +145,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   bool paused = false;
   Timer? _ticker;
   bool _tenFired = false;
+  bool _announcePending = false;
 
   /// A per-session working copy of the plan's stretches, so "Swap" can
   /// replace one stretch for this session without mutating [widget.plan]
@@ -220,7 +222,11 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
       );
     }
     if (remaining <= 3 && remaining >= 1) {
-      AudioService.instance.cue(CueKind.count, mode: widget.guideMode);
+      AudioService.instance.cue(
+        CueKind.count,
+        text: '$remaining',
+        mode: widget.guideMode,
+      );
     }
   }
 
@@ -230,6 +236,11 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   /// or stay still, a switch beat just says "Switch sides."
   void _announceStep() {
     _tenFired = false;
+    if (paused) {
+      AudioService.instance.stopSpeaking();
+      _announcePending = true;
+      return;
+    }
     final step = currentStep;
     final stretch = currentStretch;
     switch (step.kind) {
@@ -302,11 +313,31 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   }
 
   void _exit() {
+    AudioService.instance.stopSpeaking();
     AudioService.instance.stopMusic();
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  void _togglePause() => setState(() => paused = !paused);
+  void _togglePause() => _setPaused(!paused);
+
+  /// Single entry point for pausing, so the timer, video, voice and music
+  /// always stop and resume together.
+  void _setPaused(bool value) {
+    if (paused == value) return;
+    setState(() => paused = value);
+    if (value) {
+      AudioService.instance.pauseAll();
+    } else {
+      unawaited(_resumeAudio());
+    }
+  }
+
+  Future<void> _resumeAudio() async {
+    await AudioService.instance.resumeAll();
+    if (!mounted || paused || !_announcePending) return;
+    _announcePending = false;
+    _announceStep();
+  }
 
   void _addFifteen() => setState(() => remaining += 15);
 
@@ -371,7 +402,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   /// prototype's `stretchInfo()`.
   void _showStretchInfo() {
     final wasPaused = paused;
-    if (!wasPaused) setState(() => paused = true);
+    _setPaused(true);
     StretchDetailSheet.open(
       context,
       name: currentStretch.name,
@@ -380,13 +411,14 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
       note: 'Timer paused while you read.',
     ).then((_) {
       if (!mounted || wasPaused) return;
-      setState(() => paused = false);
+      _setPaused(false);
     });
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
+    AudioService.instance.stopSpeaking();
     AudioService.instance.stopMusic();
     super.dispose();
   }
@@ -402,8 +434,6 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
         : null;
 
     final stretchThumbUrl = stretch.model?.thumbnailUrl;
-    final hasStretchThumb =
-        stretchThumbUrl != null && stretchThumbUrl.trim().isNotEmpty;
 
     final nextThumbUrl = nextStretch?.model?.thumbnailUrl;
     final hasNextThumb =
@@ -473,26 +503,13 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                       width: 220.w,
                       child: ClipRRect(
                         borderRadius: AppBorderRadius.hero,
-                        child: hasStretchThumb
-                            ? Image.network(
-                                stretchThumbUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    AnimatedStretchFigure(
-                                  pose: stretch.pose,
-                                  nearColor: colors.playerInk,
-                                  farColor: colors.playerDim,
-                                  groundColor:
-                                      colors.playerInk.withValues(alpha: 0.14),
-                                ),
-                              )
-                            : AnimatedStretchFigure(
-                                pose: stretch.pose,
-                                nearColor: colors.playerInk,
-                                farColor: colors.playerDim,
-                                groundColor:
-                                    colors.playerInk.withValues(alpha: 0.14),
-                              ),
+                        child: StretchMediaPlayer(
+                          videoUrl: stretch.model?.videoUrl,
+                          thumbnailUrl: stretchThumbUrl,
+                          pose: stretch.pose,
+                          showVideo: step.kind == _StepKind.hold,
+                          playing: !paused,
+                        ),
                       ),
                     ),
                     Text(

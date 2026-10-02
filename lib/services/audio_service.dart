@@ -36,11 +36,16 @@ class AudioService {
     for (final name in _sfxNames) name: AudioPlayer(playerId: 'sfx_$name'),
   };
   final AudioPlayer _music = AudioPlayer(playerId: 'music');
-  final AudioPlayer _voicePlayer = AudioPlayer(playerId: 'voice_tts');
   final FlutterTts _tts = FlutterTts();
 
   bool _initialized = false;
   bool _musicOn = false;
+  bool _paused = false;
+  int _speechGen = 0; // invalidates an in-flight speak() when superseded or paused
+  String? _utterance;
+  int _spokenOffset = 0; // start of the word the voice is on, within _utterance
+  double _speechRate = 1.0;
+  String? _resumeText;
   final double _musicVolume = 0.15; // subtle, mirrors the original's quiet ramp to .04 gain
   final double _duckedVolume = 0.04;
   double _currentVolume = 0; // audioplayers has no getVolume(), so track it ourselves
@@ -57,6 +62,8 @@ class AudioService {
             .then((_) => entry.value.setSourceAsset('audio/sfx_${entry.key}.wav')),
     ]);
     await _tts.awaitSpeakCompletion(true);
+    _tts.setProgressHandler((text, start, end, word) => _spokenOffset = start);
+    _tts.setCompletionHandler(() => _utterance = null);
   }
 
   // --- one-shot SFX, matches the tone()-based cues in the original ---
@@ -139,46 +146,61 @@ class AudioService {
 
   // --- TTS, matches speak() ---
   Future<void> speak(String text, {double rate = 1.0}) async {
+    if (_paused) return;
+    final gen = ++_speechGen;
+    _utterance = text;
+    _spokenOffset = 0;
+    _speechRate = rate;
     try {
-      await _voicePlayer.stop();
       await _tts.stop();
     } catch (_) {}
     await duck(true);
-    await _tts.setSpeechRate((0.5 * rate).clamp(0.3, 0.7));
+    if (gen != _speechGen || _paused) return;
     try {
-      final res = await _tts.synthesizeToFile(text, 'cue.wav');
-      if (res == 1) {
-        await _voicePlayer.play(AssetSource('audio/cue.wav'));
-      } else {
-        await _tts.speak(text);
-      }
-    } catch (_) {
-      try {
-        await _tts.speak(text);
-      } catch (_) {}
-    }
-    await duck(false);
+      await _tts.setSpeechRate((0.5 * rate).clamp(0.3, 0.7));
+      await _tts.speak(text);
+    } catch (_) {}
+    if (gen == _speechGen) await duck(false);
   }
 
-  Future<void> pauseVoice() async {
+  /// Freezes the session audio: silences the voice at once, remembering the
+  /// part of the sentence not yet spoken so [resumeAll] can carry on from the
+  /// word it stopped at, pauses the music, and blocks new cues until resumed.
+  Future<void> pauseAll() async {
+    _paused = true;
+    final text = _utterance;
+    if (text != null) {
+      final rest = text.substring(_spokenOffset.clamp(0, text.length)).trim();
+      _resumeText = rest.isEmpty ? null : rest;
+    }
+    _speechGen++;
+    _utterance = null;
     try {
-      await _voicePlayer.pause();
       await _tts.stop();
     } catch (_) {}
+    await pauseMusic();
   }
 
-  Future<void> resumeVoice() async {
-    try {
-      await _voicePlayer.resume();
-    } catch (_) {}
+  Future<void> resumeAll() async {
+    _paused = false;
+    await resumeMusic();
+    final text = _resumeText;
+    _resumeText = null;
+    if (text != null) {
+      unawaited(speak(text, rate: _speechRate));
+    } else {
+      unawaited(duck(false));
+    }
   }
 
   /// Cuts off whatever [speak] is currently saying — e.g. the Settings
   /// screen's "Test the voice" button, tapped again while it's talking.
   /// Safe to call even when nothing is speaking.
   Future<void> stopSpeaking() async {
+    _speechGen++;
+    _utterance = null;
+    _resumeText = null;
     try {
-      await _voicePlayer.stop();
       await _tts.stop();
     } catch (_) {}
     await duck(false);
@@ -198,9 +220,12 @@ class AudioService {
   /// `cue(kind, text)`: voice speaks [text] (count still just ticks),
   /// beeps plays the matching tone, silent taps a haptic instead.
   Future<void> cue(CueKind kind, {String? text, required GuideMode mode, double rate = 1.0}) {
+    if (_paused) return Future.value();
     switch (mode) {
       case GuideMode.voice:
-        if (kind == CueKind.count) return count();
+        if (kind == CueKind.count) {
+          return text != null ? speak(text, rate: 1.4) : count();
+        }
         if (text != null && text.isNotEmpty) return speak(text, rate: rate);
         return Future.value();
       case GuideMode.beeps:

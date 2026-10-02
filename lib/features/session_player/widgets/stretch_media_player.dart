@@ -10,11 +10,21 @@ class StretchMediaPlayer extends StatefulWidget {
     this.videoUrl,
     this.thumbnailUrl,
     required this.pose,
+    this.playing = true,
+    this.showVideo = true,
   });
 
   final String? videoUrl;
   final String? thumbnailUrl;
   final StretchPose pose;
+
+  /// False while the session is paused: the video freezes on its current
+  /// frame and resumes from there.
+  final bool playing;
+
+  /// False during the get-into-position and switch-sides beats: the
+  /// thumbnail is shown while the video stays preloaded for the hold.
+  final bool showVideo;
 
   @override
   State<StretchMediaPlayer> createState() => _StretchMediaPlayerState();
@@ -34,34 +44,43 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
   @override
   void didUpdateWidget(covariant StretchMediaPlayer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.videoUrl != widget.videoUrl || oldWidget.pose != widget.pose) {
+    if (oldWidget.videoUrl != widget.videoUrl) {
       _disposeVideo();
       _initVideo();
+      return;
     }
+    if (oldWidget.playing != widget.playing ||
+        oldWidget.showVideo != widget.showVideo) {
+      _syncPlayback();
+    }
+  }
+
+  void _syncPlayback() {
+    final controller = _controller;
+    if (controller == null || !_isInitialized) return;
+    widget.playing && widget.showVideo ? controller.play() : controller.pause();
   }
 
   Future<void> _initVideo() async {
     final url = widget.videoUrl;
     if (url == null || url.trim().isEmpty) return;
 
+    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
+    _controller = controller;
     try {
-      final controller = VideoPlayerController.networkUrl(Uri.parse(url));
-      _controller = controller;
       await controller.initialize();
-      if (!mounted) return;
-
-      controller.setLooping(false);
-      controller.setVolume(0);
-      controller.play();
-
-      setState(() {
-        _isInitialized = true;
-      });
+      // A newer stretch (or dispose) replaced this controller mid-load.
+      if (!mounted || _controller != controller) {
+        await controller.dispose();
+        return;
+      }
+      await controller.setLooping(true);
+      await controller.setVolume(0);
+      setState(() => _isInitialized = true);
+      _syncPlayback();
     } catch (_) {
-      if (mounted) {
-        setState(() {
-          _hasError = true;
-        });
+      if (mounted && _controller == controller) {
+        setState(() => _hasError = true);
       }
     }
   }
@@ -82,16 +101,17 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final controller = _controller;
 
-    if (_isInitialized && _controller != null && !_hasError) {
+    if (widget.showVideo && _isInitialized && controller != null && !_hasError) {
       return SizedBox.expand(
         child: FittedBox(
           fit: BoxFit.cover,
           clipBehavior: Clip.hardEdge,
           child: SizedBox(
-            width: _controller!.value.size.width,
-            height: _controller!.value.size.height,
-            child: VideoPlayer(_controller!),
+            width: controller.value.size.width,
+            height: controller.value.size.height,
+            child: VideoPlayer(controller),
           ),
         ),
       );
