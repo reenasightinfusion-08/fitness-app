@@ -26,6 +26,17 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        // One shared debug key for every developer, so the SHA-1 registered
+        // for Google Sign-In in Google Cloud matches on every PC.
+        getByName("debug") {
+            storeFile = file("debug-shared.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

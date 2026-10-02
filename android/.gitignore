@@ -12,3 +12,6 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Shared debug key so Google Sign-In works on every PC (not a secret).
+!app/debug-shared.keystore
