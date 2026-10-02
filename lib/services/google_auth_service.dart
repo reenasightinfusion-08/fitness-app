@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:fitness_app/services/auth_service.dart';
@@ -43,6 +44,7 @@ class GoogleAuthService {
       }
       return idToken;
     } on GoogleSignInException catch (e) {
+      debugPrint('[GoogleAuth] ${e.code} | ${e.description} | ${e.details}');
       if (e.code == GoogleSignInExceptionCode.canceled) return null;
       throw AuthException("Couldn't sign in with Google. Try again.");
     }
