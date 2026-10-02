@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:fitness_app/core/providers/auth_service_provider.dart';
+import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
+
 /// Top-level screen the app is currently showing. Drives `home:` in
 /// [MaterialApp] directly, so navigation between these top-level screens
 /// needs no `Navigator` plumbing — any widget can advance the flow with
@@ -45,6 +48,24 @@ class AppFlowController extends Notifier<AppRoute> {
   /// The setup wizard's last step just built a plan — reveal it before the
   /// tabbed home shell.
   void showPlanReady() => state = AppRoute.planReady;
+
+  /// After email or Google sign-in succeeds: loads the saved profile, then
+  /// lands on Home for a finished account or the setup wizard for a new one.
+  Future<void> enterAfterSignIn() async {
+    var isOnboardingComplete = false;
+    try {
+      final res = await ref.read(authServiceProvider).getMe();
+      final userData =
+          (res['user'] ?? res['data'] ?? res) as Map<String, dynamic>;
+      isOnboardingComplete = userData['onboardingComplete'] == true;
+      ref.read(onboardingProfileProvider.notifier).loadFromApi(userData);
+    } catch (_) {}
+    if (isOnboardingComplete) {
+      enterApp();
+    } else {
+      showOnboarding();
+    }
+  }
 
   /// A successful login, "Explore with a sample account" on the welcome
   /// screen, or leaving the plan-reveal screen — all land here since

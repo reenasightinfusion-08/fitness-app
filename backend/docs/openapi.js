@@ -431,6 +431,22 @@ module.exports = {
         },
       },
     },
+    '/api/auth/google': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Sign in (or sign up) with a Google ID token',
+        requestBody: jsonBody(
+          { type: 'object', required: ['idToken'], properties: { idToken: { type: 'string', description: 'ID token from Google Sign-In' } } },
+        ),
+        responses: {
+          200: okResponse('JWT returned', { $ref: '#/components/schemas/TokenData' }, 'Signed in'),
+          400: err('Missing token', 'Google ID token is required'),
+          401: err('Invalid token or unverified Google email', 'Google sign-in failed. Please try again.'),
+          409: err('Email linked to another Google account', 'This email is linked to a different Google account'),
+          500: err('Not configured', 'Google sign-in is not configured'),
+        },
+      },
+    },
     '/api/auth/forgot-password': {
       post: {
         tags: ['Auth'],

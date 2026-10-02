@@ -4,7 +4,9 @@ const userSchema = new mongoose.Schema(
   {
     // --- auth ---
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true },
+    // Null for accounts created through Google sign-in until a password is set.
+    passwordHash: { type: String, default: null },
+    googleId: { type: String, unique: true, sparse: true },
     isVerified: { type: Boolean, default: false },
     verifyCode: { type: String, default: null },
     resetCode: { type: String, default: null },

@@ -3,10 +3,17 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendCode } = require('../utils/mailer');
-const { ok, fail } = require('../utils/response');
+const { OAuth2Client } = require('google-auth-library');
+const { ok, fail, asyncHandler } = require('../utils/response');
 
 const sign = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES || '1h' });
+
+const googleClient = new OAuth2Client();
+// Comma-separated OAuth client IDs the app's ID tokens may be issued for
+// (the Web client ID the Flutter app passes as serverClientId).
+const googleAudiences = () =>
+  String(process.env.GOOGLE_CLIENT_IDS || '').split(',').map((id) => id.trim()).filter(Boolean);
 
 const genCode = () => String(Math.floor(100000 + Math.random() * 900000));
 const RESET_TTL_MS = 15 * 60 * 1000;
@@ -67,6 +74,9 @@ router.post('/login', async (req, res) => {
     const email = String(req.body.email || '').trim().toLowerCase();
     const { password } = req.body;
     const user = await User.findOne({ email });
+    if (user && !user.passwordHash) {
+      return fail(res, 401, 'This account uses Google sign-in. Tap "Continue with Google".');
+    }
     if (!user || !(await bcrypt.compare(password || '', user.passwordHash))) {
       return fail(res, 401, 'Invalid email or password');
     }
@@ -77,6 +87,48 @@ router.post('/login', async (req, res) => {
     fail(res, 500, 'Login failed');
   }
 });
+
+// POST /api/auth/google { idToken }
+// Verifies a Google ID token, then signs in the matching account — creating a
+// verified one on first use, or linking Google to an existing account that has
+// the same (Google-verified) email.
+router.post('/google', asyncHandler(async (req, res) => {
+  const { idToken } = req.body;
+  if (!idToken) return fail(res, 400, 'Google ID token is required');
+  const audience = googleAudiences();
+  if (!audience.length) return fail(res, 500, 'Google sign-in is not configured');
+
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({ idToken, audience });
+    payload = ticket.getPayload();
+  } catch (err) {
+    return fail(res, 401, 'Google sign-in failed. Please try again.');
+  }
+  if (!payload?.email || !payload.email_verified) {
+    return fail(res, 401, 'Your Google email is not verified');
+  }
+
+  const email = payload.email.trim().toLowerCase();
+  let user = await User.findOne({ $or: [{ googleId: payload.sub }, { email }] });
+  if (!user) {
+    user = await User.create({
+      email,
+      googleId: payload.sub,
+      isVerified: true,
+      name: payload.name || '',
+    });
+  } else {
+    if (user.googleId && user.googleId !== payload.sub) {
+      return fail(res, 409, 'This email is linked to a different Google account');
+    }
+    user.googleId = payload.sub;
+    user.isVerified = true;
+    user.verifyCode = undefined;
+    await user.save();
+  }
+  ok(res, { token: sign(user._id), email: user.email }, 'Signed in');
+}));
 
 // POST /api/auth/forgot-password { email }
 router.post('/forgot-password', async (req, res) => {

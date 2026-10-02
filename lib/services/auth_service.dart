@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:fitness_app/services/google_auth_service.dart';
+
 /// Thrown for any auth failure the UI should show as-is (bad credentials,
 /// wrong code, unreachable server, etc).
 class AuthException implements Exception {
@@ -72,6 +74,7 @@ class AuthService {
   static Future<String> _getBaseUrl() async => '${await _getHost()}/api/auth';
 
   final _storage = const FlutterSecureStorage();
+  final _googleAuth = GoogleAuthService();
 
   Future<void> signup({required String email, required String password}) =>
       _post('/signup', {'email': email, 'password': password});
@@ -87,6 +90,16 @@ class AuthService {
   Future<void> login({required String email, required String password}) async {
     final data = await _post('/login', {'email': email, 'password': password});
     await _storage.write(key: _tokenKey, value: data['token'] as String);
+  }
+
+  /// Signs in through Google. Returns false if the user dismissed the account
+  /// picker, true once the backend has issued a session.
+  Future<bool> loginWithGoogle() async {
+    final idToken = await _googleAuth.getIdToken();
+    if (idToken == null) return false;
+    final data = await _post('/google', {'idToken': idToken});
+    await _storage.write(key: _tokenKey, value: data['token'] as String);
+    return true;
   }
 
   Future<void> forgotPassword({required String email}) =>
@@ -108,7 +121,10 @@ class AuthService {
   Future<bool> hasSession() async =>
       (await _storage.read(key: _tokenKey)) != null;
 
-  Future<void> logout() => _storage.delete(key: _tokenKey);
+  Future<void> logout() async {
+    await _storage.delete(key: _tokenKey);
+    await _googleAuth.signOut();
+  }
 
   /// The saved stretch reminders, each `{ time: {hour, minute}, isOn, days }`.
   Future<List<dynamic>> getReminders() => _reachable(() async {
