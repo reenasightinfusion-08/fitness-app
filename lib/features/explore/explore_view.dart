@@ -6,6 +6,8 @@ import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/app_validators.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/explore/models/explore_data.dart';
+import 'package:fitness_app/features/explore/models/safety_rules.dart';
+import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
 import 'package:fitness_app/features/stretch_detail/models/stretch_model.dart';
@@ -70,10 +72,15 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
     super.dispose();
   }
 
-  bool _matchesQuery(String name, List<String> areaKeys) {
+  bool _matchesQuery(
+    String name,
+    List<String> areaKeys, [
+    Iterable<String> extraTerms = const [],
+  ]) {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return true;
     if (name.toLowerCase().contains(q)) return true;
+    if (extraTerms.any((term) => term.toLowerCase().contains(q))) return true;
     return areaKeys.any(
       (key) => ExploreDemoData.areas
           .firstWhere((a) => a.key == key, orElse: () => ExploreArea(key, key))
@@ -100,25 +107,50 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
     return set.toList();
   }
 
-  List<RoutineSummary> _filterRoutineSummaries(List<RoutineSummary> list) {
+  /// What "Safe for me" hides: from the setup answers plus the stretches the
+  /// user marked as hurt. Null when the toggle is off.
+  SafetyRules? get _safety {
+    if (!_safeForMe) return null;
+    final hurtIds = <String>{
+      for (final h
+          in ref.watch(hurtStretchesProvider).valueOrNull ??
+              const <HurtStretch>[])
+        h.id,
+    };
+    return SafetyRules.fromProfile(
+      ref.watch(onboardingProfileProvider),
+      hurtIds,
+    );
+  }
+
+  List<RoutineSummary> _filterRoutineSummaries(
+    List<RoutineSummary> list,
+    SafetyRules? safety,
+  ) {
     return list.where((r) {
       final areas = _routineAreas(r);
-      final matchesQ = _matchesQuery(r.name, areas);
+      final matchesQ = _matchesQuery(r.name, areas, [
+        ...r.tags,
+        for (final s in r.stretches) s.name,
+      ]);
       final matchesArea = _area == null || areas.contains(_area);
-      final matchesTime = _time.matches(r.minutes);
-      return matchesQ && matchesArea && matchesTime;
+      final matchesTime = _time.matches(r.totalSeconds);
+      final isSafe = safety == null || safety.allowsRoutine(r);
+      return matchesQ && matchesArea && matchesTime && isSafe;
     }).toList();
   }
 
-  List<StretchModel> get _filteredStretches => _apiStretches
+  List<StretchModel> _filteredStretches(SafetyRules? safety) => _apiStretches
       .where((s) => _matchesQuery(s.name, s.areas))
       .where((s) => _area == null || s.areas.contains(_area))
+      .where((s) => safety == null || safety.allowsStretch(s))
       .toList();
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final stretches = _filteredStretches;
+    final safety = _safety;
+    final stretches = _filteredStretches(safety);
     final routinesAsync = ref.watch(routinesProvider);
 
     return ListView(
@@ -138,7 +170,7 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
           variant: AppCardVariant.list,
           child: AppSettingRow(
             title: 'Safe for me',
-            subtitle: "Swaps out stretches that don't suit your body",
+            subtitle: "Hides stretches and routines that don't suit your body",
             showDivider: false,
             trailing: AppSwitch(
               value: _safeForMe,
@@ -178,12 +210,14 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
         20.verticalSpace,
         routinesAsync.when(
           data: (apiRoutines) {
-            final routines = _filterRoutineSummaries(apiRoutines);
+            final routines = _filterRoutineSummaries(apiRoutines, safety);
             if (routines.isEmpty) {
-              return const AppEmptyState(
+              return AppEmptyState(
                 icon: Icons.search_off_rounded,
                 title: 'No routines match',
-                message: 'Try a different area or time.',
+                message: _safeForMe
+                    ? 'Try a different area or time, or turn off "Safe for me".'
+                    : 'Try a different area or time.',
               );
             }
             return Column(
@@ -221,9 +255,7 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
                       ),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => RoutineDetailScreen(
-                            routine: routine,
-                          ),
+                          builder: (_) => RoutineDetailScreen(routine: routine),
                         ),
                       ),
                     );

@@ -13,25 +13,29 @@ class ExploreArea {
   final String label;
 }
 
-/// Mirrors the prototype's time-filter chips (`t==='5'|'10'|'15'|'16'`):
-/// each keeps routines at or under a minute cap, except [over15] which
-/// keeps only the longer ones.
+/// The time-filter chips. Each is a range of exact seconds with no overlap
+/// between neighbours: a routine is over [overSeconds] and at most [maxSeconds],
+/// so 5:50 is "5 to 10" and exactly 10:00 is still "5 to 10".
 enum ExploreTimeFilter {
   any('Any length'),
-  upTo5('5 min or less', maxMinutes: 5),
-  upTo10('Up to 10 min', maxMinutes: 10),
-  upTo15('Up to 15 min', maxMinutes: 15),
-  over15('15+ min', minMinutes: 15);
+  upTo5('5 min or less', maxSeconds: 5 * 60),
+  from5To10('5 to 10 min', overSeconds: 5 * 60, maxSeconds: 10 * 60),
+  from10To15('10 to 15 min', overSeconds: 10 * 60, maxSeconds: 15 * 60),
+  over15('15+ min', overSeconds: 15 * 60);
 
-  const ExploreTimeFilter(this.label, {this.maxMinutes, this.minMinutes});
+  const ExploreTimeFilter(this.label, {this.overSeconds, this.maxSeconds});
 
   final String label;
-  final int? maxMinutes;
-  final int? minMinutes;
 
-  bool matches(int minutes) {
-    if (maxMinutes != null && minutes > maxMinutes!) return false;
-    if (minMinutes != null && minutes < minMinutes!) return false;
+  /// Exclusive lower bound.
+  final int? overSeconds;
+
+  /// Inclusive upper bound.
+  final int? maxSeconds;
+
+  bool matches(int seconds) {
+    if (overSeconds != null && seconds <= overSeconds!) return false;
+    if (maxSeconds != null && seconds > maxSeconds!) return false;
     return true;
   }
 }
