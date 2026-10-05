@@ -82,7 +82,7 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
       MaterialPageRoute(
         builder: (_) => SessionPlayerScreen(
           plan: widget.plan,
-          holdSecondsOverride: holdSeconds,
+          // holdSecondsOverride: holdSeconds,
           guideMode: guideMode,
           musicOn: musicOn,
           voiceRate: ref.read(sessionSettingsProvider).voiceRate,
