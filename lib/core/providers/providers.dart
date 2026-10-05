@@ -6,7 +6,6 @@ export 'package:fitness_app/core/providers/favorites_provider.dart';
 export 'package:fitness_app/core/providers/hurt_stretches_provider.dart';
 export 'package:fitness_app/core/providers/pending_auth_provider.dart';
 export 'package:fitness_app/core/providers/routines_provider.dart';
-export 'package:fitness_app/core/providers/sign_in_methods_provider.dart';
 export 'package:fitness_app/core/providers/stretches_provider.dart';
 export 'package:fitness_app/core/providers/theme_mode_provider.dart';
 export 'package:fitness_app/core/providers/todays_plan_provider.dart';

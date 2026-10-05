@@ -68,12 +68,10 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isPremium = ref.watch(premiumProvider);
-    final methods = ref
-        .watch(signInMethodsProvider)
-        .maybeWhen(data: (m) => m, orElse: () => null);
-
     final profile = ref.watch(onboardingProfileProvider);
-    final userEmail = profile.email.isEmpty ? ProfileDemoData.email : profile.email;
+    final userEmail = profile.email.isEmpty
+        ? ProfileDemoData.email
+        : profile.email;
 
     return Scaffold(
       backgroundColor: colors.ground,
@@ -90,19 +88,16 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
               variant: AppCardVariant.list,
               child: Column(
                 children: [
+                  AppSettingRow(title: 'Email', subtitle: userEmail),
                   AppSettingRow(
-                    title: userEmail,
-                    subtitle: 'Email',
-                  ),
-                  AppSettingRow(
-                    title: methods?.label ?? 'Email and password',
-                    subtitle: 'Signed in with',
+                    title: 'Signed in with',
+                    subtitle: profile.signInLabel,
                     showDivider: false,
                   ),
                 ],
               ),
             ),
-            if (methods?.hasPassword ?? true) ...[
+            if (profile.hasPassword) ...[
               16.verticalSpace,
               AppCard(
                 variant: AppCardVariant.list,
@@ -129,9 +124,7 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
                     isPremium
                         ? 'Premium, one-time purchase. Nothing will renew.'
                         : 'Free plan. Nothing to cancel.',
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: colors.ink2,
-                    ),
+                    style: AppTextStyle.bodyMedium.copyWith(color: colors.ink2),
                   ),
                 ],
               ),

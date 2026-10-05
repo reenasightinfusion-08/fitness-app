@@ -34,10 +34,21 @@ class OnboardingProfile {
     this.reminderOn = true,
     this.reminderTime = const TimeOfDay(hour: 8, minute: 0),
     this.safetyAcknowledged = false,
+    this.hasPassword = true,
+    this.hasGoogle = false,
   });
 
   final String name;
   final String email;
+  final bool hasPassword;
+  final bool hasGoogle;
+
+  String get signInLabel => switch ((hasPassword, hasGoogle)) {
+        (true, true) => 'Email and Google',
+        (false, true) => 'Google',
+        _ => 'Email and password',
+      };
+
   final String country;
   final String age;
   final String? gender;
@@ -100,9 +111,13 @@ class OnboardingProfile {
     bool? reminderOn,
     TimeOfDay? reminderTime,
     bool? safetyAcknowledged,
+    bool? hasPassword,
+    bool? hasGoogle,
   }) => OnboardingProfile(
     name: name ?? this.name,
     email: email ?? this.email,
+    hasPassword: hasPassword ?? this.hasPassword,
+    hasGoogle: hasGoogle ?? this.hasGoogle,
     country: country ?? this.country,
     age: age ?? this.age,
     gender: gender == null ? this.gender : gender(),
@@ -166,6 +181,8 @@ class OnboardingProfile {
     return OnboardingProfile(
       name: json['name']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
+      hasPassword: json['hasPassword'] as bool? ?? true,
+      hasGoogle: json['hasGoogle'] as bool? ?? false,
       country: json['country']?.toString() ?? '',
       age: json['age']?.toString() ?? '',
       gender: json['gender']?.toString(),
