@@ -484,17 +484,25 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                       textAlign: TextAlign.center,
                     ),
                     12.verticalSpace,
-                    SizedBox(
-                      height: 220.h,
-                      width: 220.w,
-                      child: ClipRRect(
-                        borderRadius: AppBorderRadius.hero,
-                        child: StretchMediaPlayer(
-                          videoUrl: stretch.model?.videoUrl,
-                          thumbnailUrl: stretchThumbUrl,
-                          pose: stretch.pose,
-                          showVideo: step.kind == _StepKind.hold,
-                          playing: !paused,
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: 350.w),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: ColoredBox(
+                          color: Color(0xffEFEBE5),
+                          child: ClipRRect(
+                            borderRadius: AppBorderRadius.hero,
+                            child: Transform.flip(
+                              flipX: stretch.isEachSide && step.side == 'Second',
+                              child: StretchMediaPlayer(
+                                videoUrl: stretch.model?.videoUrl,
+                                thumbnailUrl: stretchThumbUrl,
+                                pose: stretch.pose,
+                                showVideo: step.kind == _StepKind.hold,
+                                playing: !paused,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -502,6 +510,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                       _formatSeconds(remaining),
                       style: AppTextStyle.timer.copyWith(
                         color: colors.playerInk,
+                        fontSize: 80
                       ),
                     ),
                     8.verticalSpace,

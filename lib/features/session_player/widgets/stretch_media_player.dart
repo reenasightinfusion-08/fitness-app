@@ -106,7 +106,7 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
     if (widget.showVideo && _isInitialized && controller != null && !_hasError) {
       return SizedBox.expand(
         child: FittedBox(
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
           clipBehavior: Clip.hardEdge,
           child: SizedBox(
             width: controller.value.size.width,
@@ -121,7 +121,7 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
     if (thumb != null && thumb.trim().isNotEmpty) {
       return Image.network(
         thumb,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) => _buildStickFigure(colors),
       );
     }

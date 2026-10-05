@@ -142,6 +142,7 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
                 ref.invalidate(sessionSettingsProvider);
                 await ReminderNotificationService.instance.cancelAll();
                 if (context.mounted) {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
                   ref.read(appFlowProvider.notifier).showWelcome();
                 }
               },
