@@ -46,7 +46,7 @@ class ProfileView extends ConsumerWidget {
       ),
       (
         'Session settings',
-        'Voice, music, hold and transition times, streak day',
+        'Voice, music, streak day',
         () => _open(context, const SettingsScreen()),
       ),
       (

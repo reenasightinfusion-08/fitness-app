@@ -370,7 +370,7 @@ class _LibraryTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 16.h),
+          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 15.h),
           child: Column(
             children: [
               SizedBox(
@@ -388,7 +388,7 @@ class _LibraryTile extends StatelessWidget {
                       )
                     : StretchFigure(pose: stretch.pose),
               ),
-              6.verticalSpace,
+              5.verticalSpace,
               Expanded(
                 child: Center(
                   child: Text(

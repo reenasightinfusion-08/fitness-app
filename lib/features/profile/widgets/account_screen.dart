@@ -88,12 +88,12 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
               child: Column(
                 children: [
                   AppSettingRow(
-                    title: userEmail,
-                    subtitle: 'Email',
+                    title: 'Email',
+                    subtitle: userEmail,
                   ),
                   const AppSettingRow(
-                    title: 'Email and password',
-                    subtitle: 'Signed in with',
+                    title: 'Signed in with',
+                    subtitle: 'Email and password',
                     showDivider: false,
                   ),
                 ],
