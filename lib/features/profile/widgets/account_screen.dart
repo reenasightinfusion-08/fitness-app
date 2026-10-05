@@ -68,6 +68,9 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isPremium = ref.watch(premiumProvider);
+    final methods = ref
+        .watch(signInMethodsProvider)
+        .maybeWhen(data: (m) => m, orElse: () => null);
 
     final profile = ref.watch(onboardingProfileProvider);
     final userEmail = profile.email.isEmpty ? ProfileDemoData.email : profile.email;
@@ -88,31 +91,33 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
               child: Column(
                 children: [
                   AppSettingRow(
-                    title: 'Email',
-                    subtitle: userEmail,
+                    title: userEmail,
+                    subtitle: 'Email',
                   ),
-                  const AppSettingRow(
-                    title: 'Signed in with',
-                    subtitle: 'Email and password',
+                  AppSettingRow(
+                    title: methods?.label ?? 'Email and password',
+                    subtitle: 'Signed in with',
                     showDivider: false,
                   ),
                 ],
               ),
             ),
-            16.verticalSpace,
-            AppCard(
-              variant: AppCardVariant.list,
-              child: AppSettingRow(
-                title: 'Password',
-                subtitle: '••••••••',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ChangePasswordScreen(email: userEmail),
+            if (methods?.hasPassword ?? true) ...[
+              16.verticalSpace,
+              AppCard(
+                variant: AppCardVariant.list,
+                child: AppSettingRow(
+                  title: 'Password',
+                  subtitle: '••••••••',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChangePasswordScreen(email: userEmail),
+                    ),
                   ),
+                  showDivider: false,
                 ),
-                showDivider: false,
               ),
-            ),
+            ],
             16.verticalSpace,
             AppCard(
               child: Column(

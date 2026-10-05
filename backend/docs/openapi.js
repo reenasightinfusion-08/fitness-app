@@ -84,6 +84,14 @@ module.exports = {
           _id: { type: 'string' },
           email: emailProp,
           isVerified: { type: 'boolean' },
+          hasPassword: {
+            type: 'boolean',
+            description: 'Only on GET /users/me. False for Google-only accounts, which have no password to change.',
+          },
+          hasGoogle: {
+            type: 'boolean',
+            description: 'Only on GET /users/me. True when a Google account is linked.',
+          },
           name: { type: 'string' },
           age: { type: 'number', nullable: true },
           gender: { type: 'string', nullable: true },
