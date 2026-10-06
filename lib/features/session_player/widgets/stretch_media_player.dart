@@ -46,6 +46,7 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
   @override
   void initState() {
     super.initState();
+    _background = VideoBackgroundService.getCached(widget.videoUrl);
     _initVideo();
   }
 
@@ -54,6 +55,7 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.videoUrl != widget.videoUrl) {
       _disposeVideo();
+      _background = VideoBackgroundService.getCached(widget.videoUrl);
       _initVideo();
       return;
     }

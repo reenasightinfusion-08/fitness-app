@@ -10,6 +10,7 @@ import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/session_player/session_player_screen.dart';
 import 'package:fitness_app/services/audio_service.dart' show GuideMode;
+import 'package:fitness_app/services/video_background_service.dart';
 
 /// Matches the prototype's `screens.getready`: the settings screen shown
 /// right before a session starts — guidance style, background music, and
@@ -47,6 +48,14 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
   );
   late bool musicOn = ref.read(sessionSettingsProvider).musicOn;
   late int holdSeconds = widget.plan.stretches.first.holdSeconds;
+
+  @override
+  void initState() {
+    super.initState();
+    VideoBackgroundService.preloadUrls(
+      widget.plan.stretches.map((s) => s.model?.videoUrl),
+    );
+  }
 
   String get _guideDescription => switch (guideMode) {
     GuideMode.voice =>

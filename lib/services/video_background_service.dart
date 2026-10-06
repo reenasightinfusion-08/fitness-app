@@ -46,6 +46,19 @@ class VideoBackground {
 class VideoBackgroundService {
   static final Map<String, VideoBackground?> _cache = {};
 
+  /// Instant synchronous getter from cache (0ms delay).
+  static VideoBackground? getCached(String? url) =>
+      url == null ? null : _cache[url];
+
+  /// Preloads background colors for a list of video URLs in the background.
+  static void preloadUrls(Iterable<String?> urls) {
+    for (final url in urls) {
+      if (url != null && url.trim().isNotEmpty && !_cache.containsKey(url)) {
+        detect(url);
+      }
+    }
+  }
+
   /// Returns null when the frame can't be read; callers fall back to [VideoBackground.fallback].
   static Future<VideoBackground?> detect(String url) async {
     if (_cache.containsKey(url)) return _cache[url];
