@@ -70,7 +70,7 @@ class PremiumScreen extends ConsumerWidget {
                     ),
                     16.verticalSpace,
                   ],
-                  Text('Go deeper, pay once.', style: AppTextStyle.headline),
+                  Text('Go deeper, Pay once.', style: AppTextStyle.headline),
                   6.verticalSpace,
                   Text(
                     'No trial that quietly turns into a charge. No '
@@ -98,19 +98,23 @@ class PremiumScreen extends ConsumerWidget {
                                 SizedBox(
                                   width: 60.w,
                                   child: row.inFree
-                                      ? const AppTag(
-                                          label: 'Free',
-                                          tone: AppTone.accent,
-                                        )
+                                      ? Center(
+                                        child: const AppTag(
+                                            label: 'Free',
+                                            tone: AppTone.accent,
+                                          ),
+                                      )
                                       : const SizedBox.shrink(),
                                 ),
                                 SizedBox(
                                   width: 76.w,
                                   child: row.inPremium
-                                      ? const AppTag(
-                                          label: 'Premium',
-                                          tone: AppTone.accent,
-                                        )
+                                      ? Center(
+                                        child: const AppTag(
+                                            label: 'Premium',
+                                            tone: AppTone.accent,
+                                          ),
+                                      )
                                       : const SizedBox.shrink(),
                                 ),
                               ],
