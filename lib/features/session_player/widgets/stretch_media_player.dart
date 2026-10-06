@@ -143,16 +143,14 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
               videoSize: videoSize,
             ),
           ),
-          // 2. Centered video with soft edge feathering so there is zero hard seam.
+          // 2. Whole video, uncropped, centered over the matching background.
           SizedBox.expand(
             child: FittedBox(
               fit: BoxFit.contain,
               child: SizedBox(
                 width: videoSize.width,
                 height: videoSize.height,
-                child: _EdgeFeatherMask(
-                  child: VideoPlayer(controller),
-                ),
+                child: VideoPlayer(controller),
               ),
             ),
           ),
@@ -320,63 +318,5 @@ class VideoBackgroundPainter extends CustomPainter {
   bool shouldRepaint(covariant VideoBackgroundPainter oldDelegate) {
     return oldDelegate.background != background ||
         oldDelegate.videoSize != videoSize;
-  }
-}
-
-/// Smoothly feathers the outer perimeter of the video into the container background.
-///
-/// Blends from alpha 0.0 at the video boundary to alpha 1.0 inward over ~12-16
-/// logical pixels. This eliminates any step discontinuity at the seam and
-/// renders any minor color-space (YUV->RGB) or subpixel alignment difference
-/// completely imperceptible.
-class _EdgeFeatherMask extends StatelessWidget {
-  const _EdgeFeatherMask({required this.child});
-
-  final Widget child;
-
-  static const double featherHorizontal = 0.035;
-  static const double featherVertical = 0.05;
-
-  @override
-  Widget build(BuildContext context) {
-    return ShaderMask(
-      blendMode: BlendMode.dstIn,
-      shaderCallback: (bounds) {
-        final fh = (bounds.height * featherVertical).clamp(6.0, 36.0);
-        final topStop = bounds.height > 0 ? (fh / bounds.height) : 0.0;
-        final botStop = (1.0 - topStop).clamp(topStop, 1.0);
-        return LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: const [
-            Colors.transparent,
-            Colors.white,
-            Colors.white,
-            Colors.transparent,
-          ],
-          stops: [0.0, topStop, botStop, 1.0],
-        ).createShader(bounds);
-      },
-      child: ShaderMask(
-        blendMode: BlendMode.dstIn,
-        shaderCallback: (bounds) {
-          final fw = (bounds.width * featherHorizontal).clamp(6.0, 36.0);
-          final leftStop = bounds.width > 0 ? (fw / bounds.width) : 0.0;
-          final rightStop = (1.0 - leftStop).clamp(leftStop, 1.0);
-          return LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: const [
-              Colors.transparent,
-              Colors.white,
-              Colors.white,
-              Colors.transparent,
-            ],
-            stops: [0.0, leftStop, rightStop, 1.0],
-          ).createShader(bounds);
-        },
-        child: child,
-      ),
-    );
   }
 }

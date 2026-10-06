@@ -101,9 +101,10 @@ class VideoBackgroundService {
               return Color.fromARGB(255, r ~/ count, g ~/ count, b ~/ count);
             }
 
-            // Inset by ~4% of dimensions to bypass H.264 macroblock border padding.
-            final insetX = (w * 0.04).round().clamp(2, 8);
-            final insetY = (h * 0.04).round().clamp(2, 6);
+            // Sample right at the edge (just past codec padding) so the
+            // letterbox bars match the video's outermost pixels.
+            const insetX = 2;
+            const insetY = 2;
             final midX = w ~/ 2;
             final midY = h ~/ 2;
 
