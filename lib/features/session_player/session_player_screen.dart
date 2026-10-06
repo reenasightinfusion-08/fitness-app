@@ -489,21 +489,18 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                 child: ColoredBox(
                   color: Color(0xFFECE2D4),
                   //  color: Color(0xffEFEBE5),
-                  child: ClipRRect(
-                    borderRadius: AppBorderRadius.hero,
-                    child: Transform.flip(
-                      flipX:
-                          stretch.isEachSide &&
-                          (step.side == 'Second' ||
-                              step.kind == _StepKind.switchSides),
-                      child: StretchMediaPlayer(
-                        videoUrl: stretch.model?.videoUrl,
-                        thumbnailUrl: stretchThumbUrl,
-                        holdSeconds: stretch.model?.defaultHoldSeconds ?? 30,
-                        pose: stretch.pose,
-                        showVideo: step.kind == _StepKind.hold,
-                        playing: !paused,
-                      ),
+                  child: Transform.flip(
+                    flipX:
+                        stretch.isEachSide &&
+                        (step.side == 'Second' ||
+                            step.kind == _StepKind.switchSides),
+                    child: StretchMediaPlayer(
+                      videoUrl: stretch.model?.videoUrl,
+                      thumbnailUrl: stretchThumbUrl,
+                      holdSeconds: stretch.model?.defaultHoldSeconds ?? 30,
+                      pose: stretch.pose,
+                      showVideo: step.kind == _StepKind.hold,
+                      playing: !paused,
                     ),
                   ),
                 ),
