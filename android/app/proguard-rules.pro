@@ -1,0 +1,5 @@
+-keep class com.dexterous.flutterlocalnotifications.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep class * extends com.google.gson.reflect.TypeToken
+-keep class com.google.gson.reflect.TypeToken { *; }
