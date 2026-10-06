@@ -32,6 +32,7 @@ class ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   Future<void> submit() async {
+    FocusScope.of(context).unfocus();
     if (isLoading) return;
     if (!(formKey.currentState?.validate() ?? false)) return;
 

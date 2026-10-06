@@ -34,6 +34,7 @@ class ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   }
 
   Future<void> submit(PendingAuth pending) async {
+    FocusScope.of(context).unfocus();
     if (isLoading) return;
     if (!(formKey.currentState?.validate() ?? false)) return;
 

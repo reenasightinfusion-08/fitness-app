@@ -39,6 +39,7 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> submit() async {
+    FocusScope.of(context).unfocus();
     setState(() => hasSubmitted = true);
     if (!(formKey.currentState?.validate() ?? false)) return;
 

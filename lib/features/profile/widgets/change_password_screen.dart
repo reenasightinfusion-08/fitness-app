@@ -57,6 +57,7 @@ class ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   /// Runs [action] with the loading state and shows the server's reason on failure.
   Future<void> run(Future<void> Function() action) async {
+    FocusScope.of(context).unfocus();
     if (isLoading || isSendingCode) return;
     if (!(formKey.currentState?.validate() ?? false)) return;
     setState(() {
@@ -88,6 +89,7 @@ class ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   });
 
   Future<void> sendCode() async {
+    FocusScope.of(context).unfocus();
     if (isLoading || isSendingCode) return;
     setState(() {
       isSendingCode = true;

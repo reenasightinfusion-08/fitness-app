@@ -39,6 +39,7 @@ class SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   Future<void> submit() async {
+    FocusScope.of(context).unfocus();
     if (isLoading) return;
     setState(() => hasSubmitted = true);
     if (!(formKey.currentState?.validate() ?? false)) return;
