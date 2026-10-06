@@ -435,11 +435,11 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
     return Scaffold(
       backgroundColor: colors.playerBg,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(14.w, 6.h, 14.w, 16.h),
-          child: Column(
-            children: [
-              Row(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(14.w, 6.h, 14.w, 6.h),
+              child: Row(
                 children: [
                   AppIconButton(
                     icon: Icons.close_rounded,
@@ -463,183 +463,192 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                   ),
                 ],
               ),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      step.side == null
-                          ? _phaseLabel(step, isFirstStretch).toUpperCase()
-                          : '${_phaseLabel(step, isFirstStretch).toUpperCase()} · ${step.side} side',
-                      style: AppTextStyle.eyebrow.copyWith(
-                        color: colors.playerDim,
+            ),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 390.w),
+              child: AspectRatio(
+                aspectRatio: 16/13,
+                child: ColoredBox(
+                  color: Color(0xFFECE2D4),
+                  //  color: Color(0xffEFEBE5),
+                  child: ClipRRect(
+                    borderRadius: AppBorderRadius.hero,
+                    child: Transform.flip(
+                      flipX: stretch.isEachSide && step.side == 'Second',
+                      child: StretchMediaPlayer(
+                        videoUrl: stretch.model?.videoUrl,
+                        thumbnailUrl: stretchThumbUrl,
+                        pose: stretch.pose,
+                        showVideo: step.kind == _StepKind.hold,
+                        playing: !paused,
                       ),
                     ),
-                    2.verticalSpace,
-                    Text(
-                      stretch.name,
-                      style: AppTextStyle.headline.copyWith(
-                        color: colors.playerInk,
-                      ),
-                      textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+            20.verticalSpace,
+            Padding(
+              padding: EdgeInsets.fromLTRB(14.w, 6.h, 14.w, 16.h),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text(
+                    step.side == null
+                        ? _phaseLabel(step, isFirstStretch).toUpperCase()
+                        : '${_phaseLabel(step, isFirstStretch).toUpperCase()} · ${step.side} side',
+                    style: AppTextStyle.eyebrow.copyWith(
+                      color: colors.playerDim,
                     ),
-                    12.verticalSpace,
-                    ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: 350.w),
-                      child: AspectRatio(
-                        aspectRatio: 1,
-                        child: ColoredBox(
-                          color: Color(0xFFECE2D4),
-                        //  color: Color(0xffEFEBE5),
-                          child: ClipRRect(
-                            borderRadius: AppBorderRadius.hero,
-                            child: Transform.flip(
-                              flipX: stretch.isEachSide && step.side == 'Second',
-                              child: StretchMediaPlayer(
-                                videoUrl: stretch.model?.videoUrl,
-                                thumbnailUrl: stretchThumbUrl,
-                                pose: stretch.pose,
-                                showVideo: step.kind == _StepKind.hold,
-                                playing: !paused,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                  ),
+                  3.verticalSpace,
+                  Text(
+                    stretch.name,
+                    style: AppTextStyle.headline.copyWith(
+                      color: colors.playerInk,
                     ),
-                    Text(
-                      _formatSeconds(remaining),
-                      style: AppTextStyle.timer.copyWith(
-                        color: colors.playerInk,
-                        fontSize: 80
-                      ),
+                    textAlign: TextAlign.center,
+                  ),
+                  12.verticalSpace,
+                  Text(
+                    _formatSeconds(remaining),
+                    style: AppTextStyle.timer.copyWith(
+                      color: colors.playerInk,
+                      fontSize: 80
                     ),
-                    8.verticalSpace,
-                    ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: 260.w),
+                  ),
+                  12.verticalSpace,
+                  SizedBox(
+                    width: 260.w,
+                    height: 44.h, // Fixed height reserved for 2 lines of text
+                    child: Align(
+                      alignment: Alignment.center, // Keeps 1-line text centered inside the 44.h box
                       child: Text(
                         cue,
                         textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: AppTextStyle.bodySmall.copyWith(
                           color: colors.playerDim,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.all(12.r),
-                decoration: BoxDecoration(
-                  color: colors.playerInk.withValues(alpha: 0.07),
-                  borderRadius: AppBorderRadius.xl,
-                ),
-                child: Row(
-                  children: [
-                    AppThumb(
-                      isOnDark: true,
-                      child: nextStretch == null
-                          ? null
-                          : (hasNextThumb
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                    child: Image.network(
-                                      nextThumbUrl,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              CustomPaint(
-                                                painter: StretchFigurePainter(
-                                                  pose: nextStretch.pose,
-                                                  nearColor: colors.playerInk,
-                                                  farColor: colors.playerDim,
-                                                  groundColor:
-                                                      Colors.transparent,
-                                                  showGround: false,
-                                                ),
-                                              ),
-                                    ),
-                                  )
-                                : CustomPaint(
-                                    painter: StretchFigurePainter(
-                                      pose: nextStretch.pose,
-                                      nearColor: colors.playerInk,
-                                      farColor: colors.playerDim,
-                                      groundColor: Colors.transparent,
-                                      showGround: false,
-                                    ),
-                                  )),
+                  ),
+                 14.verticalSpace,
+                  Container(
+                    padding: EdgeInsets.all(12.r),
+                    decoration: BoxDecoration(
+                      color: colors.playerInk.withValues(alpha: 0.07),
+                      borderRadius: AppBorderRadius.xl,
                     ),
-                    12.horizontalSpace,
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            nextStretch == null ? 'Last stretch' : 'Next up',
-                            style: AppTextStyle.caption.copyWith(
-                              color: colors.playerDim,
-                            ),
+                    child: Row(
+                      children: [
+                        AppThumb(
+                          isOnDark: true,
+                          child: nextStretch == null
+                              ? null
+                              : (hasNextThumb
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(8.r),
+                                        child: Image.network(
+                                          nextThumbUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  CustomPaint(
+                                                    painter: StretchFigurePainter(
+                                                      pose: nextStretch.pose,
+                                                      nearColor: colors.playerInk,
+                                                      farColor: colors.playerDim,
+                                                      groundColor:
+                                                          Colors.transparent,
+                                                      showGround: false,
+                                                    ),
+                                                  ),
+                                        ),
+                                      )
+                                    : CustomPaint(
+                                        painter: StretchFigurePainter(
+                                          pose: nextStretch.pose,
+                                          nearColor: colors.playerInk,
+                                          farColor: colors.playerDim,
+                                          groundColor: Colors.transparent,
+                                          showGround: false,
+                                        ),
+                                      )),
+                        ),
+                        12.horizontalSpace,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                nextStretch == null ? 'Last stretch' : 'Next up',
+                                style: AppTextStyle.caption.copyWith(
+                                  color: colors.playerDim,
+                                ),
+                              ),
+                              Text(
+                                nextStretch?.name ?? 'Almost done',
+                                style: AppTextStyle.titleSmall.copyWith(
+                                  color: colors.playerInk,
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            nextStretch?.name ?? 'Almost done',
-                            style: AppTextStyle.titleSmall.copyWith(
-                              color: colors.playerInk,
-                            ),
-                          ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  14.verticalSpace,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      AppPlayerButton(
+                        icon: Icons.skip_previous_rounded,
+                        tooltip: 'Back',
+                        onTap: _goBack,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              14.verticalSpace,
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  AppPlayerButton(
-                    icon: Icons.skip_previous_rounded,
-                    tooltip: 'Back',
-                    onTap: _goBack,
+                      AppPlayerButton(
+                        icon: Icons.swap_horiz_rounded,
+                        tooltip: isSwapEnabled
+                            ? 'Swap side'
+                            : 'Swap side (only active during two-sided stretch)',
+                        label: 'Swap',
+                        onTap: isSwapEnabled ? _toggleSide : null,
+                      ),
+                      AppPlayerButton(
+                        icon: paused
+                            ? Icons.play_arrow_rounded
+                            : Icons.pause_rounded,
+                        tooltip: paused ? 'Resume' : 'Pause',
+                        isPrimary: true,
+                        onTap: _togglePause,
+                      ),
+                      AppPlayerButton(
+                        icon: Icons.add_rounded,
+                        tooltip: 'Add 15 seconds',
+                        label: '15 sec',
+                        onTap: _addFifteen,
+                      ),
+                      AppPlayerButton(
+                        icon: Icons.skip_next_rounded,
+                        tooltip: 'Skip to next stretch',
+                        onTap: () => setState(_advance),
+                      ),
+                    ],
                   ),
-                  AppPlayerButton(
-                    icon: Icons.swap_horiz_rounded,
-                    tooltip: isSwapEnabled
-                        ? 'Swap side'
-                        : 'Swap side (only active during two-sided stretch)',
-                    label: 'Swap',
-                    onTap: isSwapEnabled ? _toggleSide : null,
-                  ),
-                  AppPlayerButton(
-                    icon: paused
-                        ? Icons.play_arrow_rounded
-                        : Icons.pause_rounded,
-                    tooltip: paused ? 'Resume' : 'Pause',
-                    isPrimary: true,
-                    onTap: _togglePause,
-                  ),
-                  AppPlayerButton(
-                    icon: Icons.add_rounded,
-                    tooltip: 'Add 15 seconds',
-                    label: '15 sec',
-                    onTap: _addFifteen,
-                  ),
-                  AppPlayerButton(
-                    icon: Icons.skip_next_rounded,
-                    tooltip: 'Skip to next stretch',
-                    onTap: () => setState(_advance),
+                  14.verticalSpace,
+                  AppProgressBar(
+                    value: _totalSeconds == 0 ? 0 : _elapsedSeconds / _totalSeconds,
+                    height: 3,
+                    color: colors.warm,
+                    trackColor: colors.playerInk.withValues(alpha: 0.12),
                   ),
                 ],
               ),
-              14.verticalSpace,
-              AppProgressBar(
-                value: _totalSeconds == 0 ? 0 : _elapsedSeconds / _totalSeconds,
-                height: 3,
-                color: colors.warm,
-                trackColor: colors.playerInk.withValues(alpha: 0.12),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
