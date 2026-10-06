@@ -241,17 +241,23 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
                       isLocked: false,
                       thumbnail: AppThumb(
                         size: AppThumbSize.large,
-                        child: hasThumb
-                            ? ClipRRect(
-                                borderRadius: AppBorderRadius.md,
-                                child: Image.network(
-                                  thumbUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      StretchFigure(pose: pose),
-                                ),
-                              )
-                            : StretchFigure(pose: pose),
+                        child: StretchVideoFrame(
+                          videoUrl: firstStretch?.model?.videoUrl,
+                          holdSeconds:
+                              firstStretch?.model?.defaultHoldSeconds ?? 30,
+                          fallback: hasThumb
+                              ? ClipRRect(
+                                  borderRadius: AppBorderRadius.md,
+                                  child: Image.network(
+                                    thumbUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            StretchFigure(pose: pose),
+                                  ),
+                                )
+                              : StretchFigure(pose: pose),
+                        ),
                       ),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
@@ -376,17 +382,21 @@ class _LibraryTile extends StatelessWidget {
               SizedBox(
                 width: 80.r,
                 height: 80.r,
-                child: hasThumb
-                    ? ClipRRect(
-                        borderRadius: AppBorderRadius.md,
-                        child: Image.network(
-                          stretch.thumbnailUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              StretchFigure(pose: stretch.pose),
-                        ),
-                      )
-                    : StretchFigure(pose: stretch.pose),
+                child: StretchVideoFrame(
+                  videoUrl: stretch.videoUrl,
+                  holdSeconds: stretch.defaultHoldSeconds,
+                  fallback: hasThumb
+                      ? ClipRRect(
+                          borderRadius: AppBorderRadius.md,
+                          child: Image.network(
+                            stretch.thumbnailUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                StretchFigure(pose: stretch.pose),
+                          ),
+                        )
+                      : StretchFigure(pose: stretch.pose),
+                ),
               ),
               5.verticalSpace,
               Expanded(

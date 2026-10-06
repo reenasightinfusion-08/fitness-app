@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:fitness_app/features/home/models/today_plan.dart';
+import 'package:fitness_app/services/video_frame_service.dart';
 
 /// Thrown when fetching or parsing routines fails.
 class RoutineServiceException implements Exception {
@@ -86,8 +87,15 @@ class RoutineService {
     }
 
     final list = body['data'] as List? ?? [];
-    return list
+    final routines = list
         .map((json) => RoutineSummary.fromJson(json as Map<String, dynamic>))
         .toList();
+    for (final routine in routines) {
+      for (final stretch in routine.stretches) {
+        final model = stretch.model;
+        VideoFrameService.prefetch(model?.videoUrl, model?.defaultHoldSeconds ?? 30);
+      }
+    }
+    return routines;
   }
 }

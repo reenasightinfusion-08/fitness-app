@@ -12,6 +12,7 @@ class StretchMediaPlayer extends StatefulWidget {
     super.key,
     this.videoUrl,
     this.thumbnailUrl,
+    this.holdSeconds = 30,
     required this.pose,
     this.playing = true,
     this.showVideo = true,
@@ -19,6 +20,9 @@ class StretchMediaPlayer extends StatefulWidget {
 
   final String? videoUrl;
   final String? thumbnailUrl;
+
+  /// The stretch's default hold time; picks which video frame is shown.
+  final int holdSeconds;
   final StretchPose pose;
 
   /// False while the session is paused: the video freezes on its current
@@ -167,10 +171,16 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
                 videoSize: controller?.value.size ?? const Size(16, 9),
               ),
             ),
-          Image.network(
-            thumb,
+          StretchVideoFrame(
+            videoUrl: widget.videoUrl,
+            holdSeconds: widget.holdSeconds,
             fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => _buildStickFigure(colors),
+            fallback: Image.network(
+              thumb,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) =>
+                  _buildStickFigure(colors),
+            ),
           ),
         ],
       );

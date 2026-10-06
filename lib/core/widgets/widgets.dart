@@ -27,6 +27,7 @@ export 'package:fitness_app/core/widgets/app_reason_list.dart';
 export 'package:fitness_app/core/widgets/app_resume_banner.dart';
 export 'package:fitness_app/core/widgets/app_routine_card.dart';
 export 'package:fitness_app/core/widgets/app_section_wrapper.dart';
+export 'package:fitness_app/core/widgets/stretch_video_frame.dart';
 export 'package:fitness_app/core/widgets/app_segment_progress.dart';
 export 'package:fitness_app/core/widgets/app_segmented_control.dart';
 export 'package:fitness_app/core/widgets/app_selection_indicator.dart';

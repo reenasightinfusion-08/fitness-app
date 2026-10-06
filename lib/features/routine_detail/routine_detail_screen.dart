@@ -96,7 +96,11 @@ class RoutineDetailScreen extends ConsumerWidget {
                       ),
                       child: ClipRRect(
                         borderRadius: AppBorderRadius.hero,
-                        child: hasThumb
+                        child: StretchVideoFrame(
+                          videoUrl: firstStretch?.model?.videoUrl,
+                          holdSeconds:
+                              firstStretch?.model?.defaultHoldSeconds ?? 30,
+                          fallback: hasThumb
                             ? Image.network(
                                 thumbUrl,
                                 fit: BoxFit.cover,
@@ -115,7 +119,8 @@ class RoutineDetailScreen extends ConsumerWidget {
                                   pose: firstStretch?.pose ??
                                       StretchPoses.neutral,
                                 ),
-                              ),
+                              )
+                        ),
                       ),
                     ),
                   ),
@@ -205,15 +210,20 @@ class RoutineDetailScreen extends ConsumerWidget {
                               '${stretch.isEachSide ? ' each side' : ''}'
                               ' · ${stretch.position.label}',
                           leading: AppThumb(
-                            child: hasThumb
-                                ? Image.network(
-                                    thumbUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            StretchFigure(pose: stretch.pose),
-                                  )
-                                : StretchFigure(pose: stretch.pose),
+                            child: StretchVideoFrame(
+                              videoUrl: stretch.model?.videoUrl,
+                              holdSeconds:
+                                  stretch.model?.defaultHoldSeconds ?? 30,
+                              fallback: hasThumb
+                                  ? Image.network(
+                                      thumbUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              StretchFigure(pose: stretch.pose),
+                                    )
+                                  : StretchFigure(pose: stretch.pose),
+                            ),
                           ),
                           trailing: Icon(
                             Icons.info_outline_rounded,

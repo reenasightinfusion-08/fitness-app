@@ -1,6 +1,7 @@
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/services/auth_service.dart';
+import 'package:fitness_app/services/video_frame_service.dart';
 
 /// Reads and writes the signed-in user's own routines
 /// (`/api/custom-routines`). Everything goes through [AuthService] so the
@@ -13,9 +14,16 @@ class CustomRoutineService {
   /// The user's routines, newest first, with every stretch fully populated.
   Future<List<RoutineSummary>> fetch() async {
     final data = await authService.getCustomRoutines();
-    return data
+    final routines = data
         .map((json) => RoutineSummary.fromJson(json as Map<String, dynamic>))
         .toList();
+    for (final routine in routines) {
+      for (final stretch in routine.stretches) {
+        final model = stretch.model;
+        VideoFrameService.prefetch(model?.videoUrl, model?.defaultHoldSeconds ?? 30);
+      }
+    }
+    return routines;
   }
 
   /// Saves [draft]. The server only replies "created", so call [fetch] to get

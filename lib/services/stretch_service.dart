@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:fitness_app/features/stretch_detail/models/stretch_model.dart';
+import 'package:fitness_app/services/video_frame_service.dart';
 
 /// Thrown when fetching or parsing stretches fails.
 class StretchServiceException implements Exception {
@@ -90,8 +91,12 @@ class StretchService {
     }
 
     final list = body['data'] as List? ?? [];
-    return list
+    final stretches = list
         .map((json) => StretchModel.fromJson(json as Map<String, dynamic>))
         .toList();
+    for (final stretch in stretches) {
+      VideoFrameService.prefetch(stretch.videoUrl, stretch.defaultHoldSeconds);
+    }
+    return stretches;
   }
 }

@@ -81,19 +81,23 @@ class StretchDetailSheet extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: AppBorderRadius.card,
-              child: hasThumb
-                  ? Image.network(
-                      model!.thumbnailUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Padding(
+              child: StretchVideoFrame(
+                videoUrl: model?.videoUrl,
+                holdSeconds: model?.defaultHoldSeconds ?? 30,
+                fallback: hasThumb
+                    ? Image.network(
+                        model!.thumbnailUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Padding(
+                          padding: EdgeInsets.all(20.r),
+                          child: StretchFigure(pose: effectivePose),
+                        ),
+                      )
+                    : Padding(
                         padding: EdgeInsets.all(20.r),
                         child: StretchFigure(pose: effectivePose),
                       ),
-                    )
-                  : Padding(
-                      padding: EdgeInsets.all(20.r),
-                      child: StretchFigure(pose: effectivePose),
-                    ),
+              ),
             ),
           ),
         ),

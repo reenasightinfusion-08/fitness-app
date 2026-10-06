@@ -240,17 +240,21 @@ class _QuickPickTile extends StatelessWidget {
       title: routine.name,
       meta: routine.durationText,
       thumbnail: AppThumb(
-        child: hasThumb
-            ? Image.network(
-                thumbUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => StretchFigure(
+        child: StretchVideoFrame(
+          videoUrl: firstStretch?.model?.videoUrl,
+          holdSeconds: firstStretch?.model?.defaultHoldSeconds ?? 30,
+          fallback: hasThumb
+              ? Image.network(
+                  thumbUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => StretchFigure(
+                    pose: firstStretch?.pose ?? StretchPoses.neutral,
+                  ),
+                )
+              : StretchFigure(
                   pose: firstStretch?.pose ?? StretchPoses.neutral,
                 ),
-              )
-            : StretchFigure(
-                pose: firstStretch?.pose ?? StretchPoses.neutral,
-              ),
+        ),
       ),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => RoutineDetailScreen(routine: routine)),

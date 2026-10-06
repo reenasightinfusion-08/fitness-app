@@ -124,8 +124,12 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: AppBorderRadius.hero,
-                        child: hasThumb
-                            ? Image.network(
+                        child: StretchVideoFrame(
+                          videoUrl: firstStretch?.model?.videoUrl,
+                          holdSeconds:
+                              firstStretch?.model?.defaultHoldSeconds ?? 30,
+                          fallback: hasThumb
+                              ? Image.network(
                                 thumbUrl,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
@@ -143,7 +147,8 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                                   pose: firstStretch?.pose ??
                                       StretchPoses.neutral,
                                 ),
-                              ),
+                              )
+                        ),
                       ),
                     ),
                   ),

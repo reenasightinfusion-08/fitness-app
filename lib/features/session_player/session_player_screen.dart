@@ -13,6 +13,7 @@ import 'package:fitness_app/features/session_player/widgets/stretch_media_player
 import 'package:fitness_app/features/stretch_detail/models/stretch_guide.dart';
 import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
 import 'package:fitness_app/services/audio_service.dart';
+import 'package:fitness_app/services/video_frame_service.dart';
 
 enum _StepKind { getReady, hold, switchSides }
 
@@ -182,7 +183,24 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
 
   /// Reports that every stretch before the current one is done. Called on
   /// entering a stretch (not on every beat), so a save happens once per stretch.
-  void reportProgress() => widget.onProgress?.call(currentStep.stretchIndex);
+  void reportProgress() {
+    widget.onProgress?.call(currentStep.stretchIndex);
+    warmFrames();
+  }
+
+  /// Moves the current and next stretch's video frames to the front of the
+  /// extraction queue so they are ready before their beat starts.
+  void warmFrames() {
+    final index = currentStep.stretchIndex;
+    for (final stretch in _stretches.skip(index).take(2)) {
+      final model = stretch.model;
+      VideoFrameService.prefetch(
+        model?.videoUrl,
+        model?.defaultHoldSeconds ?? 30,
+        urgent: true,
+      );
+    }
+  }
 
   _SessionStep get currentStep => steps[stepIndex];
   StretchPreview get currentStretch => _stretches[currentStep.stretchIndex];
@@ -463,6 +481,54 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                   ),
                 ],
               ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      step.side == null
+                          ? _phaseLabel(step, isFirstStretch).toUpperCase()
+                          : '${_phaseLabel(step, isFirstStretch).toUpperCase()} · ${step.side} side',
+                      style: AppTextStyle.eyebrow.copyWith(
+                        color: colors.playerDim,
+                      ),
+                    ),
+                    2.verticalSpace,
+                    Text(
+                      stretch.name,
+                      style: AppTextStyle.headline.copyWith(
+                        color: colors.playerInk,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    12.verticalSpace,
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: 350.w),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: ColoredBox(
+                          color: Color(0xFFECE2D4),
+                        //  color: Color(0xffEFEBE5),
+                          child: ClipRRect(
+                            borderRadius: AppBorderRadius.hero,
+                            child: Transform.flip(
+                              flipX:
+                                  stretch.isEachSide &&
+                                  (step.side == 'Second' ||
+                                      step.kind == _StepKind.switchSides),
+                              child: StretchMediaPlayer(
+                                videoUrl: stretch.model?.videoUrl,
+                                thumbnailUrl: stretchThumbUrl,
+                                holdSeconds:
+                                    stretch.model?.defaultHoldSeconds ?? 30,
+                                pose: stretch.pose,
+                                showVideo: step.kind == _StepKind.hold,
+                                playing: !paused,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
             ),
             ConstrainedBox(
               constraints: BoxConstraints(maxWidth: 390.w),
@@ -649,6 +715,125 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
               ),
             ),
           ],
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.all(12.r),
+                decoration: BoxDecoration(
+                  color: colors.playerInk.withValues(alpha: 0.07),
+                  borderRadius: AppBorderRadius.xl,
+                ),
+                child: Row(
+                  children: [
+                    AppThumb(
+                      isOnDark: true,
+                      child: nextStretch == null
+                          ? null
+                          : (hasNextThumb
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    child: StretchVideoFrame(
+                                      videoUrl: nextStretch.model?.videoUrl,
+                                      holdSeconds: nextStretch.model?.defaultHoldSeconds ?? 30,
+                                      fallback: Image.network(
+                                      nextThumbUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              CustomPaint(
+                                                painter: StretchFigurePainter(
+                                                  pose: nextStretch.pose,
+                                                  nearColor: colors.playerInk,
+                                                  farColor: colors.playerDim,
+                                                  groundColor:
+                                                      Colors.transparent,
+                                                  showGround: false,
+                                                ),
+                                              ),
+                                    ),
+                                    ),
+                                  )
+                                : CustomPaint(
+                                    painter: StretchFigurePainter(
+                                      pose: nextStretch.pose,
+                                      nearColor: colors.playerInk,
+                                      farColor: colors.playerDim,
+                                      groundColor: Colors.transparent,
+                                      showGround: false,
+                                    ),
+                                  )),
+                    ),
+                    12.horizontalSpace,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            nextStretch == null ? 'Last stretch' : 'Next up',
+                            style: AppTextStyle.caption.copyWith(
+                              color: colors.playerDim,
+                            ),
+                          ),
+                          Text(
+                            nextStretch?.name ?? 'Almost done',
+                            style: AppTextStyle.titleSmall.copyWith(
+                              color: colors.playerInk,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              14.verticalSpace,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  AppPlayerButton(
+                    icon: Icons.skip_previous_rounded,
+                    tooltip: 'Back',
+                    onTap: _goBack,
+                  ),
+                  AppPlayerButton(
+                    icon: Icons.swap_horiz_rounded,
+                    tooltip: isSwapEnabled
+                        ? 'Swap side'
+                        : 'Swap side (only active during two-sided stretch)',
+                    label: 'Swap',
+                    onTap: isSwapEnabled ? _toggleSide : null,
+                  ),
+                  AppPlayerButton(
+                    icon: paused
+                        ? Icons.play_arrow_rounded
+                        : Icons.pause_rounded,
+                    tooltip: paused ? 'Resume' : 'Pause',
+                    isPrimary: true,
+                    onTap: _togglePause,
+                  ),
+                  AppPlayerButton(
+                    icon: Icons.add_rounded,
+                    tooltip: 'Add 15 seconds',
+                    label: '15 sec',
+                    onTap: _addFifteen,
+                  ),
+                  AppPlayerButton(
+                    icon: Icons.skip_next_rounded,
+                    tooltip: 'Skip to next stretch',
+                    onTap: () => setState(_advance),
+                  ),
+                ],
+              ),
+              14.verticalSpace,
+              AppProgressBar(
+                value: _totalSeconds == 0 ? 0 : _elapsedSeconds / _totalSeconds,
+                height: 3,
+                color: colors.warm,
+                trackColor: colors.playerInk.withValues(alpha: 0.12),
+              ),
+            ],
+          ),
         ),
       ),
     );
