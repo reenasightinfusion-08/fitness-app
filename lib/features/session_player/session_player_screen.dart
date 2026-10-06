@@ -607,140 +607,6 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                                                               .transparent,
                                                           showGround: false,
                                                         ),
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 6.h, 14.w, 6.h),
-              child: Row(
-                children: [
-                  AppIconButton(
-                    icon: Icons.close_rounded,
-                    tooltip: 'End session',
-                    isOnDark: true,
-                    onPressed: _exit,
-                  ),
-                  8.horizontalSpace,
-                  Expanded(
-                    child: AppSegmentProgress(
-                      total: _stretches.length,
-                      currentIndex: step.stretchIndex,
-                    ),
-                  ),
-                  8.horizontalSpace,
-                  AppIconButton(
-                    icon: Icons.info_outline_rounded,
-                    tooltip: 'How to do this stretch',
-                    isOnDark: true,
-                    onPressed: _showStretchInfo,
-                  ),
-                ],
-              ),
-            ),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 390.w),
-              child: AspectRatio(
-                aspectRatio: 16/13,
-                child: ColoredBox(
-                  color: Color(0xFFECE2D4),
-                  //  color: Color(0xffEFEBE5),
-                  child: Transform.flip(
-                    flipX:
-                        stretch.isEachSide &&
-                        (step.side == 'Second' ||
-                            step.kind == _StepKind.switchSides),
-                    child: StretchMediaPlayer(
-                      videoUrl: stretch.model?.videoUrl,
-                      thumbnailUrl: stretchThumbUrl,
-                      holdSeconds: stretch.model?.defaultHoldSeconds ?? 30,
-                      pose: stretch.pose,
-                      showVideo: step.kind == _StepKind.hold,
-                      playing: !paused,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            20.verticalSpace,
-            Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 6.h, 14.w, 16.h),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Text(
-                    step.side == null
-                        ? _phaseLabel(step, isFirstStretch).toUpperCase()
-                        : '${_phaseLabel(step, isFirstStretch).toUpperCase()} · ${step.side} side',
-                    style: AppTextStyle.eyebrow.copyWith(
-                      color: colors.playerDim,
-                    ),
-                  ),
-                  3.verticalSpace,
-                  Text(
-                    stretch.name,
-                    style: AppTextStyle.headline.copyWith(
-                      color: colors.playerInk,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  12.verticalSpace,
-                  Text(
-                    _formatSeconds(remaining),
-                    style: AppTextStyle.timer.copyWith(
-                      color: colors.playerInk,
-                      fontSize: 80
-                    ),
-                  ),
-                  12.verticalSpace,
-                  SizedBox(
-                    width: 260.w,
-                    height: 44.h, // Fixed height reserved for 2 lines of text
-                    child: Align(
-                      alignment: Alignment.center, // Keeps 1-line text centered inside the 44.h box
-                      child: Text(
-                        cue,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyle.bodySmall.copyWith(
-                          color: colors.playerDim,
-                        ),
-                      ),
-                    ),
-                  ),
-                 14.verticalSpace,
-                  Container(
-                    padding: EdgeInsets.all(12.r),
-                    decoration: BoxDecoration(
-                      color: colors.playerInk.withValues(alpha: 0.07),
-                      borderRadius: AppBorderRadius.xl,
-                    ),
-                    child: Row(
-                      children: [
-                        AppThumb(
-                          isOnDark: true,
-                          child: nextStretch == null
-                              ? null
-                              : (hasNextThumb
-                                    ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(8.r),
-                                        child: StretchVideoFrame(
-                                          videoUrl: nextStretch.model?.videoUrl,
-                                          holdSeconds:
-                                              nextStretch.model?.defaultHoldSeconds ?? 30,
-                                          fallback: Image.network(
-                                          nextThumbUrl,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) =>
-                                                  CustomPaint(
-                                                    painter: StretchFigurePainter(
-                                                      pose: nextStretch.pose,
-                                                      nearColor: colors.playerInk,
-                                                      farColor: colors.playerDim,
-                                                      groundColor:
-                                                          Colors.transparent,
-                                                      showGround: false,
-                                                    ),
                                                   ),
                                             ),
                                           ),
@@ -833,7 +699,8 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
             ],
           ),
         ),
-      ),
+      )
     );
+
   }
 }
