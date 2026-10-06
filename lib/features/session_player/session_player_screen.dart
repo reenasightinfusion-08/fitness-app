@@ -489,7 +489,8 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                       child: AspectRatio(
                         aspectRatio: 1,
                         child: ColoredBox(
-                          color: Color(0xffEFEBE5),
+                          color: Color(0xFFECE2D4),
+                        //  color: Color(0xffEFEBE5),
                           child: ClipRRect(
                             borderRadius: AppBorderRadius.hero,
                             child: Transform.flip(
