@@ -1,5 +1,5 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -15,6 +15,35 @@ import 'package:fitness_app/features/stretch_detail/models/stretch_model.dart';
 import 'package:fitness_app/services/auth_service.dart';
 import 'package:fitness_app/services/stretch_service.dart'
     show StretchServiceException;
+import 'package:fitness_app/services/video_frame_service.dart';
+
+/// Full container shimmer for a single row in the Add Stretches picker sheet.
+class StretchPickerRowShimmer extends StatelessWidget {
+  const StretchPickerRowShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Row(
+        children: [
+          // Checkbox square skeleton (24x24)
+          AppShimmer.box(width: 24.r, height: 24.r, borderRadius: 6.r),
+          10.horizontalSpace,
+
+          // Thumbnail square skeleton (40x40)
+          AppShimmer.box(width: 40.r, height: 40.r, borderRadius: 8.r),
+          10.horizontalSpace,
+
+          // Stretch name text line skeleton
+          Expanded(
+            child: AppShimmer.box(width: 140.w, height: 16.h, borderRadius: 4.r),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// Matches the prototype's `screens.builder`: name a routine, add stretches
 /// from the library, drag to reorder and tune each hold time, then save —
@@ -505,9 +534,11 @@ class _StretchPickerSheetState extends ConsumerState<_StretchPickerSheet> {
               child: Column(
                 children: [
                   if (library.isLoading)
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24.h),
-                      child: const Center(child: AppLoader()),
+                    Column(
+                      children: [
+                        for (var i = 0; i < 10; i++)
+                          const StretchPickerRowShimmer(),
+                      ],
                     )
                   else if (library.hasError)
                     AppEmptyState(
@@ -559,7 +590,7 @@ class _StretchPickerSheetState extends ConsumerState<_StretchPickerSheet> {
   }
 }
 
-class _PickerRow extends StatelessWidget {
+class _PickerRow extends StatefulWidget {
   const _PickerRow({
     required this.stretch,
     required this.isSelected,
@@ -571,15 +602,55 @@ class _PickerRow extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_PickerRow> createState() => _PickerRowState();
+}
+
+class _PickerRowState extends State<_PickerRow> {
+  late Future<Uint8List?> _frameFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initFrameFuture();
+  }
+
+  @override
+  void didUpdateWidget(covariant _PickerRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stretch != widget.stretch) {
+      _initFrameFuture();
+    }
+  }
+
+  void _initFrameFuture() {
+    final videoUrl = widget.stretch.videoUrl;
+    if (videoUrl != null && videoUrl.trim().isNotEmpty) {
+      _frameFuture = VideoFrameService.frameAt(
+        videoUrl,
+        timeMs: VideoFrameService.midpointMs(
+          widget.stretch.defaultHoldSeconds,
+        ),
+      );
+    } else {
+      _frameFuture = Future.value(null);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final stretch = widget.stretch;
+    final isSelected = widget.isSelected;
+    final hasThumb =
+        stretch.thumbnailUrl != null && stretch.thumbnailUrl!.trim().isNotEmpty;
+
     return Semantics(
       button: true,
       selected: isSelected,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          onTap: widget.onTap,
           borderRadius: AppBorderRadius.md,
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 8.h),
@@ -606,9 +677,46 @@ class _PickerRow extends StatelessWidget {
                       : null,
                 ),
                 10.horizontalSpace,
-                StretchThumbnail(
-                  stretch: stretch.toPreview().copyWith(model: stretch),
-                  size: AppThumbSize.small,
+                FutureBuilder<Uint8List?>(
+                  future: _frameFuture,
+                  builder: (context, snapshot) {
+                    final frameBytes = snapshot.data;
+                    Widget thumbnailWidget;
+                    if (frameBytes != null) {
+                      thumbnailWidget = ClipRRect(
+                        borderRadius: AppBorderRadius.xs,
+                        child: Image.memory(
+                          frameBytes,
+                          fit: BoxFit.cover,
+                          gaplessPlayback: true,
+                        ),
+                      );
+                    } else if (hasThumb) {
+                      thumbnailWidget = ClipRRect(
+                        borderRadius: AppBorderRadius.xs,
+                        child: Image.network(
+                          stretch.thumbnailUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              StretchFigure(pose: stretch.pose),
+                        ),
+                      );
+                    } else if (snapshot.connectionState != ConnectionState.done) {
+                      // Thumbnail square shimmer while video frame extracts
+                      thumbnailWidget = AppShimmer.box(
+                        width: 40.r,
+                        height: 40.r,
+                        borderRadius: 8.r,
+                      );
+                    } else {
+                      thumbnailWidget = StretchFigure(pose: stretch.pose);
+                    }
+
+                    return AppThumb(
+                      size: AppThumbSize.small,
+                      child: thumbnailWidget,
+                    );
+                  },
                 ),
                 10.horizontalSpace,
                 Expanded(

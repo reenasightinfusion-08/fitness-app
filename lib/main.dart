@@ -16,11 +16,13 @@ import 'package:fitness_app/features/plan_ready/plan_ready_screen.dart';
 import 'package:fitness_app/features/profile/providers/reminders_provider.dart';
 import 'package:fitness_app/features/splash/splash_screen.dart';
 import 'package:fitness_app/features/welcome/welcome_screen.dart';
+import 'package:fitness_app/services/paused_session_cache.dart';
 import 'package:fitness_app/services/reminder_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ReminderNotificationService.instance.init();
+  await PausedSessionCache.init();
   runApp(const ProviderScope(child: FitnessApp()));
 }
 

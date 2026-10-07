@@ -40,6 +40,7 @@ export 'package:fitness_app/core/widgets/app_switch.dart';
 export 'package:fitness_app/core/widgets/app_tag.dart';
 export 'package:fitness_app/core/widgets/app_text_field.dart';
 export 'package:fitness_app/core/widgets/app_thumb.dart';
+export 'package:fitness_app/core/widgets/app_shimmer.dart';
 export 'package:fitness_app/core/widgets/app_tile_card.dart';
 export 'package:fitness_app/core/widgets/app_top_bar.dart';
 export 'package:fitness_app/core/widgets/app_week_strip.dart';

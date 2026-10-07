@@ -271,6 +271,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
   /// or stay still, a switch beat just says "Switch sides."
   void _announceStep() {
     _tenFired = false;
+    _announcePending = false;
     if (widget.musicOn) AudioService.instance.keepMusicPlaying();
     if (paused) {
       AudioService.instance.stopSpeaking();
@@ -322,19 +323,25 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
       _finish();
       return;
     }
+    AudioService.instance.stopSpeaking();
+    _announcePending = false;
     final previousStretch = currentStep.stretchIndex;
     stepIndex += 1;
     remaining = steps[stepIndex].durationSeconds;
     if (currentStep.stretchIndex != previousStretch) reportProgress();
+    _setPaused(false);
     _announceStep();
   }
 
   void _goBack() {
+    AudioService.instance.stopSpeaking();
+    _announcePending = false;
     setState(() {
       final previousStretch = currentStep.stretchIndex;
       stepIndex = stepIndex > 0 ? stepIndex - 1 : 0;
       remaining = steps[stepIndex].durationSeconds;
       if (currentStep.stretchIndex != previousStretch) reportProgress();
+      _setPaused(false);
       _announceStep();
     });
   }

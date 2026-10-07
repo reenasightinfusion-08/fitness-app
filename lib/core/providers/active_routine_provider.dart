@@ -7,8 +7,7 @@ import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/home/models/todays_plan_model.dart';
 import 'package:fitness_app/services/active_routine_history_service.dart';
 import 'package:fitness_app/services/active_routine_service.dart';
-
-import 'package:fitness_app/core/providers/todays_plan_provider.dart';
+import 'package:fitness_app/services/paused_session_cache.dart';
 
 final activeRoutineServiceProvider = Provider<ActiveRoutineService>(
   (ref) => ActiveRoutineService(ref.watch(authServiceProvider)),
@@ -50,7 +49,9 @@ final todaysPlanActiveProvider = FutureProvider.autoDispose<ActiveRoutineModel?>
 final pausedUserRoutinesProvider =
     FutureProvider.autoDispose<List<ActiveRoutineModel>>((ref) async {
       final active = await ref.watch(currentRoutinesProvider.future);
-      return active.where((r) => r.source == 'user').toList();
+      final paused = active.where((r) => r.source == 'user').toList();
+      PausedSessionCache.setHasPausedRoutine(paused.isNotEmpty);
+      return paused;
     });
 
 /// Completed routines for the Progress history. Empty for the sample account.

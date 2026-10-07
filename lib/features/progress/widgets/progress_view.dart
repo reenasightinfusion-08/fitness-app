@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:fitness_app/core/providers/providers.dart';
@@ -8,10 +7,10 @@ import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/greeting.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/home/models/active_routine_model.dart';
+import 'package:fitness_app/features/onboarding_setup/models/onboarding_profile.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/profile/models/session_settings.dart';
 import 'package:fitness_app/features/profile/providers/session_settings_provider.dart';
-import 'package:fitness_app/features/onboarding_setup/models/onboarding_profile.dart';
 import 'package:fitness_app/features/progress/flexibility_check_screen.dart';
 import 'package:fitness_app/features/progress/providers/progress_stats_provider.dart';
 import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
@@ -164,10 +163,7 @@ class ProgressView extends ConsumerWidget {
         10.verticalSpace,
         historyAsync.when(
           data: (history) => _HistoryList(history: history),
-          loading: () => Padding(
-            padding: EdgeInsets.symmetric(vertical: 32.h),
-            child: const Center(child: AppLoader()),
-          ),
+          loading: () => const HistoryListShimmer(),
           error: (error, stack) => const AppEmptyState(
             icon: Icons.cloud_off_rounded,
             title: "Couldn't load history",
@@ -175,6 +171,47 @@ class ProgressView extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Wireframe shimmer skeleton for the History list in Progress view.
+class HistoryListShimmer extends StatelessWidget {
+  const HistoryListShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      variant: AppCardVariant.list,
+      child: Column(
+        children: [
+          for (var i = 0; i < 4; i++) ...[
+            if (i > 0) const Divider(height: 1),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title skeleton (Routine name)
+                        AppShimmer.box(width: 140.w, height: 16.h, borderRadius: 4.r),
+                        4.verticalSpace,
+                        // Subtitle skeleton ("Date · X stretches")
+                        AppShimmer.box(width: 100.w, height: 12.h, borderRadius: 4.r),
+                      ],
+                    ),
+                  ),
+                  12.horizontalSpace,
+                  // Duration tag pill skeleton ("X min")
+                  AppShimmer.box(width: 54.w, height: 22.h, borderRadius: 100.r),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

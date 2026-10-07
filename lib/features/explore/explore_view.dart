@@ -1,18 +1,95 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/app_validators.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/explore/models/explore_data.dart';
 import 'package:fitness_app/features/explore/models/safety_rules.dart';
-import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
+import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
 import 'package:fitness_app/features/stretch_detail/models/stretch_model.dart';
 import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
 import 'package:fitness_app/services/stretch_service.dart';
+import 'package:fitness_app/services/video_frame_service.dart';
+
+/// Full container shimmer for a routine card in Explore view.
+class ExploreRoutineCardShimmer extends StatelessWidget {
+  const ExploreRoutineCardShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Material(
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: AppBorderRadius.xxl,
+        side: BorderSide(color: colors.line),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: EdgeInsets.all(12.r),
+        child: Row(
+          children: [
+            // Thumbnail large square skeleton (64x64)
+            AppShimmer.box(width: 64.r, height: 64.r, borderRadius: 16.r),
+            14.horizontalSpace,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Title text line skeleton
+                  AppShimmer.box(width: 140.w, height: 16.h, borderRadius: 4.r),
+                  6.verticalSpace,
+                  // Duration/stretches count meta text line skeleton
+                  AppShimmer.box(width: 110.w, height: 12.h, borderRadius: 4.r),
+                ],
+              ),
+            ),
+            12.horizontalSpace,
+            // Chevron arrow icon skeleton
+            AppShimmer.box(width: 12.w, height: 18.h, borderRadius: 4.r),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Full container shimmer for a stretch library tile in Explore view.
+class ExploreLibraryTileShimmer extends StatelessWidget {
+  const ExploreLibraryTileShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Material(
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: AppBorderRadius.xl,
+        side: BorderSide(color: colors.line),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 15.h),
+        child: Column(
+          children: [
+            // Centered stretch thumbnail 80x80 skeleton
+            AppShimmer.box(width: 80.r, height: 80.r, borderRadius: 12.r),
+            6.verticalSpace,
+            // Stretch name text line skeleton
+            AppShimmer.box(width: 60.w, height: 12.h, borderRadius: 4.r),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 /// Matches the prototype's `screens.explore`: search, a "Safe for me"
 /// toggle, area/time filter chips, matching routine cards and the full
@@ -224,55 +301,18 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
               children: [
                 for (var i = 0; i < routines.length; i++) ...[
                   if (i > 0) 10.verticalSpace,
-                  () {
-                    final routine = routines[i];
-                    final firstStretch = routine.stretches.isNotEmpty
-                        ? routine.stretches.first
-                        : null;
-                    final pose = firstStretch?.pose ?? StretchPoses.neutral;
-                    final thumbUrl = firstStretch?.model?.thumbnailUrl;
-                    final hasThumb =
-                        thumbUrl != null && thumbUrl.trim().isNotEmpty;
-
-                    return AppRoutineCard(
-                      title: routine.name,
-                      meta:
-                          '${routine.durationText} · ${routine.stretches.length} stretches',
-                      isLocked: false,
-                      thumbnail: AppThumb(
-                        size: AppThumbSize.large,
-                        child: StretchVideoFrame(
-                          videoUrl: firstStretch?.model?.videoUrl,
-                          holdSeconds:
-                              firstStretch?.model?.defaultHoldSeconds ?? 30,
-                          fallback: hasThumb
-                              ? ClipRRect(
-                                  borderRadius: AppBorderRadius.md,
-                                  child: Image.network(
-                                    thumbUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            StretchFigure(pose: pose),
-                                  ),
-                                )
-                              : StretchFigure(pose: pose),
-                        ),
-                      ),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => RoutineDetailScreen(routine: routine),
-                        ),
-                      ),
-                    );
-                  }(),
+                  _ExploreRoutineTile(routine: routines[i]),
                 ],
               ],
             );
           },
-          loading: () => Padding(
-            padding: EdgeInsets.symmetric(vertical: 24.h),
-            child: const Center(child: CircularProgressIndicator()),
+          loading: () => Column(
+            children: [
+              for (var i = 0; i < 5; i++) ...[
+                if (i > 0) 10.verticalSpace,
+                const ExploreRoutineCardShimmer(),
+              ],
+            ],
           ),
           error: (err, stack) => Padding(
             padding: EdgeInsets.symmetric(vertical: 12.h),
@@ -299,9 +339,17 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
         ),
         10.verticalSpace,
         if (_isLoadingStretches)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 24.h),
-            child: const Center(child: CircularProgressIndicator()),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 6,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 8.h,
+              crossAxisSpacing: 8.w,
+              childAspectRatio: 0.78,
+            ),
+            itemBuilder: (context, index) => const ExploreLibraryTileShimmer(),
           )
         else if (_stretchesError != null)
           Padding(
@@ -351,20 +399,196 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
   }
 }
 
+/// Routine card tile with thumbnail preloading + shimmer loading state.
+class _ExploreRoutineTile extends StatefulWidget {
+  const _ExploreRoutineTile({required this.routine});
+
+  final RoutineSummary routine;
+
+  @override
+  State<_ExploreRoutineTile> createState() => _ExploreRoutineTileState();
+}
+
+class _ExploreRoutineTileState extends State<_ExploreRoutineTile> {
+  late Future<Uint8List?> _frameFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initFrameFuture();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ExploreRoutineTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.routine != widget.routine) {
+      _initFrameFuture();
+    }
+  }
+
+  void _initFrameFuture() {
+    final firstStretch = widget.routine.stretches.isNotEmpty
+        ? widget.routine.stretches.first
+        : null;
+    final videoUrl = firstStretch?.model?.videoUrl;
+    if (videoUrl != null && videoUrl.trim().isNotEmpty) {
+      _frameFuture = VideoFrameService.frameAt(
+        videoUrl,
+        timeMs: VideoFrameService.midpointMs(
+          firstStretch?.model?.defaultHoldSeconds ?? 30,
+        ),
+      );
+    } else {
+      _frameFuture = Future.value(null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List?>(
+      future: _frameFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const ExploreRoutineCardShimmer();
+        }
+        return _buildCardContent(context, snapshot.data);
+      },
+    );
+  }
+
+  Widget _buildCardContent(BuildContext context, Uint8List? frameBytes) {
+    final routine = widget.routine;
+    final firstStretch =
+        routine.stretches.isNotEmpty ? routine.stretches.first : null;
+    final pose = firstStretch?.pose ?? StretchPoses.neutral;
+    final thumbUrl = firstStretch?.model?.thumbnailUrl;
+    final hasThumb = thumbUrl != null && thumbUrl.trim().isNotEmpty;
+
+    Widget thumbnailWidget;
+    if (frameBytes != null) {
+      thumbnailWidget = ClipRRect(
+        borderRadius: AppBorderRadius.md,
+        child: Image.memory(
+          frameBytes,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+        ),
+      );
+    } else if (hasThumb) {
+      thumbnailWidget = ClipRRect(
+        borderRadius: AppBorderRadius.md,
+        child: Image.network(
+          thumbUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              StretchFigure(pose: pose),
+        ),
+      );
+    } else {
+      thumbnailWidget = StretchFigure(pose: pose);
+    }
+
+    return AppRoutineCard(
+      title: routine.name,
+      meta: '${routine.durationText} · ${routine.stretches.length} stretches',
+      isLocked: false,
+      thumbnail: AppThumb(
+        size: AppThumbSize.large,
+        child: thumbnailWidget,
+      ),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => RoutineDetailScreen(routine: routine),
+        ),
+      ),
+    );
+  }
+}
+
 /// Mirrors the prototype's `.tile`: a centered thumbnail + name, three to
 /// a row — distinct from [AppTileCard], which is left-aligned with a meta
 /// line for "Quick picks".
-class _LibraryTile extends StatelessWidget {
+class _LibraryTile extends StatefulWidget {
   const _LibraryTile({required this.stretch, required this.onTap});
 
   final StretchModel stretch;
   final VoidCallback onTap;
 
   @override
+  State<_LibraryTile> createState() => _LibraryTileState();
+}
+
+class _LibraryTileState extends State<_LibraryTile> {
+  late Future<Uint8List?> _frameFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initFrameFuture();
+  }
+
+  @override
+  void didUpdateWidget(covariant _LibraryTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stretch != widget.stretch) {
+      _initFrameFuture();
+    }
+  }
+
+  void _initFrameFuture() {
+    final videoUrl = widget.stretch.videoUrl;
+    if (videoUrl != null && videoUrl.trim().isNotEmpty) {
+      _frameFuture = VideoFrameService.frameAt(
+        videoUrl,
+        timeMs: VideoFrameService.midpointMs(widget.stretch.defaultHoldSeconds),
+      );
+    } else {
+      _frameFuture = Future.value(null);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List?>(
+      future: _frameFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const ExploreLibraryTileShimmer();
+        }
+        return _buildTileContent(context, snapshot.data);
+      },
+    );
+  }
+
+  Widget _buildTileContent(BuildContext context, Uint8List? frameBytes) {
     final colors = context.colors;
+    final stretch = widget.stretch;
     final hasThumb =
         stretch.thumbnailUrl != null && stretch.thumbnailUrl!.trim().isNotEmpty;
+
+    Widget thumbnailWidget;
+    if (frameBytes != null) {
+      thumbnailWidget = ClipRRect(
+        borderRadius: AppBorderRadius.md,
+        child: Image.memory(
+          frameBytes,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+        ),
+      );
+    } else if (hasThumb) {
+      thumbnailWidget = ClipRRect(
+        borderRadius: AppBorderRadius.md,
+        child: Image.network(
+          stretch.thumbnailUrl!,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              StretchFigure(pose: stretch.pose),
+        ),
+      );
+    } else {
+      thumbnailWidget = StretchFigure(pose: stretch.pose);
+    }
 
     return Material(
       color: colors.surface,
@@ -374,7 +598,7 @@ class _LibraryTile extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 15.h),
           child: Column(
@@ -382,21 +606,7 @@ class _LibraryTile extends StatelessWidget {
               SizedBox(
                 width: 80.r,
                 height: 80.r,
-                child: StretchVideoFrame(
-                  videoUrl: stretch.videoUrl,
-                  holdSeconds: stretch.defaultHoldSeconds,
-                  fallback: hasThumb
-                      ? ClipRRect(
-                          borderRadius: AppBorderRadius.md,
-                          child: Image.network(
-                            stretch.thumbnailUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                StretchFigure(pose: stretch.pose),
-                          ),
-                        )
-                      : StretchFigure(pose: stretch.pose),
-                ),
+                child: thumbnailWidget,
               ),
               5.verticalSpace,
               Expanded(
