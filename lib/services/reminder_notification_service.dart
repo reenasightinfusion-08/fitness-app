@@ -120,13 +120,14 @@ class ReminderNotificationService {
       for (final weekday in reminder.days) {
         final (title, message) = _messages[weekday - 1];
         final body = name.trim().isEmpty ? message : '${name.trim()}, $message';
+        final notificationId = (reminder.id.hashCode.abs() % 10000) * 10 + weekday;
         await _plugin.zonedSchedule(
-          i * 10 + weekday,
+          notificationId,
           title,
           body,
           _nextOccurrence(reminder.time, weekday),
           _details(title, body),
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
         );
       }
