@@ -83,6 +83,8 @@ flutter:
   assets:
     - assets/images/onboarding/
     - assets/audio/
+    - assets/images/welcome_hero_real.jpg
+    - assets/images/loosen_hero.jpg
 
   # To add assets to your application, add an assets section, like this:
   # assets:
