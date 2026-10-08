@@ -12,26 +12,12 @@ class WelcomeHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     return AspectRatio(
-      aspectRatio: 16 / 10,
+      aspectRatio: 16 / 12,
       child: ClipRRect(
         borderRadius: AppBorderRadius.hero,
-       // child: Image.asset('assets/images/welcome_hero_real.jpg',fit: BoxFit.cover,),
-        child: Image.asset('assets/images/loosen_hero.jpg',fit: BoxFit.cover,),
+       child: Image.asset('assets/images/welcome_hero.jpg',fit: BoxFit.cover,),
       )
-      // Container(
-      //   decoration: BoxDecoration(
-      //     color: colors.accentSoft,
-      //     borderRadius: AppBorderRadius.hero,
-      //   ),
-      //   padding: EdgeInsets.all(28.r),
-      //   child: const FractionallySizedBox(
-      //     widthFactor: 0.62,
-      //     heightFactor: 0.62,
-      //     child: StretchFigure(pose: StretchPoses.reach, showGround: false),
-      //   ),
-      // ),
     );
   }
 }
