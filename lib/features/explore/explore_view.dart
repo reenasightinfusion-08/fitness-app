@@ -230,19 +230,23 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
     final stretches = _filteredStretches(safety);
     final routinesAsync = ref.watch(routinesProvider);
 
-    return ListView(
-      padding: AppInsets.page,
-      children: [
-        Text('Explore', style: AppTextStyle.headline),
-        14.verticalSpace,
-        AppTextField(
-          controller: _searchController,
-          validator: AppValidators.none,
-          variant: AppTextFieldVariant.search,
-          hint: 'Search routines, stretches, body areas',
-          onChanged: (value) => setState(() => _query = value),
-        ),
-        14.verticalSpace,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.translucent,
+      child: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: AppInsets.page,
+        children: [
+          Text('Explore', style: AppTextStyle.headline),
+          14.verticalSpace,
+          AppTextField(
+            controller: _searchController,
+            validator: AppValidators.none,
+            variant: AppTextFieldVariant.search,
+            hint: 'Search routines, stretches, body areas',
+            onChanged: (value) => setState(() => _query = value),
+          ),
+          14.verticalSpace,
         AppCard(
           variant: AppCardVariant.list,
           child: AppSettingRow(
@@ -395,6 +399,7 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
             ),
           ),
       ],
+    ),
     );
   }
 }

@@ -29,6 +29,7 @@ class AppTextField extends StatefulWidget {
     this.initialValue,
     this.onChanged,
     this.onSubmitted,
+    this.onTapOutside,
     this.autovalidateMode = AutovalidateMode.disabled,
   });
 
@@ -48,6 +49,7 @@ class AppTextField extends StatefulWidget {
   final String? initialValue;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+  final TapRegionCallback? onTapOutside;
 
   /// Defaults to [AutovalidateMode.disabled] so an error doesn't flash up
   /// before the user has ever tried to submit. Pass
@@ -101,6 +103,8 @@ class AppTextFieldState extends State<AppTextField> {
           cursorColor: colors.accent,
           onChanged: widget.onChanged,
           onFieldSubmitted: widget.onSubmitted,
+          onTapOutside: widget.onTapOutside ??
+              (event) => FocusManager.instance.primaryFocus?.unfocus(),
           decoration: AppInputDecoration.build(
             colors,
             hint: widget.hint,
