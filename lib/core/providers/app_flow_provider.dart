@@ -1,6 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:fitness_app/core/providers/custom_routines_provider.dart';
+import 'package:fitness_app/core/providers/favorites_provider.dart';
+import 'package:fitness_app/core/providers/home_tab_provider.dart';
+import 'package:fitness_app/core/providers/hurt_stretches_provider.dart';
+import 'package:fitness_app/core/providers/plan_overview_provider.dart';
+import 'package:fitness_app/core/providers/todays_plan_provider.dart';
+import 'package:fitness_app/features/profile/providers/premium_provider.dart';
+import 'package:fitness_app/features/profile/providers/reminders_provider.dart';
 import 'package:fitness_app/features/profile/providers/session_settings_provider.dart';
+import 'package:fitness_app/services/reminder_notification_service.dart';
 
 import 'package:fitness_app/core/providers/auth_service_provider.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
@@ -68,6 +77,23 @@ class AppFlowController extends Notifier<AppRoute> {
     } else {
       showOnboarding();
     }
+  }
+
+  /// Clears everything tied to the signed-in account (call after the session
+  /// is gone) so the next account starts clean, on the Today tab.
+  Future<void> resetUserState() async {
+    ref.invalidate(homeTabProvider);
+    ref.invalidate(onboardingProfileProvider);
+    ref.invalidate(sessionSettingsProvider);
+    ref.invalidate(premiumProvider);
+    ref.invalidate(customRoutinesProvider);
+    ref.invalidate(favoritesProvider);
+    ref.invalidate(hurtStretchesProvider);
+    ref.invalidate(remindersProvider);
+    ref.invalidate(deskNudgeProvider);
+    ref.invalidate(todaysPlanProvider);
+    ref.invalidate(planOverviewProvider);
+    await ReminderNotificationService.instance.cancelAll();
   }
 
   /// A successful login, "Explore with a sample account" on the welcome

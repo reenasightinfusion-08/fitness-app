@@ -10,10 +10,7 @@ import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/profile/models/profile_data.dart';
 import 'package:fitness_app/features/profile/providers/premium_provider.dart';
-import 'package:fitness_app/features/profile/providers/reminders_provider.dart';
-import 'package:fitness_app/features/profile/providers/session_settings_provider.dart';
 import 'package:fitness_app/features/profile/widgets/change_password_screen.dart';
-import 'package:fitness_app/services/reminder_notification_service.dart';
 
 /// Matches the prototype's `screens.account`: sign-in details, a masked
 /// password row that opens the change-password flow, subscription status, and the two exits — log out and
@@ -49,18 +46,12 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
       }
       return;
     }
-    ref.invalidate(customRoutinesProvider);
-    ref.invalidate(favoritesProvider);
-    ref.invalidate(remindersProvider);
-    ref.invalidate(hurtStretchesProvider);
-    ref.invalidate(onboardingProfileProvider);
-    ref.invalidate(premiumProvider);
-    ref.invalidate(sessionSettingsProvider);
-    await ReminderNotificationService.instance.cancelAll();
-    if (!context.mounted) return;
+    final flow = ref.read(appFlowProvider.notifier);
+    await flow.resetUserState();
+    if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     Navigator.of(context).popUntil((route) => route.isFirst);
-    ref.read(appFlowProvider.notifier).showWelcome();
+    flow.showWelcome();
     messenger.showSnackBar(const SnackBar(content: Text('Account deleted.')));
   }
 
@@ -135,15 +126,11 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
               variant: AppButtonVariant.secondary,
               onPressed: () async {
                 await ref.read(authServiceProvider).logout();
-                ref.invalidate(customRoutinesProvider);
-                ref.invalidate(favoritesProvider);
-                ref.invalidate(remindersProvider);
-                ref.invalidate(hurtStretchesProvider);
-                ref.invalidate(sessionSettingsProvider);
-                await ReminderNotificationService.instance.cancelAll();
+                final flow = ref.read(appFlowProvider.notifier);
+                await flow.resetUserState();
                 if (context.mounted) {
                   Navigator.of(context).popUntil((route) => route.isFirst);
-                  ref.read(appFlowProvider.notifier).showWelcome();
+                  flow.showWelcome();
                 }
               },
             ),

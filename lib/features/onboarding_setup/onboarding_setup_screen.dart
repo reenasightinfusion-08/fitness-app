@@ -18,6 +18,7 @@ import 'package:fitness_app/features/onboarding_setup/widgets/steps/lifestyle_st
 import 'package:fitness_app/features/onboarding_setup/widgets/steps/pain_step.dart';
 import 'package:fitness_app/features/onboarding_setup/widgets/steps/safety_step.dart';
 import 'package:fitness_app/features/onboarding_setup/widgets/steps/time_step.dart';
+import 'package:fitness_app/features/profile/providers/reminders_provider.dart';
 import 'package:fitness_app/services/auth_service.dart';
 
 const int _bodyStepIndex = 1;
@@ -74,6 +75,12 @@ class OnboardingSetupScreenState
     }
     if (isLastStep) {
       await _syncProfile(markComplete: true);
+      final profile = ref.read(onboardingProfileProvider);
+      if (profile.reminderOn) {
+        ref
+            .read(remindersProvider.notifier)
+            .addFromOnboarding(profile.reminderTime);
+      }
       if (mounted) ref.read(appFlowProvider.notifier).showPlanReady();
       return;
     }

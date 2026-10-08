@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Color, TimeOfDay;
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
@@ -121,15 +122,20 @@ class ReminderNotificationService {
         final (title, message) = _messages[weekday - 1];
         final body = name.trim().isEmpty ? message : '${name.trim()}, $message';
         final notificationId = (reminder.id.hashCode.abs() % 10000) * 10 + weekday;
-        await _plugin.zonedSchedule(
+        Future<void> schedule(AndroidScheduleMode mode) => _plugin.zonedSchedule(
           notificationId,
           title,
           body,
           _nextOccurrence(reminder.time, weekday),
           _details(title, body),
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          androidScheduleMode: mode,
           matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
         );
+        try {
+          await schedule(AndroidScheduleMode.exactAllowWhileIdle);
+        } on PlatformException {
+          await schedule(AndroidScheduleMode.inexactAllowWhileIdle);
+        }
       }
     }
   }

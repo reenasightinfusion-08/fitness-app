@@ -7,24 +7,20 @@ import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profi
 import 'package:fitness_app/features/profile/models/reminder.dart';
 import 'package:fitness_app/services/reminder_notification_service.dart';
 
-/// Demo reminders so the screen isn't empty on first run — mirrors the
-/// prototype's seeded 8:00 am / 9:00 pm account.
-List<ReminderEntry> _seedReminders() => [
-  const ReminderEntry(id: 'r1', time: TimeOfDay(hour: 8, minute: 0)),
-  const ReminderEntry(id: 'r2', time: TimeOfDay(hour: 21, minute: 0)),
-];
-
 /// The user's stretch reminders. Signed-in accounts load them from the server
 /// and every change is saved back and re-scheduled as local notifications on the
-/// phone; the sample account keeps demo reminders in memory only.
+/// phone; the sample account keeps its reminders in memory only.
 class RemindersController extends Notifier<List<ReminderEntry>> {
   int _nextId = 1;
   bool _loaded = false;
   Future<void> _saving = Future.value();
+  Future<void> _loading = Future.value();
 
   @override
   List<ReminderEntry> build() {
-    Future.microtask(_load);
+    _nextId = 1;
+    _loaded = false;
+    _loading = Future.microtask(_load);
     return const [];
   }
 
@@ -33,7 +29,6 @@ class RemindersController extends Notifier<List<ReminderEntry>> {
   Future<void> _load() async {
     final auth = ref.read(authServiceProvider);
     if (!await auth.hasSession()) {
-      state = _seedReminders();
       return;
     }
     try {
@@ -47,6 +42,16 @@ class RemindersController extends Notifier<List<ReminderEntry>> {
     } catch (e) {
       debugPrint('[Reminders] could not load reminders: $e');
     }
+  }
+
+  /// The daily reminder picked in the setup wizard becomes the account's first
+  /// reminder: shown in Profile, saved to the server and scheduled on the phone.
+  Future<void> addFromOnboarding(TimeOfDay time) async {
+    await _loading;
+    if (state.isNotEmpty) return;
+    _loaded = true;
+    state = [ReminderEntry(id: 'r${_nextId++}', time: time)];
+    _persist();
   }
 
   void add() {

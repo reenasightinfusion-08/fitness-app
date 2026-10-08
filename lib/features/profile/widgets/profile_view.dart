@@ -13,7 +13,6 @@ import 'package:fitness_app/features/profile/widgets/account_screen.dart';
 import 'package:fitness_app/features/profile/widgets/edit_profile_screen.dart';
 import 'package:fitness_app/features/profile/widgets/premium_screen.dart';
 import 'package:fitness_app/features/profile/widgets/reminders_screen.dart';
-import 'package:fitness_app/services/reminder_notification_service.dart';
 import 'package:fitness_app/features/profile/widgets/settings_screen.dart';
 
 /// Matches the prototype's `screens.profile`: identity header, an account
@@ -34,7 +33,9 @@ class ProfileView extends ConsumerWidget {
     final displayName = profile.name.isEmpty ? 'Runner' : profile.name;
     final displayEmail = profile.email.isNotEmpty ? profile.email : profile.country;
     final onReminders = reminders.where((r) => r.isOn).toList();
-    final remindersSubtitle = onReminders.isEmpty
+    final remindersSubtitle = reminders.isEmpty
+        ? 'No reminder set yet'
+        : onReminders.isEmpty
         ? 'Off'
         : onReminders.map((r) => r.time.format(context)).join(', ');
 
@@ -109,15 +110,9 @@ class ProfileView extends ConsumerWidget {
           variant: AppButtonVariant.secondary,
           onPressed: () async {
             await ref.read(authServiceProvider).logout();
-            ref.invalidate(onboardingProfileProvider);
-            ref.invalidate(customRoutinesProvider);
-            ref.invalidate(favoritesProvider);
-            ref.invalidate(remindersProvider);
-            ref.invalidate(hurtStretchesProvider);
-            await ReminderNotificationService.instance.cancelAll();
-            if (context.mounted) {
-              ref.read(appFlowProvider.notifier).showWelcome();
-            }
+            final flow = ref.read(appFlowProvider.notifier);
+            await flow.resetUserState();
+            flow.showWelcome();
           },
         ),
       ],

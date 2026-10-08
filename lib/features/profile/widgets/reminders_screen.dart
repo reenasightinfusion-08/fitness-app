@@ -50,6 +50,19 @@ class RemindersScreen extends ConsumerWidget {
               style: AppTextStyle.bodyMedium.copyWith(color: colors.ink2),
             ),
             16.verticalSpace,
+            if (reminders.isEmpty) ...[
+              AppCard(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  child: Text(
+                    'No reminder set yet',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyle.bodyMedium.copyWith(color: colors.ink2),
+                  ),
+                ),
+              ),
+              12.verticalSpace,
+            ],
             for (final reminder in reminders) ...[
               AppCard(
                 child: Column(
@@ -115,7 +128,7 @@ class RemindersScreen extends ConsumerWidget {
                           ),
                       ],
                     ),
-                    if (reminders.length > 1) ...[
+                    ...[
                       8.verticalSpace,
                       Align(
                         alignment: Alignment.centerLeft,
