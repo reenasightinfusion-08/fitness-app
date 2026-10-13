@@ -14,6 +14,7 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 class VideoFrameService {
   static const int maxConcurrent = 3;
   static const int width = 720;
+  static const Duration _retryAfter = Duration(seconds: 30);
 
   static final Map<String, Future<Uint8List?>> _cache = {};
   static final Queue<String> _order = Queue();
@@ -31,7 +32,11 @@ class VideoFrameService {
     final future = _load(key, url, timeMs);
     _cache[key] = future;
     future.then((bytes) {
-      if (bytes == null) _cache.remove(key);
+      // Keep the failed future for a while so widgets that rebuild don't
+      // restart the extraction (and flash their fallback) on every frame.
+      if (bytes == null) {
+        Timer(_retryAfter, () => _cache.remove(key));
+      }
     });
     return future;
   }
@@ -60,21 +65,33 @@ class VideoFrameService {
 
     await _acquire(key);
     try {
-      final bytes = await VideoThumbnail.thumbnailData(
+      // iOS (AVAssetImageGenerator) fails when the requested time is past the
+      // end of a short clip, where Android clamps to the last frame. Fall back
+      // to the first frame so every video still gets a still.
+      for (final at in {timeMs, 0}) {
+        final bytes = await _grab(url, at);
+        if (bytes != null && bytes.isNotEmpty) {
+          unawaited(file.writeAsBytes(bytes).then((_) {}, onError: (_) {}));
+          return bytes;
+        }
+      }
+      return null;
+    } finally {
+      _release();
+    }
+  }
+
+  static Future<Uint8List?> _grab(String url, int timeMs) async {
+    try {
+      return await VideoThumbnail.thumbnailData(
         video: url,
         imageFormat: ImageFormat.JPEG,
         timeMs: timeMs,
         maxWidth: width,
         quality: 85,
       );
-      if (bytes != null && bytes.isNotEmpty) {
-        unawaited(file.writeAsBytes(bytes).then((_) {}, onError: (_) {}));
-      }
-      return bytes;
     } catch (_) {
       return null;
-    } finally {
-      _release();
     }
   }
 
