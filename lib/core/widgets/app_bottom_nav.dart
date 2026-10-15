@@ -37,26 +37,37 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // iPhones report a 34pt home-indicator inset, but the indicator is thin; using
+    // all of it leaves a tall empty strip under the labels and the bar looks too
+    // high. Android keeps the full inset.
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+    final isIos = Theme.of(context).platform == TargetPlatform.iOS;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(top: BorderSide(color: colors.line)),
       ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 5.h),
-          child: Row(
-            children: [
-              for (var i = 0; i < items.length; i++)
-                Expanded(
-                  child: AppBottomNavTab(
-                    item: items[i],
-                    isActive: i == currentIndex,
-                    onTap: () => onTap(i),
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: isIos ? bottomInset * 0.4 : bottomInset,
+        ),
+        child: SafeArea(
+          top: false,
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 5.h),
+            child: Row(
+              children: [
+                for (var i = 0; i < items.length; i++)
+                  Expanded(
+                    child: AppBottomNavTab(
+                      item: items[i],
+                      isActive: i == currentIndex,
+                      onTap: () => onTap(i),
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

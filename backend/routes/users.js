@@ -19,16 +19,21 @@ const PROFILE_FIELDS = [
   'safetyAcknowledged', 'onboardingComplete', 'sessionSettings',
 ];
 
-// GET /me needs passwordHash / googleId only to report hasPassword / hasGoogle; neither is sent.
-const HIDDEN_FIELDS_KEEP_PASSWORD = '-verifyCode -resetCode -resetCodeExpires -lastCodeSentAt -__v';
-const HIDDEN_FIELDS = '-passwordHash -verifyCode -resetCode -resetCodeExpires -lastCodeSentAt -__v';
+// GET /me needs passwordHash / googleId / appleId only to report hasPassword / hasGoogle / hasApple; none is sent.
+const HIDDEN_FIELDS_KEEP_PASSWORD = '-verifyCode -verifyCodeExpires -verifyAttempts -resetCode -resetCodeExpires -resetAttempts -tokenVersion -lastCodeSentAt -__v';
+const HIDDEN_FIELDS = '-passwordHash -googleId -appleId -verifyCode -verifyCodeExpires -verifyAttempts -resetCode -resetCodeExpires -resetAttempts -tokenVersion -lastCodeSentAt -__v';
 
 // GET /api/users/me
 router.get('/me', requireAuth, asyncHandler(async (req, res) => {
   const user = await User.findById(req.userId).select(HIDDEN_FIELDS_KEEP_PASSWORD);
   if (!user) return fail(res, 404, 'User not found');
-  const { passwordHash, googleId, ...profile } = user.toObject();
-  ok(res, { ...profile, hasPassword: !!passwordHash, hasGoogle: !!googleId }, 'Profile fetched');
+  const { passwordHash, googleId, appleId, ...profile } = user.toObject();
+  ok(res, {
+    ...profile,
+    hasPassword: !!passwordHash,
+    hasGoogle: !!googleId,
+    hasApple: !!appleId,
+  }, 'Profile fetched');
 }));
 
 // PATCH /api/users/me  { ...any subset of PROFILE_FIELDS }

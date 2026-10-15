@@ -1,7 +1,7 @@
+import 'package:fitness_app/core/ads/ad_slot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/greeting.dart';
@@ -165,7 +165,7 @@ class ProgressView extends ConsumerWidget {
         historyAsync.when(
           data: (history) => _HistoryList(history: history),
           loading: () => const HistoryListShimmer(),
-          error: (error, stack) => const AppEmptyState(
+          error: (error, stack) => AppEmptyState(
             icon: Icons.cloud_off_rounded,
             title: "Couldn't load history",
             message: 'Check your connection and try again.',
@@ -197,16 +197,28 @@ class HistoryListShimmer extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Title skeleton (Routine name)
-                        AppShimmer.box(width: 140.w, height: 16.h, borderRadius: 4.r),
+                        AppShimmer.box(
+                          width: 140.w,
+                          height: 16.h,
+                          borderRadius: 4.r,
+                        ),
                         4.verticalSpace,
                         // Subtitle skeleton ("Date · X stretches")
-                        AppShimmer.box(width: 100.w, height: 12.h, borderRadius: 4.r),
+                        AppShimmer.box(
+                          width: 100.w,
+                          height: 12.h,
+                          borderRadius: 4.r,
+                        ),
                       ],
                     ),
                   ),
                   12.horizontalSpace,
                   // Duration tag pill skeleton ("X min")
-                  AppShimmer.box(width: 54.w, height: 22.h, borderRadius: 100.r),
+                  AppShimmer.box(
+                    width: 54.w,
+                    height: 22.h,
+                    borderRadius: 100.r,
+                  ),
                 ],
               ),
             ),
@@ -241,13 +253,12 @@ class _HistoryList extends StatelessWidget {
             AppSettingRow(
               title: record.routine.name,
               subtitle:
-                  '${record.completedAt == null ? '' : friendlyDate(record.completedAt!) + ' · '}'
+                  '${record.completedAt == null ? '' : '${friendlyDate(record.completedAt!)} · '}'
                   '${record.routine.stretches.length} stretches',
               trailing: AppTag(label: '${record.routine.minutes} min'),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) =>
-                      RoutineDetailScreen(routine: record.routine),
+                  builder: (_) => RoutineDetailScreen(routine: record.routine),
                 ),
               ),
               showDivider: record != history.last,

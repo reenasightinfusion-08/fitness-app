@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:fitness_app/core/widgets/widgets.dart';
-import 'package:fitness_app/features/home/models/today_plan.dart';
 
 /// A filterable body area, as shown in the area-chip row — mirrors the
 /// prototype's `FILTER_AREAS` + `AREA_LABEL`.
@@ -56,62 +55,8 @@ class ExploreStretch {
   final List<String> areas;
 }
 
-/// One entry in the routine list — mirrors `getRoutine()` as rendered by
-/// `routineCard()`: a thumbnail, a name, a "12 min · 6 stretches ·
-/// Standing → Floor" meta line, and an optional Premium lock.
-@immutable
-class ExploreRoutine {
-  const ExploreRoutine({
-    required this.name,
-    required this.minutes,
-    required this.stretchCount,
-    required this.sequence,
-    required this.previewPose,
-    required this.areas,
-    this.isPremium = false,
-  });
-
-  final String name;
-  final int minutes;
-  final int stretchCount;
-
-  /// e.g. "Standing → Seated → Floor" — the prototype's `seqLine()`.
-  final String sequence;
-  final StretchPose previewPose;
-  final List<String> areas;
-  final bool isPremium;
-
-  String get meta => '$minutes min · $stretchCount stretches · $sequence';
-}
-
-/// Builds the full [RoutineSummary] the routine detail / player screens
-/// need, since the Explore list only keeps a lightweight preview. Pulls
-/// matching entries from the stretch library rather than duplicating a
-/// full stretch list per routine.
-extension ExploreRoutineDetail on ExploreRoutine {
-  RoutineSummary toRoutineSummary() {
-    final matches = ExploreDemoData.stretches
-        .where((s) => s.areas.any(areas.contains))
-        .take(stretchCount)
-        .toList();
-    final source = matches.isEmpty
-        ? [ExploreStretch(name: name, pose: previewPose, areas: areas)]
-        : matches;
-
-    return RoutineSummary(
-      name: name,
-      minutes: minutes,
-      equipmentLabel: 'None',
-      stretches: [
-        for (final stretch in source)
-          StretchPreview(name: stretch.name, pose: stretch.pose),
-      ],
-    );
-  }
-}
-
 /// Demo content for the Explore screen — ported from the prototype's
-/// `ROUTINES`/`STRETCHES` tables, minus the fields Explore doesn't show
+/// `STRETCHES` table, minus the fields Explore doesn't show
 /// (steps, cautions, equipment…), same as [TodayDemoData] elsewhere.
 class ExploreDemoData {
   const ExploreDemoData._();
@@ -129,152 +74,6 @@ class ExploreDemoData {
     ExploreArea('quads', 'Quads'),
     ExploreArea('calves', 'Calves'),
     ExploreArea('wrists', 'Wrists'),
-  ];
-
-  static const routines = [
-    ExploreRoutine(
-      name: 'Morning wake-up',
-      minutes: 4,
-      stretchCount: 6,
-      sequence: 'Standing → Floor',
-      previewPose: StretchPoses.reach,
-      areas: [
-        'shoulders',
-        'upperback',
-        'spine',
-        'lowerback',
-        'hamstrings',
-        'calves',
-        'chest',
-      ],
-    ),
-    ExploreRoutine(
-      name: 'Desk reset',
-      minutes: 4,
-      stretchCount: 6,
-      sequence: 'Standing → Seated',
-      previewPose: StretchPoses.necktilt,
-      areas: [
-        'neck',
-        'shoulders',
-        'upperback',
-        'spine',
-        'wrists',
-        'lowerback',
-        'hips',
-        'glutes',
-      ],
-    ),
-    ExploreRoutine(
-      name: 'Neck & shoulders',
-      minutes: 3,
-      stretchCount: 5,
-      sequence: 'Standing → Floor',
-      previewPose: StretchPoses.necktilt,
-      areas: ['neck', 'shoulders', 'upperback', 'chest', 'spine'],
-    ),
-    ExploreRoutine(
-      name: 'Lower back relief',
-      minutes: 4,
-      stretchCount: 5,
-      sequence: 'Floor',
-      previewPose: StretchPoses.kneehug,
-      areas: [
-        'lowerback',
-        'glutes',
-        'hips',
-        'spine',
-        'chest',
-        'upperback',
-        'shoulders',
-      ],
-    ),
-    ExploreRoutine(
-      name: 'Tight hips',
-      minutes: 4,
-      stretchCount: 5,
-      sequence: 'Seated → Floor',
-      previewPose: StretchPoses.butterfly,
-      areas: ['hips', 'quads', 'glutes', 'spine', 'lowerback', 'chest'],
-    ),
-    ExploreRoutine(
-      name: 'Hamstring opener',
-      minutes: 4,
-      stretchCount: 5,
-      sequence: 'Standing → Seated → Floor',
-      previewPose: StretchPoses.fold,
-      areas: ['hamstrings', 'lowerback', 'calves', 'shoulders'],
-    ),
-    ExploreRoutine(
-      name: "Runner's cooldown",
-      minutes: 3,
-      stretchCount: 5,
-      sequence: 'Standing → Floor',
-      previewPose: StretchPoses.quad,
-      areas: ['quads', 'hips', 'calves', 'hamstrings', 'lowerback', 'glutes'],
-    ),
-    ExploreRoutine(
-      name: 'Bedtime wind-down',
-      minutes: 4,
-      stretchCount: 5,
-      sequence: 'Seated → Floor',
-      previewPose: StretchPoses.butterfly,
-      areas: ['hips', 'spine', 'glutes', 'lowerback', 'chest', 'shoulders'],
-    ),
-    ExploreRoutine(
-      name: 'Knee-friendly full body',
-      minutes: 5,
-      stretchCount: 7,
-      sequence: 'Standing → Seated → Floor',
-      previewPose: StretchPoses.reach,
-      areas: [
-        'shoulders',
-        'upperback',
-        'spine',
-        'lowerback',
-        'hamstrings',
-        'calves',
-        'chest',
-      ],
-    ),
-    ExploreRoutine(
-      name: 'Posture reset',
-      minutes: 4,
-      stretchCount: 6,
-      sequence: 'Standing → Floor',
-      previewPose: StretchPoses.wallchest,
-      areas: ['chest', 'shoulders', 'upperback', 'spine', 'lowerback'],
-      isPremium: true,
-    ),
-    ExploreRoutine(
-      name: 'Splits prep',
-      minutes: 4,
-      stretchCount: 5,
-      sequence: 'Floor',
-      previewPose: StretchPoses.lunge,
-      areas: ['hips', 'quads', 'hamstrings', 'glutes', 'calves', 'shoulders'],
-      isPremium: true,
-    ),
-    ExploreRoutine(
-      name: 'Deep full-body',
-      minutes: 7,
-      stretchCount: 8,
-      sequence: 'Standing → Floor → Seated → Floor',
-      previewPose: StretchPoses.reach,
-      areas: [
-        'shoulders',
-        'upperback',
-        'spine',
-        'hamstrings',
-        'lowerback',
-        'calves',
-        'hips',
-        'quads',
-        'glutes',
-        'chest',
-      ],
-      isPremium: true,
-    ),
   ];
 
   static const stretches = [

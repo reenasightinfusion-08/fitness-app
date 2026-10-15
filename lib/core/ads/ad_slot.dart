@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'package:fitness_app/core/theme/theme.dart';
-import 'package:fitness_app/features/profile/providers/premium_provider.dart';
-import 'package:fitness_app/features/progress/providers/progress_stats_provider.dart';
-import 'ad_gate.dart';
+ import 'package:fitness_app/features/progress/providers/progress_stats_provider.dart';
 import 'ad_ids.dart';
 import 'ad_service.dart';
 
@@ -15,12 +13,11 @@ const int kAdFreeSessions = 3;
 /// True when in-feed ads (banner / native) may be shown right now.
 final adsVisibleProvider = Provider<bool>((ref) {
   if (!AdService.supported) return false;
-  if (ref.watch(premiumProvider) || AdGate.adFreeNow) return false;
   return ref.watch(progressStatsProvider).totalSessions >= kAdFreeSessions;
 });
 
 /// Adaptive banner that sizes itself to [width] and disappears when the
-/// load fails or the user is Premium. Meant for in-content placement.
+/// load fails. Meant for in-content placement.
 class AdBanner extends ConsumerStatefulWidget {
   const AdBanner({super.key});
 

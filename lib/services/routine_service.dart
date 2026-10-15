@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:fitness_app/core/config/api_config.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/services/video_frame_service.dart';
 
@@ -19,43 +20,7 @@ class RoutineServiceException implements Exception {
 class RoutineService {
   RoutineService();
 
-  static const String _liveProductionHost =
-      'https://fitness-backend-eight.vercel.app';
-
-  static const List<String> _candidateHosts = [
-    _liveProductionHost,
-    'http://127.0.0.1:4000',
-    'http://10.0.2.2:4000',
-    'http://192.168.29.88:4000',
-    'http://localhost:4000',
-  ];
-
-  static String? _resolvedHost;
-
-  /// Automatically tests connection to backend candidate hosts (matching StretchService/AuthService logic).
-  static Future<String> _getHost() async {
-    if (_resolvedHost != null) return _resolvedHost!;
-
-    for (final host in _candidateHosts) {
-      try {
-        final timeout = host.startsWith('https://')
-            ? const Duration(seconds: 4)
-            : const Duration(milliseconds: 800);
-        final res = await http.get(Uri.parse('$host/health')).timeout(timeout);
-        if (res.statusCode == 200) {
-          debugPrint('[RoutineService] Connected to backend at $host');
-          _resolvedHost = host;
-          return host;
-        }
-      } catch (e) {
-        debugPrint('[RoutineService] Probe to $host: $e');
-      }
-    }
-
-    _resolvedHost = _liveProductionHost;
-    debugPrint('[RoutineService] Defaulting to live production at $_liveProductionHost');
-    return _liveProductionHost;
-  }
+  static Future<String> _getHost() async => ApiConfig.baseUrl;
 
   /// Fetches all active routines from `GET /api/routines`.
   Future<List<RoutineSummary>> fetchRoutines() async {
@@ -70,7 +35,6 @@ class RoutineService {
           .timeout(const Duration(seconds: 10));
     } catch (e) {
       debugPrint('[RoutineService] Request to $url failed: $e');
-      _resolvedHost = null;
       throw RoutineServiceException(
         "Couldn't connect to server. Check your connection.",
       );

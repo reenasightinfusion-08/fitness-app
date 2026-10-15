@@ -7,7 +7,6 @@ import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/welcome/widgets/welcome_hero.dart';
-import 'package:fitness_app/features/welcome/widgets/welcome_pricing_card.dart';
 
 /// Matches the prototype's `screens.welcome` view. "Get started", "I
 /// already have an account" and "Explore with a sample account" all route
@@ -55,8 +54,6 @@ class WelcomeScreen extends ConsumerWidget {
                 'phone.',
                 style: AppTextStyle.bodyMedium.copyWith(color: colors.ink2),
               ),
-              20.verticalSpace,
-              const WelcomePricingCard(),
               20.verticalSpace,
               AppButton(label: 'Get started', onPressed: flow.showSignup),
               10.verticalSpace,

@@ -85,7 +85,8 @@ class SettingsScreenState extends ConsumerState<SettingsScreen> {
       await AudioService.instance
           .preview(GuideMode.values.byName(mode.name), rate: rate)
           .timeout(const Duration(seconds: 8), onTimeout: () {});
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[Settings] failed: $e');
       if (mounted) {
         AppSnackBar.showError(
           context,

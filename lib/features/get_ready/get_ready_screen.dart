@@ -40,6 +40,8 @@ class GetReadyScreen extends ConsumerStatefulWidget {
 class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
   static const int _minHoldSeconds = 15;
   static const int _maxHoldSeconds = 120;
+  // Used by the hold-time stepper that is commented out below.
+  // ignore: unused_field
   static const int _holdStepSeconds = 5;
 
   bool isStarting = false;
@@ -65,6 +67,7 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
     GuideMode.silent => 'No voice, tones or vibration.',
   };
 
+  // ignore: unused_element
   void _adjustHold(int delta) => setState(
     () => holdSeconds = (holdSeconds + delta).clamp(
       _minHoldSeconds,

@@ -76,7 +76,8 @@ class SessionCompleteScreenState
       if (!ref.read(customRoutineServiceProvider).canSave(plan)) return;
       final existing = await ref.read(customRoutinesProvider.future);
       if (plan.id != null && existing.any((r) => r.id == plan.id)) return;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[SessionComplete] failed: $e');
       return;
     }
     if (mounted) setState(() => canSave = true);
@@ -88,7 +89,8 @@ class SessionCompleteScreenState
     final List<HurtStretch> marked;
     try {
       marked = await ref.read(hurtStretchesProvider.future);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[SessionComplete] failed: $e');
       return;
     }
     if (!mounted) return;

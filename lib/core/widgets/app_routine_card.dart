@@ -13,7 +13,6 @@ class AppRoutineCard extends StatelessWidget {
     required this.meta,
     required this.onTap,
     this.thumbnail,
-    this.isLocked = false,
     this.badge,
   });
 
@@ -21,7 +20,6 @@ class AppRoutineCard extends StatelessWidget {
   final String meta;
   final VoidCallback? onTap;
   final Widget? thumbnail;
-  final bool isLocked;
 
   /// Accent tag under the meta line, e.g. "Adapted for you · 2 swaps".
   final String? badge;
@@ -54,11 +52,6 @@ class AppRoutineCard extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(title, style: AppTextStyle.titleMedium),
-                        if (isLocked)
-                          const AppTag(
-                            label: 'Premium',
-                            icon: Icons.lock_rounded,
-                          ),
                       ],
                     ),
                     2.verticalSpace,

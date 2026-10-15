@@ -9,11 +9,10 @@ import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/profile/models/profile_data.dart';
-import 'package:fitness_app/features/profile/providers/premium_provider.dart';
 import 'package:fitness_app/features/profile/widgets/change_password_screen.dart';
 
 /// Matches the prototype's `screens.account`: sign-in details, a masked
-/// password row that opens the change-password flow, subscription status, and the two exits — log out and
+/// password row that opens the change-password flow, and the two exits — log out and
 /// delete account.
 class AccountScreen extends ConsumerStatefulWidget {
   const AccountScreen({super.key});
@@ -31,7 +30,7 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
       title: 'Delete your account?',
       message:
           'This permanently removes your profile, history, routines and '
-          'stretches. Any Premium purchase ends too.',
+          'stretches.',
       confirmLabel: 'Delete everything',
       isDestructive: true,
     );
@@ -58,7 +57,6 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isPremium = ref.watch(premiumProvider);
     final profile = ref.watch(onboardingProfileProvider);
     final userEmail = profile.email.isEmpty
         ? ProfileDemoData.email
@@ -104,22 +102,6 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
                 ),
               ),
             ],
-            16.verticalSpace,
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('Subscription', style: AppTextStyle.titleMedium),
-                  6.verticalSpace,
-                  Text(
-                    isPremium
-                        ? 'Premium, one-time purchase. Nothing will renew.'
-                        : 'Free plan. Nothing to cancel.',
-                    style: AppTextStyle.bodyMedium.copyWith(color: colors.ink2),
-                  ),
-                ],
-              ),
-            ),
             20.verticalSpace,
             AppButton(
               label: 'Log out',

@@ -498,7 +498,6 @@ class _ExploreRoutineTileState extends State<_ExploreRoutineTile> {
     return AppRoutineCard(
       title: routine.name,
       meta: '${routine.durationText} · ${routine.stretches.length} stretches',
-      isLocked: false,
       thumbnail: AppThumb(
         size: AppThumbSize.large,
         child: thumbnailWidget,

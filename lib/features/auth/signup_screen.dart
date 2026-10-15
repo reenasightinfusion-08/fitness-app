@@ -5,6 +5,7 @@ import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/app_validators.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
+import 'package:fitness_app/features/auth/widgets/auth_legal_notice.dart';
 import 'package:fitness_app/features/auth/widgets/auth_social_buttons.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/services/auth_service.dart';
@@ -121,7 +122,9 @@ class SignupScreenState extends ConsumerState<SignupScreen> {
                   onPressed: submit,
                   isLoading: isLoading,
                 ),
-                14.verticalSpace,
+                16.verticalSpace,
+                const AuthLegalNotice(),
+                20.verticalSpace,
                 AppInlineLink(
                   prefix: 'Already have an account?',
                   linkText: 'Log in',

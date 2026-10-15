@@ -4,13 +4,21 @@ const userSchema = new mongoose.Schema(
   {
     // --- auth ---
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    // Null for accounts created through Google sign-in until a password is set.
+    // Null for accounts created through Google or Apple sign-in until a password is set.
     passwordHash: { type: String, default: null },
     googleId: { type: String, unique: true, sparse: true },
+    // Apple's stable user id (the identity token's "sub").
+    appleId: { type: String, unique: true, sparse: true },
     isVerified: { type: Boolean, default: false },
     verifyCode: { type: String, default: null },
+    verifyCodeExpires: { type: Date, default: null },
+    // Wrong guesses against the current code; the code is dropped after too many.
+    verifyAttempts: { type: Number, default: 0 },
     resetCode: { type: String, default: null },
     resetCodeExpires: { type: Date, default: null },
+    resetAttempts: { type: Number, default: 0 },
+    // Raised on password change/reset; tokens carrying an older number stop working.
+    tokenVersion: { type: Number, default: 0 },
     lastCodeSentAt: { type: Date, default: null },
 
     // --- profile (flat, mirrors OnboardingProfile) ---

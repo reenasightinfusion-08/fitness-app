@@ -27,14 +27,20 @@ const transport = hasSmtp
   : null;
 
 
+// Throws when the email could not be sent, so callers can tell the user instead of
+// pretending a code is on its way.
 async function sendCode(email, code, purpose) {
   if (!transport) {
+    // Codes are only ever printed on a developer's machine, never on a deployed server.
+    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+      throw new Error('SMTP is not configured');
+    }
     console.log(`[mailer] (No SMTP configured - simulation) (${purpose}) code for ${email}: ${code}`);
     return;
   }
 
   const isVerify = purpose === 'verify';
-  const subject = isVerify ? 'Verify your Fitness App account' : 'Reset your password';
+  const subject = isVerify ? 'Verify your Loosen account' : 'Reset your password';
   const actionText = isVerify ? 'verify your email address' : 'reset your password';
 
   const html = `
@@ -57,28 +63,24 @@ async function sendCode(email, code, purpose) {
     </div>
   `;
 
-  try {
-    let from = (process.env.SMTP_FROM || '').trim();
-    if (!from || !from.includes('@')) {
-      from = `"Fitness App" <${smtpUser}>`;
-    } else if (!from.includes('<') && from.includes(' ')) {
-      const parts = from.trim().split(/\s+/);
-      const emailPart = parts.pop();
-      const namePart = parts.join(' ').replace(/["']/g, '');
-      from = `"${namePart}" <${emailPart}>`;
-    }
-
-    const info = await transport.sendMail({
-      from,
-      to: email,
-      subject,
-      text: `Your code is ${code}. It expires in 15 minutes.`,
-      html,
-    });
-    console.log(`[mailer] Sent ${purpose} email to ${email}: ${info.messageId}`);
-  } catch (err) {
-    console.error(`[mailer] Error sending email to ${email}:`, err.message);
+  let from = (process.env.SMTP_FROM || '').trim();
+  if (!from || !from.includes('@')) {
+    from = `"Loosen" <${smtpUser}>`;
+  } else if (!from.includes('<') && from.includes(' ')) {
+    const parts = from.trim().split(/\s+/);
+    const emailPart = parts.pop();
+    const namePart = parts.join(' ').replace(/["']/g, '');
+    from = `"${namePart}" <${emailPart}>`;
   }
+
+  const info = await transport.sendMail({
+    from,
+    to: email,
+    subject,
+    text: `Your code is ${code}. It expires in 15 minutes.`,
+    html,
+  });
+  console.log(`[mailer] Sent ${purpose} email: ${info.messageId}`);
 }
 
 module.exports = { sendCode };

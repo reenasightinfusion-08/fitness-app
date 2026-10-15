@@ -46,6 +46,7 @@ const err = (description, message) => ({
 const emailProp = { type: 'string', format: 'email', example: 'user@example.com' };
 const auth = [{ bearerAuth: [] }];
 const admin = [{ adminKey: [] }];
+const tooMany = err('Too many attempts; wait data.retryAfter seconds (also sent as a Retry-After header)', 'Too many attempts. Try again in 10 minutes.');
 const adminErrors = {
   401: err('Missing or wrong x-admin-key', 'Invalid admin key'),
   403: err('ADMIN_API_KEY is not configured on the server', 'Admin access is not enabled'),
@@ -99,6 +100,10 @@ module.exports = {
           hasGoogle: {
             type: 'boolean',
             description: 'Only on GET /users/me. True when a Google account is linked.',
+          },
+          hasApple: {
+            type: 'boolean',
+            description: 'Only on GET /users/me. True when an Apple account is linked.',
           },
           name: { type: 'string' },
           age: { type: 'number', nullable: true },
@@ -433,6 +438,7 @@ module.exports = {
           { type: 'object', required: ['email', 'password'], properties: { email: emailProp, password: { type: 'string', minLength: 8 } } },
         ),
         responses: {
+          429: tooMany,
           200: okResponse('Verification code sent', nullData, 'Verification code sent'),
           400: err('Missing fields or password too short', 'Password must be at least 8 characters'),
           409: err('Email already registered and verified', 'Email already in use'),
@@ -448,6 +454,7 @@ module.exports = {
           { type: 'object', required: ['email', 'code'], properties: { email: emailProp, code: { type: 'string', example: '123456' } } },
         ),
         responses: {
+          429: tooMany,
           200: okResponse('Verified, JWT returned', { $ref: '#/components/schemas/TokenData' }, 'Signed in'),
           400: err('Wrong code', "That code doesn't match"),
           500: err('Server error', 'Verification failed'),
@@ -462,6 +469,7 @@ module.exports = {
           { type: 'object', required: ['email', 'password'], properties: { email: emailProp, password: { type: 'string' } } },
         ),
         responses: {
+          429: tooMany,
           200: okResponse('JWT returned', { $ref: '#/components/schemas/TokenData' }, 'Signed in'),
           401: err('Bad credentials', 'Invalid email or password'),
           403: err('Email not verified', 'Please verify your email first'),
@@ -477,11 +485,37 @@ module.exports = {
           { type: 'object', required: ['idToken'], properties: { idToken: { type: 'string', description: 'ID token from Google Sign-In' } } },
         ),
         responses: {
+          429: tooMany,
           200: okResponse('JWT returned', { $ref: '#/components/schemas/TokenData' }, 'Signed in'),
           400: err('Missing token', 'Google ID token is required'),
           401: err('Invalid token or unverified Google email', 'Google sign-in failed. Please try again.'),
           409: err('Email linked to another Google account', 'This email is linked to a different Google account'),
           500: err('Not configured', 'Google sign-in is not configured'),
+        },
+      },
+    },
+    '/api/auth/apple': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Sign in (or sign up) with an Apple identity token',
+        description:
+          'The app sends the identity token from Sign in with Apple together with the raw nonce whose SHA-256 it gave Apple. ' +
+          'Apple shares the name only on first sign-in, so the app passes it as name.',
+        requestBody: jsonBody({
+          type: 'object',
+          required: ['identityToken', 'nonce'],
+          properties: {
+            identityToken: { type: 'string', description: 'Identity token (JWT) from Sign in with Apple' },
+            nonce: { type: 'string', description: 'The raw, unhashed nonce used for this request' },
+            name: { type: 'string', description: 'Full name from Apple (first sign-in only)' },
+          },
+        }),
+        responses: {
+          429: tooMany,
+          200: okResponse('JWT returned', { $ref: '#/components/schemas/TokenData' }, 'Signed in'),
+          400: err('Missing token or nonce', 'Apple identity token is required'),
+          401: err('Invalid token, nonce mismatch or no verified email', 'Apple sign-in failed. Please try again.'),
+          409: err('Email linked to another Apple account', 'This email is linked to a different Apple account'),
         },
       },
     },
@@ -492,6 +526,7 @@ module.exports = {
         description: 'Always succeeds, whether or not the account exists.',
         requestBody: jsonBody({ type: 'object', required: ['email'], properties: { email: emailProp } }),
         responses: {
+          429: tooMany,
           200: okResponse('Request accepted', nullData, 'If that email exists, a code was sent'),
           500: err('Server error', 'Request failed'),
         },
@@ -507,6 +542,7 @@ module.exports = {
           properties: { email: emailProp, purpose: { type: 'string', enum: ['verify', 'reset'], default: 'verify' } },
         }),
         responses: {
+          429: tooMany,
           200: okResponse('Code resent', nullData, 'Code resent'),
           429: {
             description: 'Cooldown active',
@@ -531,6 +567,7 @@ module.exports = {
           properties: { email: emailProp, code: { type: 'string', example: '123456' }, newPassword: { type: 'string', minLength: 8 } },
         }),
         responses: {
+          429: tooMany,
           200: okResponse('Password updated', nullData, 'Password updated'),
           400: err('Weak password, or invalid/expired code', 'Invalid or expired code'),
           500: err('Server error', 'Reset failed'),
@@ -547,6 +584,7 @@ module.exports = {
           properties: { email: emailProp, code: { type: 'string', example: '123456' } },
         }),
         responses: {
+          429: tooMany,
           200: okResponse('Code is valid', nullData, 'Code verified'),
           400: err('Invalid or expired code', 'Invalid or expired code'),
         },
@@ -563,7 +601,8 @@ module.exports = {
           properties: { currentPassword: { type: 'string' }, newPassword: { type: 'string', minLength: 8 } },
         }),
         responses: {
-          200: okResponse('Password updated', nullData, 'Password updated'),
+          429: tooMany,
+          200: okResponse('Password updated. Every other session is signed out, so use the new token from now on', { type: 'object', properties: { token: { type: 'string' } } }, 'Password updated'),
           400: err('Weak new password, wrong current password, or account without a password', 'Current password is incorrect'),
           401: err('Missing or invalid token', 'No token provided'),
           404: err('User not found', 'User not found'),
@@ -751,7 +790,7 @@ module.exports = {
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           200: okResponse('Stretch', { $ref: '#/components/schemas/Stretch' }, 'Stretch fetched'),
-          400: err('Invalid id', 'Cast to ObjectId failed'),
+          400: err('Invalid id', 'Invalid id or value'),
           404: err('Not found', 'Stretch not found'),
           500: serverErr,
         },
@@ -764,7 +803,7 @@ module.exports = {
         responses: {
           ...adminErrors,
           200: okResponse('Deleted', nullData, 'Stretch deleted'),
-          400: err('Invalid id', 'Cast to ObjectId failed'),
+          400: err('Invalid id', 'Invalid id or value'),
           404: err('Not found', 'Stretch not found'),
           500: serverErr,
         },
@@ -808,7 +847,7 @@ module.exports = {
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           200: okResponse('Routine', { $ref: '#/components/schemas/Routine' }, 'Routine fetched'),
-          400: err('Invalid id', 'Cast to ObjectId failed'),
+          400: err('Invalid id', 'Invalid id or value'),
           404: err('Not found', 'Routine not found'),
           500: serverErr,
         },
@@ -821,7 +860,7 @@ module.exports = {
         responses: {
           ...adminErrors,
           200: okResponse('Deleted', nullData, 'Routine deleted'),
-          400: err('Invalid id', 'Cast to ObjectId failed'),
+          400: err('Invalid id', 'Invalid id or value'),
           404: err('Not found', 'Routine not found'),
           500: serverErr,
         },
@@ -869,7 +908,7 @@ module.exports = {
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           200: okResponse('Custom routine', { $ref: '#/components/schemas/CustomRoutine' }, 'Custom routine fetched'),
-          400: err('Invalid id', 'Cast to ObjectId failed'),
+          400: err('Invalid id', 'Invalid id or value'),
           401: err('Missing or invalid token', 'No token provided'),
           404: err('Not found, or it belongs to another user', 'Custom routine not found'),
           500: serverErr,
@@ -882,7 +921,7 @@ module.exports = {
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           200: okResponse('Deleted', nullData, 'Custom routine deleted'),
-          400: err('Invalid id', 'Cast to ObjectId failed'),
+          400: err('Invalid id', 'Invalid id or value'),
           401: err('Missing or invalid token', 'No token provided'),
           404: err('Not found, or it belongs to another user', 'Custom routine not found'),
           500: serverErr,

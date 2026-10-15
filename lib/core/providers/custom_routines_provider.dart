@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fitness_app/core/providers/auth_service_provider.dart';
@@ -30,7 +31,8 @@ class CustomRoutinesController extends AsyncNotifier<List<RoutineSummary>> {
       state = AsyncData(routines);
       final name = draft.name.trim();
       return routines.where((routine) => routine.name == name).firstOrNull;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[CustomRoutines] Could not save the routine: $e');
       ref.invalidateSelf();
       return null;
     }

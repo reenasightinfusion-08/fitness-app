@@ -5,7 +5,18 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/app_loader.dart';
 
-enum AppButtonVariant { primary, secondary, text, danger, dangerText, inverse }
+enum AppButtonVariant {
+  primary,
+  secondary,
+  text,
+  danger,
+  dangerText,
+  inverse,
+
+  /// Black with white content (white with black content in dark mode), the
+  /// look Apple asks for on its sign-in button.
+  contrast,
+}
 
 enum AppButtonSize { regular, small }
 
@@ -17,6 +28,7 @@ class AppButton extends StatefulWidget {
     this.variant = AppButtonVariant.primary,
     this.size = AppButtonSize.regular,
     this.icon,
+    this.leading,
     this.isLoading = false,
     this.isExpanded = true,
   });
@@ -26,6 +38,9 @@ class AppButton extends StatefulWidget {
   final AppButtonVariant variant;
   final AppButtonSize size;
   final IconData? icon;
+
+  /// A custom widget (a brand logo, say) shown where [icon] would be.
+  final Widget? leading;
   final bool isLoading;
   final bool isExpanded;
 
@@ -40,8 +55,14 @@ class AppButtonState extends State<AppButton> {
   bool get isSmall => widget.size == AppButtonSize.small;
 
   ({Color background, Color foreground, Color? border}) resolvePalette(
-    AppColors colors,
-  ) => switch (widget.variant) {
+    AppColors colors, {
+    required bool isDark,
+  }) => switch (widget.variant) {
+    AppButtonVariant.contrast => (
+      background: isDark ? AppColors.white : Colors.black,
+      foreground: isDark ? Colors.black : AppColors.white,
+      border: null,
+    ),
     AppButtonVariant.primary => (
       background: colors.accent,
       foreground: colors.accentInk,
@@ -76,7 +97,10 @@ class AppButtonState extends State<AppButton> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = resolvePalette(context.colors);
+    final palette = resolvePalette(
+      context.colors,
+      isDark: Theme.of(context).brightness == Brightness.dark,
+    );
     final radius = isSmall ? AppBorderRadius.md : AppBorderRadius.xl;
     final minHeight = switch ((widget.size, widget.variant)) {
       (AppButtonSize.small, _) => 38.h,
@@ -117,6 +141,7 @@ class AppButtonState extends State<AppButton> {
                   child: AppButtonContent(
                     label: widget.label,
                     icon: widget.icon,
+                    leading: widget.leading,
                     isLoading: widget.isLoading,
                     color: palette.foreground,
                     isSmall: isSmall,
@@ -136,6 +161,7 @@ class AppButtonContent extends StatelessWidget {
     super.key,
     required this.label,
     required this.icon,
+    this.leading,
     required this.isLoading,
     required this.color,
     required this.isSmall,
@@ -143,6 +169,7 @@ class AppButtonContent extends StatelessWidget {
 
   final String label;
   final IconData? icon;
+  final Widget? leading;
   final bool isLoading;
   final Color color;
   final bool isSmall;
@@ -157,9 +184,11 @@ class AppButtonContent extends StatelessWidget {
       children: [
         if (isLoading)
           AppLoader(size: 18, strokeWidth: 2, color: color)
+        else if (leading != null)
+          leading!
         else if (icon != null)
           Icon(icon, size: 20.r, color: color),
-        if (isLoading || icon != null) 8.horizontalSpace,
+        if (isLoading || leading != null || icon != null) 8.horizontalSpace,
         Flexible(
           child: Text(
             label,

@@ -29,7 +29,7 @@ class SplashScreenState extends ConsumerState<SplashScreen> {
     Future.delayed(const Duration(milliseconds: 900), () async {
       if (!mounted) return;
       final authService = ref.read(authServiceProvider);
-      final hasSession = await authService.hasSession();
+      var hasSession = await authService.hasSession();
       if (!mounted) return;
       bool isOnboardingComplete = false;
       if (hasSession) {
@@ -41,10 +41,14 @@ class SplashScreenState extends ConsumerState<SplashScreen> {
             ref.read(onboardingProfileProvider.notifier).loadFromApi(userData);
             ref.read(sessionSettingsProvider.notifier).loadFromApi(userData);
           }
-        } catch (_) {
-          // Soft fallback if network fails
+        } catch (e) {
+          debugPrint('[Splash] Could not load the profile: $e');
+          isOnboardingComplete = await authService.onboardingCompleteCached();
         }
       }
+      if (!mounted) return;
+      // A rejected token is cleared while loading the profile above.
+      hasSession = hasSession && await authService.hasSession();
       if (!mounted) return;
       final flow = ref.read(appFlowProvider.notifier);
       if (hasSession) {

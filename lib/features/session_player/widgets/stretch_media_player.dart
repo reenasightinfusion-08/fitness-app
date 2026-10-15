@@ -102,7 +102,8 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
         _isInitialized = true;
       });
       _syncPlayback();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[StretchMediaPlayer] failed: $e');
       if (mounted && _controller == controller) {
         setState(() => _hasError = true);
       }

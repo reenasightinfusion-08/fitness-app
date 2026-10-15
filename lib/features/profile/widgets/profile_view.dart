@@ -5,19 +5,18 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
+import 'package:fitness_app/core/utils/legal_links.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
-import 'package:fitness_app/features/profile/providers/premium_provider.dart';
 import 'package:fitness_app/features/profile/providers/reminders_provider.dart';
 import 'package:fitness_app/features/profile/widgets/account_screen.dart';
 import 'package:fitness_app/features/profile/widgets/edit_profile_screen.dart';
-import 'package:fitness_app/features/profile/widgets/premium_screen.dart';
 import 'package:fitness_app/features/profile/widgets/reminders_screen.dart';
 import 'package:fitness_app/features/profile/widgets/settings_screen.dart';
 
 /// Matches the prototype's `screens.profile`: identity header, an account
 /// menu, and log out. Each row now opens its real screen; the subtitles
-/// for Reminders and Premium read live off their providers.
+/// for Reminders reads live off its provider.
 class ProfileView extends ConsumerWidget {
   const ProfileView({super.key});
 
@@ -27,7 +26,6 @@ class ProfileView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
-    final isPremium = ref.watch(premiumProvider);
     final reminders = ref.watch(remindersProvider);
     final profile = ref.watch(onboardingProfileProvider);
     final displayName = profile.name.isEmpty ? 'Runner' : profile.name;
@@ -61,9 +59,19 @@ class ProfileView extends ConsumerWidget {
         () => _open(context, const AccountScreen()),
       ),
       (
-        'Premium',
-        isPremium ? 'Active. Thank you!' : '₹999 once, or ₹149/month',
-        () => _open(context, const PremiumScreen()),
+        'Privacy Policy',
+        'How your information is used',
+        () => LegalLinks.open(context, LegalLinks.privacy),
+      ),
+      (
+        'Terms of Use',
+        'Rules and health notice',
+        () => LegalLinks.open(context, LegalLinks.terms),
+      ),
+      (
+        'Help & support',
+        'Contact us, common questions',
+        () => LegalLinks.open(context, LegalLinks.support),
       ),
     ];
 
@@ -79,11 +87,11 @@ class ProfileView extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(displayName, style: AppTextStyle.titleLarge),
-                  Text(
-                    '${displayEmail.isEmpty ? "" : "$displayEmail · "}'
-                    '${isPremium ? 'Premium' : 'Free plan'}',
-                    style: AppTextStyle.meta.copyWith(color: colors.ink2),
-                  ),
+                  if (displayEmail.isNotEmpty)
+                    Text(
+                      displayEmail,
+                      style: AppTextStyle.meta.copyWith(color: colors.ink2),
+                    ),
                 ],
               ),
             ),

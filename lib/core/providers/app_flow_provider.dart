@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fitness_app/core/providers/custom_routines_provider.dart';
@@ -6,7 +7,6 @@ import 'package:fitness_app/core/providers/home_tab_provider.dart';
 import 'package:fitness_app/core/providers/hurt_stretches_provider.dart';
 import 'package:fitness_app/core/providers/plan_overview_provider.dart';
 import 'package:fitness_app/core/providers/todays_plan_provider.dart';
-import 'package:fitness_app/features/profile/providers/premium_provider.dart';
 import 'package:fitness_app/features/profile/providers/reminders_provider.dart';
 import 'package:fitness_app/features/profile/providers/session_settings_provider.dart';
 import 'package:fitness_app/services/reminder_notification_service.dart';
@@ -31,9 +31,33 @@ enum AppRoute {
   home,
 }
 
+/// Lets the app pop pushed routes (session player, sheets) when it has to
+/// jump back to sign-in from outside the widget tree.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
+const _signedOutRoutes = {
+  AppRoute.welcome,
+  AppRoute.login,
+  AppRoute.signup,
+  AppRoute.verifyEmail,
+  AppRoute.forgotPassword,
+  AppRoute.resetPassword,
+};
+
 class AppFlowController extends Notifier<AppRoute> {
   @override
-  AppRoute build() => AppRoute.splash;
+  AppRoute build() {
+    ref.read(authServiceProvider).onSessionExpired = sessionExpired;
+    return AppRoute.splash;
+  }
+
+  /// The server rejected the saved token, so the user has to sign in again.
+  Future<void> sessionExpired() async {
+    if (_signedOutRoutes.contains(state)) return;
+    rootNavigatorKey.currentState?.popUntil((route) => route.isFirst);
+    showWelcome();
+    await resetUserState();
+  }
 
   /// Called once the splash screen's beat finishes.
   void finishSplash() => state = AppRoute.welcome;
@@ -63,15 +87,20 @@ class AppFlowController extends Notifier<AppRoute> {
   /// After email or Google sign-in succeeds: loads the saved profile, then
   /// lands on Home for a finished account or the setup wizard for a new one.
   Future<void> enterAfterSignIn() async {
+    final auth = ref.read(authServiceProvider);
     var isOnboardingComplete = false;
     try {
-      final res = await ref.read(authServiceProvider).getMe();
+      final res = await auth.getMe();
       final userData =
           (res['user'] ?? res['data'] ?? res) as Map<String, dynamic>;
       isOnboardingComplete = userData['onboardingComplete'] == true;
       ref.read(onboardingProfileProvider.notifier).loadFromApi(userData);
       ref.read(sessionSettingsProvider.notifier).loadFromApi(userData);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[AppFlow] Could not load the profile after sign-in: $e');
+      isOnboardingComplete = await auth.onboardingCompleteCached();
+    }
+    if (!await auth.hasSession()) return;
     if (isOnboardingComplete) {
       enterApp();
     } else {
@@ -85,7 +114,6 @@ class AppFlowController extends Notifier<AppRoute> {
     ref.invalidate(homeTabProvider);
     ref.invalidate(onboardingProfileProvider);
     ref.invalidate(sessionSettingsProvider);
-    ref.invalidate(premiumProvider);
     ref.invalidate(customRoutinesProvider);
     ref.invalidate(favoritesProvider);
     ref.invalidate(hurtStretchesProvider);

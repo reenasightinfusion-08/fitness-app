@@ -14,14 +14,6 @@ class AdIds {
       ? 'ca-app-pub-3940256099942544/1033173712'
       : 'ca-app-pub-3940256099942544/4411468910';
 
-  static String get rewarded => _android
-      ? 'ca-app-pub-3940256099942544/5224354917'
-      : 'ca-app-pub-3940256099942544/1712485313';
-
-  static String get rewardedInterstitial => _android
-      ? 'ca-app-pub-3940256099942544/5354046379'
-      : 'ca-app-pub-3940256099942544/6978759866';
-
   static String get native => _android
       ? 'ca-app-pub-3940256099942544/2247696110'
       : 'ca-app-pub-3940256099942544/3986624511';

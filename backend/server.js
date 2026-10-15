@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -12,10 +13,17 @@ const activeRoutineRoutes = require('./routes/activeRoutines');
 const planRoutes = require('./routes/plans');
 const { ok, fail } = require('./utils/response');
 const openapi = require('./docs/openapi');
+const legalPages = require('./pages/legal');
 
 const app = express();
+app.set('trust proxy', 1);
+// CSP stays off: this is a JSON API, and the /api/docs page loads Swagger UI from a CDN.
+app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors());
 app.use(express.json());
+
+// Public legal pages need no database, so they sit ahead of the connection middleware.
+app.use(legalPages);
 
 // Reusable MongoDB connection for both Vercel serverless & local dev
 let isConnected = false;
@@ -63,8 +71,9 @@ app.use((_req, res) => fail(res, 404, 'Route not found'));
 // eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
   console.error('[unhandled error]:', err);
-  fail(res, err.name === 'ValidationError' || err.name === 'CastError' ? 400 : 500,
-    err.name === 'ValidationError' || err.name === 'CastError' ? err.message : 'Internal server error');
+  if (err.name === 'ValidationError') return fail(res, 400, err.message);
+  if (err.name === 'CastError') return fail(res, 400, 'Invalid id or value');
+  fail(res, 500, 'Internal server error');
 });
 
 const port = process.env.PORT || 4000;

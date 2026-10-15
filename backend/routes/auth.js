@@ -1,14 +1,42 @@
 const router = require('express').Router();
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendCode } = require('../utils/mailer');
+const apple = require('../utils/apple');
 const { OAuth2Client } = require('google-auth-library');
 const { ok, fail, asyncHandler } = require('../utils/response');
 const requireAuth = require('../middleware/auth');
+const rateLimit = require('../middleware/rateLimit');
 
-const sign = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES || '1h' });
+// Limits per client address and per email, so one attacker can neither hammer one
+// account from many addresses nor many accounts from one address.
+const MIN = 60;
+const HOUR = 60 * MIN;
+const limit = (name, ipMax, emailMax, windowSec) => [
+  rateLimit({ name, by: 'ip', max: ipMax, windowSec }),
+  rateLimit({ name, by: 'email', max: emailMax, windowSec }),
+];
+const limits = {
+  signup: limit('signup', 10, 5, HOUR),
+  verifyEmail: limit('verify', 30, 5, 15 * MIN),
+  login: limit('login', 30, 10, 15 * MIN),
+  google: rateLimit({ name: 'google', by: 'ip', max: 30, windowSec: 15 * MIN }),
+  apple: rateLimit({ name: 'apple', by: 'ip', max: 30, windowSec: 15 * MIN }),
+  forgot: limit('forgot', 10, 3, HOUR),
+  resend: limit('resend', 20, 5, HOUR),
+  // verify-reset-code and reset-password share one budget per email.
+  reset: limit('reset', 30, 8, 15 * MIN),
+  changePassword: rateLimit({ name: 'chgpw', by: 'user', max: 10, windowSec: 15 * MIN }),
+};
+
+// The token carries the user's tokenVersion, so changing or resetting the password
+// (which raises it) signs the account out everywhere else.
+const sign = (user) =>
+  jwt.sign({ id: user._id, v: user.tokenVersion || 0 }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES || '30d',
+  });
 
 const googleClient = new OAuth2Client();
 // Comma-separated OAuth client IDs the app's ID tokens may be issued for
@@ -16,12 +44,45 @@ const googleClient = new OAuth2Client();
 const googleAudiences = () =>
   String(process.env.GOOGLE_CLIENT_IDS || '').split(',').map((id) => id.trim()).filter(Boolean);
 
-const genCode = () => String(Math.floor(100000 + Math.random() * 900000));
+const genCode = () => String(crypto.randomInt(100000, 1000000));
 const RESET_TTL_MS = 15 * 60 * 1000;
+const VERIFY_TTL_MS = 15 * 60 * 1000;
+// Wrong guesses allowed against one code before it is thrown away (the user can ask for a new one).
+const MAX_CODE_ATTEMPTS = 6;
 const RESEND_COOLDOWN_MS = 30 * 1000;
 
+const safeEqual = (a, b) => {
+  const x = Buffer.from(String(a));
+  const y = Buffer.from(String(b));
+  return x.length === y.length && crypto.timingSafeEqual(x, y);
+};
+
+// Counts a wrong guess against the user's current 'verify' or 'reset' code, and
+// drops the code once it has been guessed at too many times.
+async function recordMiss(user, kind) {
+  const attemptsField = kind === 'verify' ? 'verifyAttempts' : 'resetAttempts';
+  const updated = await User.findOneAndUpdate({ _id: user._id }, { $inc: { [attemptsField]: 1 } }, { new: true });
+  if (updated && updated[attemptsField] >= MAX_CODE_ATTEMPTS) {
+    await User.updateOne(
+      { _id: user._id },
+      { $set: kind === 'verify' ? { verifyCode: null, verifyCodeExpires: null } : { resetCode: null, resetCodeExpires: null } },
+    );
+  }
+}
+
+// The user whose live (unexpired, not over-guessed) reset code equals `code`, or null.
+async function findByResetCode(email, code) {
+  const user = await User.findOne({ email, resetCode: { $ne: null }, resetCodeExpires: { $gt: new Date() } });
+  if (!user || (user.resetAttempts || 0) >= MAX_CODE_ATTEMPTS) return null;
+  if (!safeEqual(user.resetCode, code)) {
+    await recordMiss(user, 'reset');
+    return null;
+  }
+  return user;
+}
+
 // POST /api/auth/signup { email, password }
-router.post('/signup', async (req, res) => {
+router.post('/signup', limits.signup, async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const { password } = req.body;
@@ -33,36 +94,46 @@ router.post('/signup', async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 12);
     const verifyCode = genCode();
+    const verifyFields = { verifyCode, verifyCodeExpires: new Date(Date.now() + VERIFY_TTL_MS), verifyAttempts: 0 };
 
     if (existing) {
-      existing.passwordHash = passwordHash;
-      existing.verifyCode = verifyCode;
+      Object.assign(existing, { passwordHash, ...verifyFields });
       await existing.save();
     } else {
-      await User.create({ email, passwordHash, verifyCode });
+      await User.create({ email, passwordHash, ...verifyFields });
     }
 
-    await sendCode(email, verifyCode, 'verify');
+    try {
+      await sendCode(email, verifyCode, 'verify');
+    } catch (mailErr) {
+      console.error('[auth/signup] email failed:', mailErr.message);
+      return fail(res, 500, "Couldn't send the email. Please try again.");
+    }
     ok(res, null, 'Verification code sent');
   } catch (err) {
     console.error('[auth/signup error]:', err);
-    fail(res, 500, 'Signup failed: ' + (err.message || err));
+    fail(res, 500, 'Signup failed');
   }
 });
 
 // POST /api/auth/verify-email { email, code }
-router.post('/verify-email', async (req, res) => {
+router.post('/verify-email', limits.verifyEmail, async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const code = String(req.body.code ?? '');
     const user = await User.findOne({ email });
-    if (!user || !user.verifyCode || user.verifyCode !== code) {
+    const live = user && user.verifyCode && user.verifyCodeExpires > new Date()
+      && (user.verifyAttempts || 0) < MAX_CODE_ATTEMPTS;
+    if (!live || !safeEqual(user.verifyCode, code)) {
+      if (live) await recordMiss(user, 'verify');
       return fail(res, 400, "That code doesn't match");
     }
     user.isVerified = true;
     user.verifyCode = undefined;
+    user.verifyCodeExpires = undefined;
+    user.verifyAttempts = 0;
     await user.save();
-    ok(res, { token: sign(user._id), email: user.email }, 'Signed in');
+    ok(res, { token: sign(user), email: user.email }, 'Signed in');
   } catch (err) {
     console.error('[auth/verify-email error]:', err);
     fail(res, 500, 'Verification failed');
@@ -70,7 +141,7 @@ router.post('/verify-email', async (req, res) => {
 });
 
 // POST /api/auth/login { email, password }
-router.post('/login', async (req, res) => {
+router.post('/login', limits.login, async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = typeof req.body.password === 'string' ? req.body.password : '';
@@ -82,7 +153,7 @@ router.post('/login', async (req, res) => {
       return fail(res, 401, 'Invalid email or password');
     }
     if (!user.isVerified) return fail(res, 403, 'Please verify your email first');
-    ok(res, { token: sign(user._id), email: user.email }, 'Signed in');
+    ok(res, { token: sign(user), email: user.email }, 'Signed in');
   } catch (err) {
     console.error('[auth/login error]:', err);
     fail(res, 500, 'Login failed');
@@ -93,7 +164,7 @@ router.post('/login', async (req, res) => {
 // Verifies a Google ID token, then signs in the matching account — creating a
 // verified one on first use, or linking Google to an existing account that has
 // the same (Google-verified) email.
-router.post('/google', asyncHandler(async (req, res) => {
+router.post('/google', limits.google, asyncHandler(async (req, res) => {
   const { idToken } = req.body;
   if (typeof idToken !== 'string' || !idToken) return fail(res, 400, 'Google ID token is required');
   const audience = googleAudiences();
@@ -123,24 +194,82 @@ router.post('/google', asyncHandler(async (req, res) => {
     if (user.googleId && user.googleId !== payload.sub) {
       return fail(res, 409, 'This email is linked to a different Google account');
     }
+    // An email/password signup that was never verified could have been made by someone
+    // else using this address, so Google taking over the account drops that password.
+    if (!user.isVerified) user.passwordHash = null;
     user.googleId = payload.sub;
     user.isVerified = true;
     user.verifyCode = undefined;
+    user.verifyCodeExpires = undefined;
     await user.save();
   }
-  ok(res, { token: sign(user._id), email: user.email }, 'Signed in');
+  ok(res, { token: sign(user), email: user.email }, 'Signed in');
+}));
+
+// POST /api/auth/apple { identityToken, nonce, name? }
+// Verifies an Apple identity token (and that it was minted for this nonce), then signs in
+// the matching account: found by Apple id first, otherwise by the token's verified email
+// (Apple's private-relay addresses included), otherwise created. Apple only shares the
+// person's name the first time, so the app passes it along and it is used for new accounts.
+router.post('/apple', limits.apple, asyncHandler(async (req, res) => {
+  const { identityToken, nonce, name } = req.body;
+  if (typeof identityToken !== 'string' || !identityToken || typeof nonce !== 'string' || !nonce) {
+    return fail(res, 400, 'Apple identity token is required');
+  }
+
+  let payload;
+  try {
+    payload = await apple.verifyIdentityToken(identityToken, nonce);
+  } catch (err) {
+    return fail(res, 401, 'Apple sign-in failed. Please try again.');
+  }
+
+  const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
+  const emailVerified = payload.email_verified === true || payload.email_verified === 'true';
+
+  let user = await User.findOne({ appleId: payload.sub });
+  if (!user) {
+    if (!email || !emailVerified) {
+      return fail(res, 401, 'Apple did not share a verified email for this account');
+    }
+    user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        email,
+        appleId: payload.sub,
+        isVerified: true,
+        name: typeof name === 'string' ? name.trim().slice(0, 80) : '',
+      });
+    } else {
+      if (user.appleId && user.appleId !== payload.sub) {
+        return fail(res, 409, 'This email is linked to a different Apple account');
+      }
+      // Same reasoning as Google: an unverified password signup may belong to someone else.
+      if (!user.isVerified) user.passwordHash = null;
+      user.appleId = payload.sub;
+      user.isVerified = true;
+      user.verifyCode = undefined;
+      user.verifyCodeExpires = undefined;
+      await user.save();
+    }
+  }
+
+  ok(res, { token: sign(user), email: user.email }, 'Signed in');
 }));
 
 // POST /api/auth/forgot-password { email }
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', limits.forgot, async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const user = await User.findOne({ email });
     if (user) {
       user.resetCode = genCode();
       user.resetCodeExpires = new Date(Date.now() + RESET_TTL_MS);
+      user.resetAttempts = 0;
       await user.save();
-      await sendCode(email, user.resetCode, 'reset');
+      // A failed send is only logged: the reply must look the same either way.
+      await sendCode(email, user.resetCode, 'reset').catch((mailErr) =>
+        console.error('[auth/forgot-password] email failed:', mailErr.message));
     }
     // Same response whether or not the account exists, so the endpoint can't
     // be used to check which emails are registered.
@@ -152,12 +281,13 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // POST /api/auth/resend-code { email, purpose: 'verify' | 'reset' }
-router.post('/resend-code', async (req, res) => {
+router.post('/resend-code', limits.resend, async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const purpose = req.body.purpose === 'reset' ? 'reset' : 'verify';
     const user = await User.findOne({ email });
-    if (user) {
+    // A verified account never needs a verification code, so none is sent to it.
+    if (user && !(purpose === 'verify' && user.isVerified)) {
       const sinceLast = user.lastCodeSentAt ? Date.now() - user.lastCodeSentAt.getTime() : Infinity;
       if (sinceLast < RESEND_COOLDOWN_MS) {
         const waitSec = Math.ceil((RESEND_COOLDOWN_MS - sinceLast) / 1000);
@@ -166,9 +296,12 @@ router.post('/resend-code', async (req, res) => {
       const code = genCode();
       if (purpose === 'verify') {
         user.verifyCode = code;
+        user.verifyCodeExpires = new Date(Date.now() + VERIFY_TTL_MS);
+        user.verifyAttempts = 0;
       } else {
         user.resetCode = code;
         user.resetCodeExpires = new Date(Date.now() + RESET_TTL_MS);
+        user.resetAttempts = 0;
       }
       user.lastCodeSentAt = new Date();
       await user.save();
@@ -182,7 +315,7 @@ router.post('/resend-code', async (req, res) => {
 });
 
 // POST /api/auth/reset-password { email, code, newPassword }
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', limits.reset, async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const code = String(req.body.code ?? '');
@@ -191,16 +324,14 @@ router.post('/reset-password', async (req, res) => {
       return fail(res, 400, 'Password must be at least 8 characters');
     }
     if (!code) return fail(res, 400, 'Invalid or expired code');
-    const user = await User.findOne({
-      email,
-      resetCode: code,
-      resetCodeExpires: { $gt: new Date() },
-    });
+    const user = await findByResetCode(email, code);
     if (!user) return fail(res, 400, 'Invalid or expired code');
 
     user.passwordHash = await bcrypt.hash(newPassword, 12);
     user.resetCode = undefined;
     user.resetCodeExpires = undefined;
+    user.resetAttempts = 0;
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
     ok(res, null, 'Password updated');
   } catch (err) {
@@ -212,21 +343,17 @@ router.post('/reset-password', async (req, res) => {
 // POST /api/auth/verify-reset-code { email, code }
 // Checks a reset code without using it up, so the app can show the new-password
 // step only after the code is right. reset-password still checks it again.
-router.post('/verify-reset-code', asyncHandler(async (req, res) => {
+router.post('/verify-reset-code', limits.reset, asyncHandler(async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const code = String(req.body.code ?? '');
   if (!code) return fail(res, 400, 'Invalid or expired code');
-  const user = await User.findOne({
-    email,
-    resetCode: code,
-    resetCodeExpires: { $gt: new Date() },
-  });
+  const user = await findByResetCode(email, code);
   if (!user) return fail(res, 400, 'Invalid or expired code');
   ok(res, null, 'Code verified');
 }));
 
 // POST /api/auth/change-password { currentPassword, newPassword }  (signed in)
-router.post('/change-password', requireAuth, asyncHandler(async (req, res) => {
+router.post('/change-password', requireAuth, limits.changePassword, asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   if (typeof newPassword !== 'string' || newPassword.length < 8) {
     return fail(res, 400, 'Password must be at least 8 characters');
@@ -240,8 +367,10 @@ router.post('/change-password', requireAuth, asyncHandler(async (req, res) => {
     return fail(res, 400, 'Current password is incorrect');
   }
   user.passwordHash = await bcrypt.hash(newPassword, 12);
+  user.tokenVersion = (user.tokenVersion || 0) + 1;
   await user.save();
-  ok(res, null, 'Password updated');
+  // Every other session is now signed out; this one continues on the fresh token.
+  ok(res, { token: sign(user) }, 'Password updated');
 }));
 
 module.exports = router;

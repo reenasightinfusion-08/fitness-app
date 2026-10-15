@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:fitness_app/core/config/api_config.dart';
+import 'package:fitness_app/services/apple_auth_service.dart';
 import 'package:fitness_app/services/google_auth_service.dart';
 
 /// Thrown for any auth failure the UI should show as-is (bad credentials,
@@ -21,60 +23,20 @@ class AuthException implements Exception {
 class AuthService {
   AuthService();
 
-  /// Android emulator reaches the host machine at 10.0.2.2. On a physical
-  /// device swap this for your computer's LAN IP (see backend/README.md);
-  /// on the iOS simulator `localhost` works.
   static const _tokenKey = 'auth_token';
+  static const _onboardedKey = 'onboarding_complete';
 
-  /// Candidate addresses:
-  /// - Live Vercel production backend (24/7 online)
-  /// - 127.0.0.1:4000 (physical Android device with `adb reverse`, or desktop)
-  /// - 10.0.2.2:4000 (standard Android Studio emulator)
-  /// - 192.168.29.88:4000 (local Wi-Fi IP for physical phones without USB reverse)
-  /// - localhost:4000 (desktop / web / iOS simulator)
-  static const String _liveProductionHost =
-      'https://fitness-backend-eight.vercel.app';
-
-  static const List<String> _candidateHosts = [
-    _liveProductionHost,
-    'http://127.0.0.1:4000',
-    'http://10.0.2.2:4000',
-    'http://192.168.29.88:4000',
-    'http://localhost:4000',
-  ];
-
-  static String? _resolvedHost;
-
-  static Future<String> _getHost() async {
-    if (_resolvedHost != null) return _resolvedHost!;
-
-    for (final host in _candidateHosts) {
-      try {
-        final timeout = host.startsWith('https://')
-            ? const Duration(seconds: 4)
-            : const Duration(milliseconds: 800);
-        final res = await http.get(Uri.parse('$host/health')).timeout(timeout);
-        if (res.statusCode == 200) {
-          debugPrint('[AuthService] Connected to backend at $host');
-          _resolvedHost = host;
-          return host;
-        }
-      } catch (e) {
-        debugPrint('[AuthService] Probe to $host: $e');
-      }
-    }
-
-    _resolvedHost = _liveProductionHost;
-    debugPrint(
-      '[AuthService] Defaulting to live production at $_liveProductionHost',
-    );
-    return _liveProductionHost;
-  }
+  static Future<String> _getHost() async => ApiConfig.baseUrl;
 
   static Future<String> _getBaseUrl() async => '${await _getHost()}/api/auth';
 
   final _storage = const FlutterSecureStorage();
   final _googleAuth = GoogleAuthService();
+  final _appleAuth = AppleAuthService();
+
+  /// Called after the server rejects the saved token (expired, or the password
+  /// was changed on another device), once it has been cleared from this phone.
+  void Function()? onSessionExpired;
 
   Future<void> signup({required String email, required String password}) =>
       _post('/signup', {'email': email, 'password': password});
@@ -98,6 +60,20 @@ class AuthService {
     final idToken = await _googleAuth.getIdToken();
     if (idToken == null) return false;
     final data = await _post('/google', {'idToken': idToken});
+    await _storage.write(key: _tokenKey, value: data['token'] as String);
+    return true;
+  }
+
+  /// Signs in through Sign in with Apple (iOS). Returns false if the user
+  /// dismissed the Apple sheet, true once the backend has issued a session.
+  Future<bool> loginWithApple() async {
+    final credential = await _appleAuth.getCredential();
+    if (credential == null) return false;
+    final data = await _post('/apple', {
+      'identityToken': credential.identityToken,
+      'nonce': credential.nonce,
+      if (credential.name != null) 'name': credential.name,
+    });
     await _storage.write(key: _tokenKey, value: data['token'] as String);
     return true;
   }
@@ -127,10 +103,13 @@ class AuthService {
     required String currentPassword,
     required String newPassword,
   }) => _reachable(() async {
-    await _authedPost('/auth/change-password', {
+    final data = await _authedPost('/auth/change-password', {
       'currentPassword': currentPassword,
       'newPassword': newPassword,
     });
+    // Changing the password revokes old tokens; the server sends a fresh one.
+    final token = data['token'];
+    if (token is String) await _storage.write(key: _tokenKey, value: token);
   });
 
   Future<bool> hasSession() async =>
@@ -138,6 +117,7 @@ class AuthService {
 
   Future<void> logout() async {
     await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _onboardedKey);
     await _googleAuth.signOut();
   }
 
@@ -176,10 +156,38 @@ class AuthService {
     await logout();
   });
 
-  Future<Map<String, dynamic>> getMe() => _authedGet('/users/me');
+  Future<Map<String, dynamic>> getMe() async {
+    final me = await _authedGet('/users/me');
+    await _rememberOnboarding(me);
+    return me;
+  }
 
-  Future<Map<String, dynamic>> updateMe(Map<String, dynamic> updates) =>
-      _authedPatch('/users/me', updates);
+  Future<Map<String, dynamic>> updateMe(Map<String, dynamic> updates) async {
+    final me = await _authedPatch('/users/me', updates);
+    await _rememberOnboarding(me);
+    return me;
+  }
+
+  /// Whether this phone has seen the account finish setup. Lets a returning
+  /// user reach Home when the profile can't be fetched (offline at launch).
+  Future<bool> onboardingCompleteCached() async =>
+      (await _storage.read(key: _onboardedKey)) == 'true';
+
+  Future<void> _rememberOnboarding(Map<String, dynamic> me) async {
+    final user = (me['user'] ?? me['data'] ?? me);
+    if (user is Map && user['onboardingComplete'] == true) {
+      await _storage.write(key: _onboardedKey, value: 'true');
+    }
+  }
+
+  /// A 401 on a signed-in request means the saved token is no longer valid.
+  Future<void> _checkSession(http.Response response) async {
+    if (response.statusCode != 401) return;
+    await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _onboardedKey);
+    onSessionExpired?.call();
+    throw AuthException('Your session expired. Please sign in again.');
+  }
 
   /// Today's routine for the signed-in user, picked by the server from the
   /// profile saved during onboarding.
@@ -199,7 +207,6 @@ class AuthService {
       rethrow;
     } catch (e) {
       debugPrint('[AuthService] today\'s plan request failed: $e');
-      _resolvedHost = null;
       throw AuthException("Couldn't reach the server. Check your connection.");
     }
   }
@@ -213,7 +220,6 @@ class AuthService {
       rethrow;
     } catch (e) {
       debugPrint('[AuthService] request failed: $e');
-      _resolvedHost = null;
       throw AuthException("Couldn't reach the server. Check your connection.");
     }
   }
@@ -317,7 +323,6 @@ class AuthService {
           .timeout(const Duration(seconds: 10));
     } catch (e) {
       debugPrint('[AuthService] request to $url failed: $e');
-      _resolvedHost = null;
       throw AuthException("Couldn't reach the server. Check your connection.");
     }
 
@@ -339,6 +344,7 @@ class AuthService {
     final response = await http
         .get(Uri.parse('$host/api$path'), headers: {'Authorization': auth})
         .timeout(const Duration(seconds: 10));
+    await _checkSession(response);
     return _decode(response);
   }
 
@@ -350,6 +356,7 @@ class AuthService {
     final response = await http
         .get(Uri.parse('$host/api$path'), headers: {'Authorization': auth})
         .timeout(const Duration(seconds: 10));
+    await _checkSession(response);
     return (_data(response) as List?) ?? <dynamic>[];
   }
 
@@ -368,6 +375,7 @@ class AuthService {
           body: jsonEncode(body),
         )
         .timeout(const Duration(seconds: 10));
+    await _checkSession(response);
     return _decode(response);
   }
 
@@ -386,6 +394,7 @@ class AuthService {
           body: jsonEncode(body),
         )
         .timeout(const Duration(seconds: 10));
+    await _checkSession(response);
     return _decode(response);
   }
 
@@ -407,6 +416,7 @@ class AuthService {
           body: body == null ? null : jsonEncode(body),
         )
         .timeout(const Duration(seconds: 10));
+    await _checkSession(response);
     return _decode(response);
   }
 
@@ -418,6 +428,7 @@ class AuthService {
     final response = await http
         .delete(Uri.parse('$host/api$path'), headers: {'Authorization': auth})
         .timeout(const Duration(seconds: 10));
+    await _checkSession(response);
     return _decode(response);
   }
 

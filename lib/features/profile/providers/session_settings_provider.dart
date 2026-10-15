@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fitness_app/core/providers/auth_service_provider.dart';
@@ -28,7 +29,8 @@ class SessionSettingsController extends Notifier<SessionSettings> {
       if (!await auth.hasSession()) return true;
       await auth.updateMe({'sessionSettings': next.toJson()});
       return true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[SessionSettings] failed: $e');
       return false;
     }
   }

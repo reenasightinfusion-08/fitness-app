@@ -36,18 +36,28 @@ class OnboardingProfile {
     this.safetyAcknowledged = false,
     this.hasPassword = true,
     this.hasGoogle = false,
+    this.hasApple = false,
   });
 
   final String name;
   final String email;
   final bool hasPassword;
   final bool hasGoogle;
+  final bool hasApple;
 
-  String get signInLabel => switch ((hasPassword, hasGoogle)) {
-        (true, true) => 'Email and Google',
-        (false, true) => 'Google',
-        _ => 'Email and password',
-      };
+  String get signInLabel {
+    final methods = [
+      if (hasPassword) 'Email',
+      if (hasGoogle) 'Google',
+      if (hasApple) 'Apple',
+    ];
+    return switch (methods) {
+      [] || ['Email'] => 'Email and password',
+      [final only] => only,
+      [final a, final b] => '$a and $b',
+      _ => '${methods.sublist(0, methods.length - 1).join(', ')} and ${methods.last}',
+    };
+  }
 
   final String country;
   final String age;
@@ -113,11 +123,13 @@ class OnboardingProfile {
     bool? safetyAcknowledged,
     bool? hasPassword,
     bool? hasGoogle,
+    bool? hasApple,
   }) => OnboardingProfile(
     name: name ?? this.name,
     email: email ?? this.email,
     hasPassword: hasPassword ?? this.hasPassword,
     hasGoogle: hasGoogle ?? this.hasGoogle,
+    hasApple: hasApple ?? this.hasApple,
     country: country ?? this.country,
     age: age ?? this.age,
     gender: gender == null ? this.gender : gender(),
@@ -183,6 +195,7 @@ class OnboardingProfile {
       email: json['email']?.toString() ?? '',
       hasPassword: json['hasPassword'] as bool? ?? true,
       hasGoogle: json['hasGoogle'] as bool? ?? false,
+      hasApple: json['hasApple'] as bool? ?? false,
       country: json['country']?.toString() ?? '',
       age: json['age']?.toString() ?? '',
       gender: json['gender']?.toString(),

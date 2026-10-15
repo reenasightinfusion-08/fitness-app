@@ -4,8 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'ad_ids.dart';
 
-/// Loads and shows full-screen ads (interstitial, rewarded, rewarded
-/// interstitial, app open). Banner and native ads are widgets — see
+/// Loads and shows full-screen ads (interstitial and app open). Banner and native ads are widgets — see
 /// BannerAdWidget and NativeAdWidget.
 class AdService {
   static bool get supported =>
@@ -14,13 +13,9 @@ class AdService {
   static bool _initialized = false;
 
   static InterstitialAd? _interstitial;
-  static RewardedAd? _rewarded;
-  static RewardedInterstitialAd? _rewardedInterstitial;
   static AppOpenAd? _appOpen;
 
   static DateTime? _interstitialAt;
-  static DateTime? _rewardedAt;
-  static DateTime? _rewardedInterstitialAt;
   static DateTime? _appOpenAt;
 
   static final Set<String> _loading = {};
@@ -44,10 +39,6 @@ class AdService {
   /// Returns false when the current screen shouldn't get an app open ad
   /// (splash, onboarding, lock screen, etc.). Set by MyApp.
   static bool Function()? appOpenGuard;
-
-  /// Returns false when the user shouldn't see ads at all (Premium).
-  /// Set by the app root.
-  static bool Function() adsEnabled = () => true;
 
   static bool _expired(DateTime? at, Duration maxAge) =>
       at == null || DateTime.now().difference(at) > maxAge;
@@ -85,8 +76,6 @@ class AdService {
     if (!await _gatherConsent()) return;
     await MobileAds.instance.initialize();
     loadInterstitial();
-    loadRewarded();
-    loadRewardedInterstitial();
     loadAppOpen();
     AppStateEventNotifier.startListening();
     AppStateEventNotifier.appStateStream.listen((state) {
@@ -136,7 +125,6 @@ class AdService {
     _interstitialTriggers++;
     final due = force || _interstitialTriggers % _interstitialEvery == 0;
     if (!supported ||
-        !adsEnabled() ||
         !due ||
         _showingFullScreen ||
         !_since(_interstitialGap) ||
@@ -165,109 +153,6 @@ class AdService {
     );
   }
 
-  // ── Rewarded ─────────────────────────────────────────────────────────────
-
-  static void loadRewarded([int attempt = 0]) {
-    if (!supported || !_loading.add('rewarded')) return;
-    RewardedAd.load(
-      adUnitId: AdIds.rewarded,
-      request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) {
-          _loading.remove('rewarded');
-          _rewarded = ad;
-          _rewardedAt = DateTime.now();
-        },
-        onAdFailedToLoad: (e) {
-          debugPrint('Rewarded failed: $e');
-          _loading.remove('rewarded');
-          _rewarded = null;
-          _retry('rewarded', attempt, loadRewarded);
-        },
-      ),
-    );
-  }
-
-  static bool get rewardedReady {
-    if (_rewarded != null && _expired(_rewardedAt, _adMaxAge)) {
-      _rewarded?.dispose();
-      _rewarded = null;
-    }
-    if (_rewarded == null) loadRewarded();
-    return _rewarded != null;
-  }
-
-  /// Returns false if no ad was ready. [onReward] fires only when the user
-  /// actually earns the reward.
-  static bool showRewarded({
-    required void Function(RewardItem reward) onReward,
-    VoidCallback? onClosed,
-  }) {
-    if (!rewardedReady) return false;
-    final ad = _rewarded!;
-    _rewarded = null;
-    _show(
-      ad,
-      setCallback: (cb) => ad.fullScreenContentCallback = cb,
-      show: () => ad.show(onUserEarnedReward: (_, r) => onReward(r)),
-      dispose: ad.dispose,
-      reload: loadRewarded,
-      onClosed: onClosed,
-    );
-    return true;
-  }
-
-  // ── Rewarded interstitial ────────────────────────────────────────────────
-
-  static void loadRewardedInterstitial([int attempt = 0]) {
-    if (!supported || !_loading.add('rewardedInterstitial')) return;
-    RewardedInterstitialAd.load(
-      adUnitId: AdIds.rewardedInterstitial,
-      request: const AdRequest(),
-      rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          _loading.remove('rewardedInterstitial');
-          _rewardedInterstitial = ad;
-          _rewardedInterstitialAt = DateTime.now();
-        },
-        onAdFailedToLoad: (e) {
-          debugPrint('Rewarded interstitial failed: $e');
-          _loading.remove('rewardedInterstitial');
-          _rewardedInterstitial = null;
-          _retry('rewardedInterstitial', attempt, loadRewardedInterstitial);
-        },
-      ),
-    );
-  }
-
-  static bool get rewardedInterstitialReady {
-    if (_rewardedInterstitial != null &&
-        _expired(_rewardedInterstitialAt, _adMaxAge)) {
-      _rewardedInterstitial?.dispose();
-      _rewardedInterstitial = null;
-    }
-    if (_rewardedInterstitial == null) loadRewardedInterstitial();
-    return _rewardedInterstitial != null;
-  }
-
-  static bool showRewardedInterstitial({
-    required void Function(RewardItem reward) onReward,
-    VoidCallback? onClosed,
-  }) {
-    if (!rewardedInterstitialReady) return false;
-    final ad = _rewardedInterstitial!;
-    _rewardedInterstitial = null;
-    _show(
-      ad,
-      setCallback: (cb) => ad.fullScreenContentCallback = cb,
-      show: () => ad.show(onUserEarnedReward: (_, r) => onReward(r)),
-      dispose: ad.dispose,
-      reload: loadRewardedInterstitial,
-      onClosed: onClosed,
-    );
-    return true;
-  }
-
   // ── App open ─────────────────────────────────────────────────────────────
 
   static void loadAppOpen([int attempt = 0]) {
@@ -293,11 +178,10 @@ class AdService {
 
   /// Called when the app returns to the foreground.
   static Future<void> showAppOpenIfAvailable() async {
-    if (!adsEnabled() || _showingFullScreen || !_since(_appOpenGap)) return;
+    if (_showingFullScreen || !_since(_appOpenGap)) return;
     // Let lock-screen navigation settle, then re-check everything.
     await Future<void>.delayed(const Duration(milliseconds: 600));
-    if (!adsEnabled() ||
-        _showingFullScreen ||
+    if (_showingFullScreen ||
         !_since(_appOpenGap) ||
         !(appOpenGuard?.call() ?? true)) {
       return;
