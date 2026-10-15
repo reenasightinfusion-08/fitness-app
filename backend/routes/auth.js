@@ -25,7 +25,7 @@ router.post('/signup', async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const { password } = req.body;
-    if (!email || !password) return fail(res, 400, 'Email and password are required');
+    if (!email || typeof password !== 'string' || !password) return fail(res, 400, 'Email and password are required');
     if (password.length < 8) return fail(res, 400, 'Password must be at least 8 characters');
 
     const existing = await User.findOne({ email });
@@ -54,7 +54,7 @@ router.post('/signup', async (req, res) => {
 router.post('/verify-email', async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
-    const { code } = req.body;
+    const code = String(req.body.code ?? '');
     const user = await User.findOne({ email });
     if (!user || !user.verifyCode || user.verifyCode !== code) {
       return fail(res, 400, "That code doesn't match");
@@ -73,7 +73,7 @@ router.post('/verify-email', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
-    const { password } = req.body;
+    const password = typeof req.body.password === 'string' ? req.body.password : '';
     const user = await User.findOne({ email });
     if (user && !user.passwordHash) {
       return fail(res, 401, 'This account uses Google sign-in. Tap "Continue with Google".');
@@ -95,7 +95,7 @@ router.post('/login', async (req, res) => {
 // the same (Google-verified) email.
 router.post('/google', asyncHandler(async (req, res) => {
   const { idToken } = req.body;
-  if (!idToken) return fail(res, 400, 'Google ID token is required');
+  if (typeof idToken !== 'string' || !idToken) return fail(res, 400, 'Google ID token is required');
   const audience = googleAudiences();
   if (!audience.length) return fail(res, 500, 'Google sign-in is not configured');
 
@@ -185,10 +185,12 @@ router.post('/resend-code', async (req, res) => {
 router.post('/reset-password', async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
-    const { code, newPassword } = req.body;
-    if (!newPassword || newPassword.length < 8) {
+    const code = String(req.body.code ?? '');
+    const { newPassword } = req.body;
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
       return fail(res, 400, 'Password must be at least 8 characters');
     }
+    if (!code) return fail(res, 400, 'Invalid or expired code');
     const user = await User.findOne({
       email,
       resetCode: code,
@@ -212,9 +214,11 @@ router.post('/reset-password', async (req, res) => {
 // step only after the code is right. reset-password still checks it again.
 router.post('/verify-reset-code', asyncHandler(async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
+  const code = String(req.body.code ?? '');
+  if (!code) return fail(res, 400, 'Invalid or expired code');
   const user = await User.findOne({
     email,
-    resetCode: String(req.body.code || ''),
+    resetCode: code,
     resetCodeExpires: { $gt: new Date() },
   });
   if (!user) return fail(res, 400, 'Invalid or expired code');
@@ -224,7 +228,7 @@ router.post('/verify-reset-code', asyncHandler(async (req, res) => {
 // POST /api/auth/change-password { currentPassword, newPassword }  (signed in)
 router.post('/change-password', requireAuth, asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
-  if (!newPassword || newPassword.length < 8) {
+  if (typeof newPassword !== 'string' || newPassword.length < 8) {
     return fail(res, 400, 'Password must be at least 8 characters');
   }
   const user = await User.findById(req.userId);
@@ -232,7 +236,7 @@ router.post('/change-password', requireAuth, asyncHandler(async (req, res) => {
   if (!user.passwordHash) {
     return fail(res, 400, 'This account has no password yet. Use "Forgot current password?" to set one.');
   }
-  if (!(await bcrypt.compare(currentPassword || '', user.passwordHash))) {
+  if (!(await bcrypt.compare(typeof currentPassword === 'string' ? currentPassword : '', user.passwordHash))) {
     return fail(res, 400, 'Current password is incorrect');
   }
   user.passwordHash = await bcrypt.hash(newPassword, 12);

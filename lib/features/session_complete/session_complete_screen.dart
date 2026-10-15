@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:fitness_app/core/ads/ad_service.dart';
+import 'package:fitness_app/core/ads/ad_slot.dart';
 import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
@@ -175,6 +177,25 @@ class SessionCompleteScreenState
   /// entering the app first guarantees "Done" always reaches the real
   /// Home shell; it's a no-op when we're already there, so the ordinary
   /// Home-started flow behaves exactly as before.
+  bool _exiting = false;
+
+  /// Leaving the screen by Done or Back goes through here so both paths get
+  /// the same (capped) interstitial. New users see none for their first
+  /// sessions.
+  void _exit() {
+    if (_exiting) return;
+    _exiting = true;
+    void go() {
+      if (mounted) _finish();
+    }
+
+    if (ref.read(progressStatsProvider).totalSessions < kAdFreeSessions) {
+      go();
+      return;
+    }
+    AdService.maybeShowInterstitial(onClosed: go);
+  }
+
   void _finish() {
     ref.read(appFlowProvider.notifier).enterApp();
     Navigator.of(context).popUntil((route) => route.isFirst);
@@ -186,7 +207,12 @@ class SessionCompleteScreenState
     final plan = widget.plan;
     final stretchNames = {for (final s in plan.stretches) s.name}.toList();
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _exit();
+      },
+      child: Scaffold(
       backgroundColor: colors.ground,
       body: SafeArea(
         child: Column(
@@ -286,7 +312,7 @@ class SessionCompleteScreenState
               children: [
                 AppButton(
                   label: 'Done',
-                  onPressed: _finish,
+                  onPressed: _exit,
                 ),
                 if (canSave)
                   AppButton(
@@ -299,6 +325,7 @@ class SessionCompleteScreenState
             ),
           ],
         ),
+      ),
       ),
     );
   }

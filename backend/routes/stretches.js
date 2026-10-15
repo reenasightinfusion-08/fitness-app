@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const Stretch = require('../models/Stretch');
+const requireAdminKey = require('../middleware/adminKey');
 const { ok, fail, asyncHandler } = require('../utils/response');
 
 // GET /api/stretches  (inactive stretches are hidden, not deleted)
@@ -16,9 +17,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 // POST /api/stretches  { poseKey, name, position, feel, ... }
-// No auth on this one yet — it's content data for seeding the library,
-// not user data. Lock this down (e.g. an admin check) before shipping.
-router.post('/', async (req, res) => {
+// Admin only: send the ADMIN_API_KEY secret in an `x-admin-key` header.
+router.post('/', requireAdminKey, async (req, res) => {
   try {
     await Stretch.create(req.body);
     ok(res, null, 'Stretch created', 201);
@@ -28,8 +28,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// DELETE /api/stretches/:id  (permanent — no auth yet, lock down before use)
-router.delete('/:id', asyncHandler(async (req, res) => {
+// DELETE /api/stretches/:id  (permanent — admin only, `x-admin-key` header)
+router.delete('/:id', requireAdminKey, asyncHandler(async (req, res) => {
   const stretch = await Stretch.findByIdAndDelete(req.params.id);
   if (!stretch) return fail(res, 404, 'Stretch not found');
   ok(res, null, 'Stretch deleted');

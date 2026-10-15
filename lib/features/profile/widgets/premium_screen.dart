@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:fitness_app/core/ads/ad_gate.dart';
+import 'package:fitness_app/core/ads/ad_service.dart';
+import 'package:fitness_app/core/ads/ad_slot.dart';
 import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
@@ -24,6 +27,7 @@ const List<_FeatureRow> _featureRows = [
   _FeatureRow('Streaks, history and body map', true, true),
   _FeatureRow('Posture reset, Splits prep, Deep full-body', false, true),
   _FeatureRow('Offline downloads of every routine', false, true),
+  _FeatureRow('No ads', false, true),
 ];
 
 /// Matches the prototype's `screens.premium`. With [isSoftPaywall], this
@@ -39,6 +43,24 @@ class PremiumScreen extends ConsumerWidget {
     AppSnackBar.showSuccess(
       context,
       'Prototype: no payment was taken. You have Premium.',
+    );
+  }
+
+  void _removeAdsForADay(BuildContext context, WidgetRef ref) {
+    AdGate.run(
+      context,
+      key: AdGate.adFreeKey,
+      title: 'Go ad-free for 24 hours?',
+      message: 'Watch one short ad and Loosen stays ad-free for a day.',
+      onUnlocked: () {
+        if (!context.mounted) return;
+        ref.invalidate(adsVisibleProvider);
+        if (AdGate.adFreeNow) {
+          AppSnackBar.showSuccess(context, 'Ads are off for 24 hours.');
+        } else {
+          AppSnackBar.show(context, 'No ad available right now. Try later.');
+        }
+      },
     );
   }
 
@@ -147,6 +169,14 @@ class PremiumScreen extends ConsumerWidget {
                       textAlign: TextAlign.center,
                       style: AppTextStyle.meta.copyWith(color: colors.ink2),
                     ),
+                    if (AdService.supported && !AdGate.adFreeNow) ...[
+                      8.verticalSpace,
+                      AppButton(
+                        label: 'Watch an ad to go ad-free for 24h',
+                        variant: AppButtonVariant.text,
+                        onPressed: () => _removeAdsForADay(context, ref),
+                      ),
+                    ],
                     8.verticalSpace,
                     AppButton(
                       label: 'Restore purchase',

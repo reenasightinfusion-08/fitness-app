@@ -10,7 +10,7 @@ const POSE_KEYS = [
   'overheadtriceps', 'chestclasp', 'neckforward', 'chintuck', 'standhamstring', 'soleus',
   'standfig4', 'walllat', 'highlunge', 'pyramid', 'legswing', 'hugstretch', 'wristext',
   'squat', 'seatedsingle', 'chairfold', 'chaircatcow', 'sphinx', 'happybaby', 'puppy',
-  'pronequad', 'camel', 'rockback', 'supinereach', 'tabletop',
+  'pronequad', 'camel', 'rockback', 'supinereach', 'tabletop', 'lizard',
 ];
 
 // Must match ExploreDemoData.areas in lib/features/explore/models/explore_data.dart.

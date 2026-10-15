@@ -282,6 +282,10 @@ class StretchPoses {
     12, 63.1, 22, 64, 50, 64, 22, 79, 22, 92, 21.5,
     79, 21, 92, 69, 64, 69, 92, 69, 64, 69, 92,
   ]);
+  static const lizard = StretchPose([
+    62, 50, 56, 58, 38, 76, 60, 82, 68, 90, 61, 83, 69, 91, 66, 70, 80, 90, 26,
+    86, 10, 90,
+  ]);
 
   /// Looks a pose up by the `poseKey` the backend stores for each stretch —
   /// the key is the constant's own name, so the two can never drift apart.
@@ -341,6 +345,7 @@ class StretchPoses {
     'rockback': rockback,
     'supinereach': supinereach,
     'tabletop': tabletop,
+    'lizard': lizard,
   };
 
   // The three poses the prototype gives an authored second frame to

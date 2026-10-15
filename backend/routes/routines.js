@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const Routine = require('../models/Routine');
 const { resolvePoseKeys, toResponse } = require('../utils/routineItems');
+const requireAdminKey = require('../middleware/adminKey');
 const { ok, fail, asyncHandler } = require('../utils/response');
 
 // GET /api/routines  (inactive routines are hidden, not deleted)
@@ -20,9 +21,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
 // POST /api/routines  { name, description, level, tags, transitionSeconds,
 //   stretches: [{ stretch | poseKey, holdSeconds, repCount }] }
-// No auth on this one yet — it's content data for seeding the library,
-// not user data. Lock this down (e.g. an admin check) before shipping.
-router.post('/', async (req, res) => {
+// Admin only: send the ADMIN_API_KEY secret in an `x-admin-key` header.
+router.post('/', requireAdminKey, async (req, res) => {
   try {
     await Routine.create({
       ...req.body,
@@ -35,8 +35,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// DELETE /api/routines/:id  (permanent — no auth yet, lock down before use)
-router.delete('/:id', asyncHandler(async (req, res) => {
+// DELETE /api/routines/:id  (permanent — admin only, `x-admin-key` header)
+router.delete('/:id', requireAdminKey, asyncHandler(async (req, res) => {
   const routine = await Routine.findByIdAndDelete(req.params.id);
   if (!routine) return fail(res, 404, 'Routine not found');
   ok(res, null, 'Routine deleted');

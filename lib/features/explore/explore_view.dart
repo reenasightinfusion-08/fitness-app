@@ -13,6 +13,7 @@ import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
 import 'package:fitness_app/features/stretch_detail/models/stretch_model.dart';
+import 'package:fitness_app/core/ads/ad_slot.dart';
 import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
 import 'package:fitness_app/services/stretch_service.dart';
 import 'package:fitness_app/services/video_frame_service.dart';
@@ -306,6 +307,7 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
                 for (var i = 0; i < routines.length; i++) ...[
                   if (i > 0) 10.verticalSpace,
                   _ExploreRoutineTile(routine: routines[i]),
+                  if (i == 2 && routines.length > 3) const AdNative(small: true),
                 ],
               ],
             );

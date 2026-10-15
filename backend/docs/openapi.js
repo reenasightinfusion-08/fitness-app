@@ -45,6 +45,11 @@ const err = (description, message) => ({
 
 const emailProp = { type: 'string', format: 'email', example: 'user@example.com' };
 const auth = [{ bearerAuth: [] }];
+const admin = [{ adminKey: [] }];
+const adminErrors = {
+  401: err('Missing or wrong x-admin-key', 'Invalid admin key'),
+  403: err('ADMIN_API_KEY is not configured on the server', 'Admin access is not enabled'),
+};
 const serverErr = err('Unhandled server error', 'Internal server error');
 
 module.exports = {
@@ -61,7 +66,10 @@ module.exports = {
   ],
   tags: [{ name: 'Health' }, { name: 'Auth' }, { name: 'Users' }, { name: 'Stretches' }, { name: 'Routines' }, { name: 'Custom Routines' }, { name: 'Active Routines' }, { name: 'Plans' }],
   components: {
-    securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } },
+    securitySchemes: {
+      bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      adminKey: { type: 'apiKey', in: 'header', name: 'x-admin-key', description: 'Server secret ADMIN_API_KEY. Needed only to create or delete stretches and routines.' },
+    },
     schemas: {
       Error: {
         type: 'object',
@@ -698,7 +706,8 @@ module.exports = {
       },
       post: {
         tags: ['Stretches'],
-        summary: 'Create a stretch (no auth yet, lock down before shipping)',
+        summary: 'Create a stretch (admin only)',
+        security: admin,
         requestBody: jsonBody({ $ref: '#/components/schemas/StretchInput' }, {
           poseKey: 'child',
           name: "Child's Pose",
@@ -728,6 +737,7 @@ module.exports = {
           isActive: true,
         }),
         responses: {
+          ...adminErrors,
           201: okResponse('Created. The record is saved; nothing is returned in data.', nullData, 'Stretch created'),
           400: err('Validation error', 'Stretch validation failed: name: Path `name` is required.'),
           409: err('A stretch with this poseKey already exists', 'A stretch with this poseKey already exists'),
@@ -748,9 +758,11 @@ module.exports = {
       },
       delete: {
         tags: ['Stretches'],
-        summary: 'Delete a stretch permanently',
+        summary: 'Delete a stretch permanently (admin only)',
+        security: admin,
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
+          ...adminErrors,
           200: okResponse('Deleted', nullData, 'Stretch deleted'),
           400: err('Invalid id', 'Cast to ObjectId failed'),
           404: err('Not found', 'Stretch not found'),
@@ -769,7 +781,8 @@ module.exports = {
       },
       post: {
         tags: ['Routines'],
-        summary: 'Create a routine (no auth yet, lock down before shipping)',
+        summary: 'Create a routine (admin only)',
+        security: admin,
         requestBody: jsonBody({ $ref: '#/components/schemas/RoutineInput' }, {
           name: 'Morning',
           description: 'A quick wake-up for a stiff neck and shoulders.',
@@ -781,6 +794,7 @@ module.exports = {
           ],
         }),
         responses: {
+          ...adminErrors,
           201: okResponse('Created. The record is saved; nothing is returned in data.', nullData, 'Routine created'),
           400: err('Validation error, or an unknown poseKey / stretch id', 'Unknown poseKey: reach'),
           409: err('A routine with this name already exists', 'A routine with this name already exists'),
@@ -801,9 +815,11 @@ module.exports = {
       },
       delete: {
         tags: ['Routines'],
-        summary: 'Delete a routine permanently',
+        summary: 'Delete a routine permanently (admin only)',
+        security: admin,
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
+          ...adminErrors,
           200: okResponse('Deleted', nullData, 'Routine deleted'),
           400: err('Invalid id', 'Cast to ObjectId failed'),
           404: err('Not found', 'Routine not found'),

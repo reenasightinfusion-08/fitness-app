@@ -158,6 +158,7 @@ class ProgressView extends ConsumerWidget {
             ],
           ),
         ),
+        const AdBanner(),
         24.verticalSpace,
         Text('History', style: AppTextStyle.sectionTitle),
         10.verticalSpace,
