@@ -18,32 +18,6 @@ class StretchPose {
   double get archAmount => joints.length > 22 ? joints[22] : 0;
 
   Offset jointAt(int index) => Offset(joints[index * 2], joints[index * 2 + 1]);
-
-  /// Blends this pose toward [other] by [t] (0 = this pose, 1 = [other]),
-  /// joint by joint — mirrors the prototype's `lerpPose()`. Used to
-  /// animate the figure moving from a neutral stance into a stretch.
-  StretchPose lerp(StretchPose other, double t) {
-    final a = _padded(joints);
-    final b = _padded(other.joints);
-    return StretchPose([
-      for (var i = 0; i < a.length; i++) a[i] + (b[i] - a[i]) * t,
-    ]);
-  }
-
-  static List<double> _padded(List<double> j) =>
-      j.length >= 23 ? j : [...j, 0];
-
-  /// The lightly offset pose the figure breathes toward while holding —
-  /// head, neck and both arms lift by a hair; hips and legs stay put.
-  /// Mirrors the prototype's default `POSES[k].b` (every pose without an
-  /// authored second frame gets this same subtle lift).
-  StretchPose get defaultBreathPartner {
-    final j = _padded(joints).toList();
-    for (final i in const [1, 3, 7, 9, 11, 13]) {
-      j[i] -= 1.3;
-    }
-    return StretchPose(j);
-  }
 }
 
 /// Every pose the prototype defines, ported verbatim so the illustration
@@ -347,60 +321,7 @@ class StretchPoses {
     'tabletop': tabletop,
     'lizard': lizard,
   };
-
-  // The three poses the prototype gives an authored second frame to
-  // breathe/sway between (its `DYN_POSES`), instead of the default subtle
-  // lift every other pose uses.
-  static const catcowB = StretchPose([
-    70, 72, 64, 64, 34, 62, 64, 76, 64, 88, 63, 76, 63, 89, 34, 88, 18, 88, 35,
-    89, 19, 89, 7,
-  ]);
-  static const torsotwistB = StretchPose([
-    47, 17, 50, 27, 50, 55, 44, 34, 54, 40, 62, 32, 72, 38, 47, 73, 46, 91, 53,
-    73, 54, 91,
-  ]);
-  static const chintuckB = StretchPose([
-    51, 16.1, 50, 26, 50, 54, 48.3, 44.9, 47.8, 59.9, 46.7,
-    44.7, 45.4, 59.7, 48.7, 73, 50, 91.9, 51.3, 73, 50, 91.9,
-  ]);
-  static const legswingB = StretchPose([
-    44.7, 16, 45, 26, 46, 54, 57.2, 40.6, 64.7, 53.6, 35.5,
-    42.5, 32.9, 57.2, 39.5, 71.9, 31.5, 89.1, 46, 73, 46, 92,
-  ]);
-  static const chaircatcowB = StretchPose([
-    50.4, 24.3, 44, 32, 44, 60, 55.2, 47.4, 64, 59.5, 56.2,
-    46.6, 65.9, 58, 63, 60, 63, 90, 63, 60, 63, 90,
-    6,
-  ]);
-  static const bandpullB = StretchPose([
-    50, 17, 50, 27, 50, 55, 36, 29, 20, 31, 64, 29, 80, 31, 47, 73, 46, 91, 53,
-    73, 54, 91,
-  ]);
-
-  /// Poses with an authored second frame — looked up by identity, same as
-  /// the prototype's `DYN_POSES` — and their faster breathing period.
-  static final Map<StretchPose, StretchPose> dynamicBreathPartners = {
-    catcow: catcowB,
-    torsotwist: torsotwistB,
-    bandpull: bandpullB,
-    chintuck: chintuckB,
-    legswing: legswingB,
-    chaircatcow: chaircatcowB,
-  };
 }
-
-/// The pose this figure eases toward and back from while holding, forever
-/// — mirrors the prototype's `lerpPose(POSES[pose], t)`.
-StretchPose _breathPartnerFor(StretchPose pose) =>
-    StretchPoses.dynamicBreathPartners[pose] ?? pose.defaultBreathPartner;
-
-/// A full breathe-in/breathe-out cycle: 3.4s for the three poses with real
-/// back-and-forth movement, 5.6s of gentle sway for everything else —
-/// mirrors the prototype's `P.dyn?3400:5600`.
-Duration _breathPeriodFor(StretchPose pose) =>
-    StretchPoses.dynamicBreathPartners.containsKey(pose)
-    ? const Duration(milliseconds: 3400)
-    : const Duration(milliseconds: 5600);
 
 /// Renders a [StretchPose] exactly like the prototype's `fig()` SVG: a
 /// ground line plus a five-stroke stick figure (far arm, far leg, torso,
@@ -424,90 +345,6 @@ class StretchFigure extends StatelessWidget {
         groundColor: colors.line,
         showGround: showGround,
       ),
-    );
-  }
-}
-
-/// [StretchFigure], but alive: instead of sitting perfectly still, it
-/// breathes gently between [pose] and a lightly offset counterpart,
-/// forever, for as long as it's on screen — mirrors the prototype's
-/// `startFigAnim()`/`figLoop()`, which animates every hero figure (get
-/// ready, the session player, the stretch-detail sheet) this same way
-/// regardless of which routine or stretch is showing.
-///
-/// Respects "reduce motion": when the platform asks for it, the figure
-/// holds its exact [pose] instead, matching the prototype's own
-/// `prefers-reduced-motion` check.
-class AnimatedStretchFigure extends StatefulWidget {
-  const AnimatedStretchFigure({
-    super.key,
-    required this.pose,
-    this.showGround = true,
-    this.nearColor,
-    this.farColor,
-    this.groundColor,
-  });
-
-  final StretchPose pose;
-  final bool showGround;
-
-  /// Colors to paint with; default to the current theme's figure colors
-  /// (the same ones [StretchFigure] uses) when left unset.
-  final Color? nearColor;
-  final Color? farColor;
-  final Color? groundColor;
-
-  @override
-  State<AnimatedStretchFigure> createState() => _AnimatedStretchFigureState();
-}
-
-class _AnimatedStretchFigureState extends State<AnimatedStretchFigure>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: _breathPeriodFor(widget.pose) ~/ 2,
-  )..repeat(reverse: true);
-  late final Animation<double> _sway = CurvedAnimation(
-    parent: _controller,
-    curve: Curves.easeInOut,
-  );
-
-  @override
-  void didUpdateWidget(covariant AnimatedStretchFigure oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.pose != widget.pose) {
-      final period = _breathPeriodFor(widget.pose) ~/ 2;
-      if (period != _controller.duration) _controller.duration = period;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    return AnimatedBuilder(
-      animation: _sway,
-      builder: (context, _) {
-        final pose = reduceMotion
-            ? widget.pose
-            : widget.pose.lerp(_breathPartnerFor(widget.pose), _sway.value);
-        return CustomPaint(
-          size: Size.infinite,
-          painter: StretchFigurePainter(
-            pose: pose,
-            nearColor: widget.nearColor ?? colors.ink,
-            farColor: widget.farColor ?? colors.figFar,
-            groundColor: widget.groundColor ?? colors.line,
-            showGround: widget.showGround,
-          ),
-        );
-      },
     );
   }
 }

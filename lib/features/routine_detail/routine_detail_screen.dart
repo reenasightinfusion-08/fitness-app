@@ -101,25 +101,13 @@ class RoutineDetailScreen extends ConsumerWidget {
                           holdSeconds:
                               firstStretch?.model?.defaultHoldSeconds ?? 30,
                           fallback: hasThumb
-                            ? Image.network(
-                                thumbUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Padding(
-                                  padding: EdgeInsets.all(28.r),
-                                  child: StretchFigure(
-                                    pose: firstStretch?.pose ??
-                                        StretchPoses.neutral,
-                                  ),
-                                ),
-                              )
-                            : Padding(
-                                padding: EdgeInsets.all(28.r),
-                                child: StretchFigure(
-                                  pose: firstStretch?.pose ??
-                                      StretchPoses.neutral,
-                                ),
-                              )
+                              ? Image.network(
+                                  thumbUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const StretchPlaceholder(),
+                                )
+                              : const StretchPlaceholder(),
                         ),
                       ),
                     ),
@@ -220,9 +208,9 @@ class RoutineDetailScreen extends ConsumerWidget {
                                       fit: BoxFit.cover,
                                       errorBuilder:
                                           (context, error, stackTrace) =>
-                                              StretchFigure(pose: stretch.pose),
+                                              const StretchPlaceholder(),
                                     )
-                                  : StretchFigure(pose: stretch.pose),
+                                  : const StretchPlaceholder(),
                             ),
                           ),
                           trailing: Icon(

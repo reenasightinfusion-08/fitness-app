@@ -2,11 +2,12 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'package:fitness_app/core/widgets/stretch_placeholder.dart';
 import 'package:fitness_app/services/video_frame_service.dart';
 
 /// A still frame from the middle of a stretch video, so no separate thumbnail
 /// image is needed. Shows [fallback] when there is no video or the frame can't
-/// be read, and nothing while the frame loads.
+/// be read, and a pulsing [StretchPlaceholder] while the frame loads.
 class StretchVideoFrame extends StatelessWidget {
   const StretchVideoFrame({
     super.key,
@@ -14,11 +15,13 @@ class StretchVideoFrame extends StatelessWidget {
     required this.fallback,
     this.holdSeconds = 30,
     this.fit = BoxFit.cover,
+    this.isOnDark = false,
   });
 
   final String? videoUrl;
   final int holdSeconds;
   final BoxFit fit;
+  final bool isOnDark;
   final Widget fallback;
 
   @override
@@ -44,7 +47,11 @@ class StretchVideoFrame extends StatelessWidget {
               )
             : snapshot.connectionState == ConnectionState.done
             ? fallback
-            : const SizedBox.expand(key: ValueKey('loading'));
+            : StretchPlaceholder(
+                key: const ValueKey('loading'),
+                isLoading: true,
+                isOnDark: isOnDark,
+              );
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
           child: child,

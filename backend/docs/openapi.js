@@ -482,14 +482,21 @@ module.exports = {
         tags: ['Auth'],
         summary: 'Sign in (or sign up) with a Google ID token',
         requestBody: jsonBody(
-          { type: 'object', required: ['idToken'], properties: { idToken: { type: 'string', description: 'ID token from Google Sign-In' } } },
+          {
+            type: 'object',
+            required: ['idToken'],
+            properties: {
+              idToken: { type: 'string', description: 'ID token from Google Sign-In' },
+              intent: { type: 'string', enum: ['signup'], description: 'Send "signup" from the sign-up screen to refuse an account that already exists (409).' },
+            },
+          },
         ),
         responses: {
           429: tooMany,
           200: okResponse('JWT returned', { $ref: '#/components/schemas/TokenData' }, 'Signed in'),
           400: err('Missing token', 'Google ID token is required'),
           401: err('Invalid token or unverified Google email', 'Google sign-in failed. Please try again.'),
-          409: err('Email linked to another Google account', 'This email is linked to a different Google account'),
+          409: err('Email linked to another Google account, or intent "signup" for an account that already exists', 'An account with this Google account already exists. Please log in instead.'),
           500: err('Not configured', 'Google sign-in is not configured'),
         },
       },

@@ -124,9 +124,8 @@ class AppFlowController extends Notifier<AppRoute> {
     await ReminderNotificationService.instance.cancelAll();
   }
 
-  /// A successful login, "Explore with a sample account" on the welcome
-  /// screen, or leaving the plan-reveal screen — all land here since
-  /// there's no backend yet.
+  /// Shows the tabbed home shell: after a successful sign-in, leaving the
+  /// plan-reveal screen, or finishing a session.
   void enterApp() => state = AppRoute.home;
 }
 

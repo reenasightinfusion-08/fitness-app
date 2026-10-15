@@ -55,11 +55,15 @@ class AuthService {
   }
 
   /// Signs in through Google. Returns false if the user dismissed the account
-  /// picker, true once the backend has issued a session.
-  Future<bool> loginWithGoogle() async {
+  /// picker, true once the backend has issued a session. With [isSignup] the
+  /// backend refuses a Google account that already has an account.
+  Future<bool> loginWithGoogle({bool isSignup = false}) async {
     final idToken = await _googleAuth.getIdToken();
     if (idToken == null) return false;
-    final data = await _post('/google', {'idToken': idToken});
+    final data = await _post('/google', {
+      'idToken': idToken,
+      if (isSignup) 'intent': 'signup',
+    });
     await _storage.write(key: _tokenKey, value: data['token'] as String);
     return true;
   }
@@ -151,7 +155,7 @@ class AuthService {
   /// then signs out on this phone. Throws [AuthException] if it couldn't be
   /// deleted, in which case the user stays signed in.
   Future<void> deleteAccount() => _reachable(() async {
-    if (!await hasSession()) return; // the sample account has nothing saved
+    if (!await hasSession()) return; // nothing to delete without an account
     await _authedDelete('/users/me');
     await logout();
   });

@@ -479,7 +479,6 @@ class _RoutineCardState extends State<_RoutineCard> {
     final routine = widget.routine;
     final firstStretch =
         routine.stretches.isNotEmpty ? routine.stretches.first : null;
-    final pose = firstStretch?.pose ?? StretchPoses.neutral;
     final thumbUrl = firstStretch?.model?.thumbnailUrl;
     final hasThumb = thumbUrl != null && thumbUrl.trim().isNotEmpty;
 
@@ -499,12 +498,11 @@ class _RoutineCardState extends State<_RoutineCard> {
         child: Image.network(
           thumbUrl,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) =>
-              StretchFigure(pose: pose),
+          errorBuilder: (context, error, stackTrace) => const StretchPlaceholder(),
         ),
       );
     } else {
-      thumbnailWidget = StretchFigure(pose: pose);
+      thumbnailWidget = const StretchPlaceholder();
     }
 
     return AppRoutineCard(

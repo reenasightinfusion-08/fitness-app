@@ -39,13 +39,6 @@ class AppTextStyle {
       display(28).copyWith(height: 1, fontFeatures: tabular);
   static TextStyle get avatar => display(26, weight: FontWeight.w800);
 
-  /// Hand-written accent lines on imagery ("Feel lighter"). Use sparingly.
-  static TextStyle get script => GoogleFonts.sacramento(
-    fontSize: 38.sp,
-    height: 1,
-    fontWeight: FontWeight.w400,
-  );
-
   // Body
   static TextStyle get titleMedium => body(16, weight: FontWeight.w700);
   static TextStyle get titleSmall => body(15, weight: FontWeight.w600);

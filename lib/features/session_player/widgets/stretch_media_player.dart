@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/services/video_background_service.dart';
 
@@ -13,7 +12,6 @@ class StretchMediaPlayer extends StatefulWidget {
     this.videoUrl,
     this.thumbnailUrl,
     this.holdSeconds = 30,
-    required this.pose,
     this.playing = true,
     this.showVideo = true,
   });
@@ -23,7 +21,6 @@ class StretchMediaPlayer extends StatefulWidget {
 
   /// The stretch's default hold time; picks which video frame is shown.
   final int holdSeconds;
-  final StretchPose pose;
 
   /// False while the session is paused: the video freezes on its current
   /// frame and resumes from there.
@@ -126,7 +123,6 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     final controller = _controller;
 
     if (widget.showVideo && _isInitialized && controller != null && !_hasError) {
@@ -180,22 +176,22 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
               thumb,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) =>
-                  _buildStickFigure(colors),
+                  _buildUnavailable(),
             ),
+            isOnDark: true,
           ),
         ],
       );
     }
 
-    return _buildStickFigure(colors);
+    return _buildUnavailable();
   }
 
-  Widget _buildStickFigure(AppColors colors) {
-    return AnimatedStretchFigure(
-      pose: widget.pose,
-      nearColor: colors.playerInk,
-      farColor: colors.playerDim,
-      groundColor: colors.playerInk.withValues(alpha: 0.14),
+  Widget _buildUnavailable() {
+    final hasVideo = widget.videoUrl?.trim().isNotEmpty ?? false;
+    return StretchPlaceholder(
+      isLoading: hasVideo && !_isInitialized && !_hasError,
+      isOnDark: true,
     );
   }
 }

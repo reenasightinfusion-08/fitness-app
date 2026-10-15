@@ -57,7 +57,7 @@ class ExploreStretch {
 
 /// Demo content for the Explore screen — ported from the prototype's
 /// `STRETCHES` table, minus the fields Explore doesn't show
-/// (steps, cautions, equipment…), same as [TodayDemoData] elsewhere.
+/// (steps, cautions, equipment…).
 class ExploreDemoData {
   const ExploreDemoData._();
 

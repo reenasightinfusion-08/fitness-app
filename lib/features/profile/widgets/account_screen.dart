@@ -8,7 +8,6 @@ import 'package:fitness_app/services/auth_service.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
-import 'package:fitness_app/features/profile/models/profile_data.dart';
 import 'package:fitness_app/features/profile/widgets/change_password_screen.dart';
 
 /// Matches the prototype's `screens.account`: sign-in details, a masked
@@ -23,6 +22,26 @@ class AccountScreen extends ConsumerStatefulWidget {
 
 class AccountScreenState extends ConsumerState<AccountScreen> {
   bool isDeleting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    refreshProfile();
+  }
+
+  /// Reloads the account from the server so the email and sign-in methods
+  /// shown here are current, even if the profile didn't load at sign-in.
+  Future<void> refreshProfile() async {
+    try {
+      final res = await ref.read(authServiceProvider).getMe();
+      final user = (res['user'] ?? res['data'] ?? res) as Map<String, dynamic>;
+      if (mounted) {
+        ref.read(onboardingProfileProvider.notifier).loadFromApi(user);
+      }
+    } catch (e) {
+      debugPrint('[Account] Could not refresh the profile: $e');
+    }
+  }
 
   Future<void> confirmDelete() async {
     final confirmed = await AppBottomSheet.confirm(
@@ -58,9 +77,7 @@ class AccountScreenState extends ConsumerState<AccountScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final profile = ref.watch(onboardingProfileProvider);
-    final userEmail = profile.email.isEmpty
-        ? ProfileDemoData.email
-        : profile.email;
+    final userEmail = profile.email;
 
     return Scaffold(
       backgroundColor: colors.ground,

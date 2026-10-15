@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
 
-import 'package:fitness_app/core/theme/theme.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// The prototype's `.hero-fig`: an accent-soft panel holding the "reach"
-/// stretch figure, same 16:10 proportions.
+/// The welcome photo, full width with rounded bottom corners.
 class WelcomeHero extends StatelessWidget {
-  const WelcomeHero({super.key});
+  const WelcomeHero({super.key, required this.height});
+
+  final double height;
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 16 / 12,
+    return SizedBox(
+      height: height,
+      width: double.infinity,
       child: ClipRRect(
-        borderRadius: AppBorderRadius.hero,
-       child: Image.asset('assets/images/welcome_hero.jpg',fit: BoxFit.cover,),
-      )
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32.r)),
+        child: Image.asset(
+          'assets/images/welcome_hero.jpg',
+          fit: BoxFit.cover,
+          alignment: Alignment.topCenter,
+        ),
+      ),
     );
   }
 }

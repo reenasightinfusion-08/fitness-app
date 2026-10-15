@@ -7,8 +7,8 @@ import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/services/video_frame_service.dart';
 
 /// A stretch tile in a rounded square showing a frame from the middle of its
-/// video. Falls back to the API photo, then the drawn figure, so a list never
-/// shows a blank tile.
+/// video. Falls back to the API photo, then a neutral placeholder, so a list
+/// never shows a blank tile.
 class StretchThumbnail extends StatelessWidget {
   const StretchThumbnail({
     super.key,
@@ -26,7 +26,8 @@ class StretchThumbnail extends StatelessWidget {
     final model = stretch.model;
     final url = model?.thumbnailUrl;
     final videoUrl = model?.videoUrl;
-    final figure = StretchFigure(pose: stretch.pose);
+    final unavailable = StretchPlaceholder(isOnDark: isOnDark);
+    final loading = StretchPlaceholder(isLoading: true, isOnDark: isOnDark);
     final hasPhoto = url != null && url.trim().isNotEmpty;
     final hasVideo = videoUrl != null && videoUrl.trim().isNotEmpty;
 
@@ -34,9 +35,9 @@ class StretchThumbnail extends StatelessWidget {
         ? Image.network(
             url,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => figure,
+            errorBuilder: (context, error, stackTrace) => unavailable,
           )
-        : figure;
+        : unavailable;
 
     final Widget child = !hasVideo
         ? photo
@@ -56,7 +57,7 @@ class StretchThumbnail extends StatelessWidget {
               }
               return snapshot.connectionState == ConnectionState.done
                   ? photo
-                  : figure;
+                  : loading;
             },
           );
     return AppThumb(size: size, isOnDark: isOnDark, child: child);

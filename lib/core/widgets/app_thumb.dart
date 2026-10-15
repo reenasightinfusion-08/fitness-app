@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:fitness_app/core/theme/theme.dart';
+import 'package:fitness_app/core/widgets/stretch_placeholder.dart';
 
 enum AppThumbSize { small, medium, large, extraLarge }
 
-/// Rounded square holding a stretch illustration or photo.
-/// Falls back to a stretching icon when neither is provided.
+/// Rounded square holding a stretch photo or video frame.
+/// Falls back to a neutral [StretchPlaceholder] when none is provided.
 class AppThumb extends StatelessWidget {
   const AppThumb({
     super.key,
@@ -47,12 +48,7 @@ class AppThumb extends StatelessWidget {
       ),
       child: image != null
           ? null
-          : child ??
-                Icon(
-                  Icons.self_improvement_rounded,
-                  size: dimension * 0.55,
-                  color: isOnDark ? colors.playerInk : colors.ink2,
-                ),
+          : child ?? StretchPlaceholder(isOnDark: isOnDark),
     );
   }
 }

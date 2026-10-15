@@ -230,7 +230,7 @@ class HistoryListShimmer extends StatelessWidget {
 }
 
 /// Scrollable list of completed routines, newest first. Falls back to an empty
-/// state when the user hasn't finished a routine yet (new accounts, demo mode).
+/// state when the user hasn't finished a routine yet (new accounts).
 class _HistoryList extends StatelessWidget {
   const _HistoryList({required this.history});
 

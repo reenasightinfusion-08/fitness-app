@@ -4,7 +4,6 @@ import 'package:fitness_app/core/providers/auth_service_provider.dart';
 import 'package:fitness_app/core/providers/todays_plan_provider.dart';
 import 'package:fitness_app/features/home/models/active_routine_model.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
-import 'package:fitness_app/features/home/models/todays_plan_model.dart';
 import 'package:fitness_app/services/active_routine_history_service.dart';
 import 'package:fitness_app/services/active_routine_service.dart';
 import 'package:fitness_app/services/paused_session_cache.dart';
@@ -14,7 +13,7 @@ final activeRoutineServiceProvider = Provider<ActiveRoutineService>(
 );
 
 /// Routines the user began and hasn't finished, newest activity first. Empty
-/// without an account ("Explore with a sample account"), where nothing is saved.
+/// without an account.
 final currentRoutinesProvider =
     FutureProvider.autoDispose<List<ActiveRoutineModel>>((ref) async {
       if (!await ref.watch(authServiceProvider).hasSession()) return const [];
@@ -25,13 +24,12 @@ final currentRoutinesProvider =
 /// Lets the Today card show Resume / Completed instead of just Start.
 final todaysPlanActiveProvider = FutureProvider.autoDispose<ActiveRoutineModel?>(
   (ref) async {
-    final plan = await ref.watch(todaysPlanProvider.future).catchError(
-      (_) => const TodaysPlanModel(
-        routine: TodayDemoData.todaysPlan,
-        completedToday: false,
-      ),
-    );
-    final planRoutineId = plan.routine.id;
+    final String? planRoutineId;
+    try {
+      planRoutineId = (await ref.watch(todaysPlanProvider.future)).routine.id;
+    } catch (_) {
+      return null;
+    }
     if (planRoutineId == null) return null;
     final active = await ref.watch(currentRoutinesProvider.future);
     for (final record in active) {
@@ -54,7 +52,7 @@ final pausedUserRoutinesProvider =
       return paused;
     });
 
-/// Completed routines for the Progress history. Empty for the sample account.
+/// Completed routines for the Progress history.
 final routineHistoryServiceProvider = Provider<ActiveRoutineHistoryService>(
   (ref) => ActiveRoutineHistoryService(ref.watch(authServiceProvider)),
 );

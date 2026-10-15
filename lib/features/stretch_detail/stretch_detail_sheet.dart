@@ -88,15 +88,10 @@ class StretchDetailSheet extends StatelessWidget {
                     ? Image.network(
                         model!.thumbnailUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Padding(
-                          padding: EdgeInsets.all(20.r),
-                          child: StretchFigure(pose: effectivePose),
-                        ),
+                        errorBuilder: (context, error, stackTrace) =>
+                            const StretchPlaceholder(),
                       )
-                    : Padding(
-                        padding: EdgeInsets.all(20.r),
-                        child: StretchFigure(pose: effectivePose),
-                      ),
+                    : const StretchPlaceholder(),
               ),
             ),
           ),

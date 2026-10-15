@@ -182,23 +182,28 @@ class TodayView extends ConsumerWidget {
         10.verticalSpace,
         routinesAsync.when(
           data: (routines) {
-            final quickPicks =
-                routines.isNotEmpty ? routines : TodayDemoData.quickPicks;
+            if (routines.isEmpty) {
+              return const AppEmptyState(
+                icon: Icons.inbox_outlined,
+                title: 'No routines yet',
+                message: 'New routines will show up here.',
+              );
+            }
             return Column(
               children: [
-                for (var i = 0; i < quickPicks.length; i += 2) ...[
+                for (var i = 0; i < routines.length; i += 2) ...[
                   if (i > 0) 10.verticalSpace,
                   IntrinsicHeight(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Expanded(
-                          child: _QuickPickTile(routine: quickPicks[i]),
+                          child: _QuickPickTile(routine: routines[i]),
                         ),
                         10.horizontalSpace,
                         Expanded(
-                          child: i + 1 < quickPicks.length
-                              ? _QuickPickTile(routine: quickPicks[i + 1])
+                          child: i + 1 < routines.length
+                              ? _QuickPickTile(routine: routines[i + 1])
                               : const SizedBox.shrink(),
                         ),
                       ],
@@ -225,30 +230,13 @@ class TodayView extends ConsumerWidget {
               ],
             ],
           ),
-          error: (err, stack) {
-            final quickPicks = TodayDemoData.quickPicks;
-            return Column(
-              children: [
-                for (var i = 0; i < quickPicks.length; i += 2) ...[
-                  if (i > 0) 10.verticalSpace,
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _QuickPickTile(routine: quickPicks[i]),
-                      ),
-                      10.horizontalSpace,
-                      Expanded(
-                        child: i + 1 < quickPicks.length
-                            ? _QuickPickTile(routine: quickPicks[i + 1])
-                            : const SizedBox.shrink(),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            );
-          },
+          error: (err, stack) => AppEmptyState(
+            icon: Icons.cloud_off_rounded,
+            title: "Couldn't load routines",
+            message: 'Check your connection and try again.',
+            actionLabel: 'Try again',
+            onAction: () => ref.invalidate(routinesProvider),
+          ),
         ),
         const AdNative(small: true),
         24.verticalSpace,
@@ -444,14 +432,10 @@ class _QuickPickTileState extends State<_QuickPickTile> {
       thumbnailWidget = Image.network(
         thumbUrl,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => StretchFigure(
-          pose: firstStretch?.pose ?? StretchPoses.neutral,
-        ),
+        errorBuilder: (context, error, stackTrace) => const StretchPlaceholder(),
       );
     } else {
-      thumbnailWidget = StretchFigure(
-        pose: firstStretch?.pose ?? StretchPoses.neutral,
-      );
+      thumbnailWidget = const StretchPlaceholder();
     }
 
     return AppTileCard(

@@ -142,24 +142,12 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                               firstStretch?.model?.defaultHoldSeconds ?? 30,
                           fallback: hasThumb
                               ? Image.network(
-                                thumbUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Padding(
-                                  padding: EdgeInsets.all(28.r),
-                                  child: AnimatedStretchFigure(
-                                    pose: firstStretch?.pose ??
-                                        StretchPoses.neutral,
-                                  ),
-                                ),
-                              )
-                            : Padding(
-                                padding: EdgeInsets.all(28.r),
-                                child: AnimatedStretchFigure(
-                                  pose: firstStretch?.pose ??
-                                      StretchPoses.neutral,
-                                ),
-                              )
+                                  thumbUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const StretchPlaceholder(),
+                                )
+                              : const StretchPlaceholder(),
                         ),
                       ),
                     ),

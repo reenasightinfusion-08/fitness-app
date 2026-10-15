@@ -698,7 +698,7 @@ class _PickerRowState extends State<_PickerRow> {
                           stretch.thumbnailUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
-                              StretchFigure(pose: stretch.pose),
+                              const StretchPlaceholder(),
                         ),
                       );
                     } else if (snapshot.connectionState != ConnectionState.done) {
@@ -709,7 +709,7 @@ class _PickerRowState extends State<_PickerRow> {
                         borderRadius: 8.r,
                       );
                     } else {
-                      thumbnailWidget = StretchFigure(pose: stretch.pose);
+                      thumbnailWidget = const StretchPlaceholder();
                     }
 
                     return AppThumb(

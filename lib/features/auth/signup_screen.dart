@@ -88,7 +88,7 @@ class SignupScreenState extends ConsumerState<SignupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const AuthSocialButtons(),
+                const AuthSocialButtons(isSignup: true),
                 18.verticalSpace,
                 AppTextField(
                   controller: emailController,

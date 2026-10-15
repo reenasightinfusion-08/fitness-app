@@ -33,9 +33,6 @@ class HurtStretchesController extends AsyncNotifier<List<HurtStretch>> {
     ];
   }
 
-  bool isHurt(String stretchId) =>
-      state.valueOrNull?.any((h) => h.id == stretchId) ?? false;
-
   /// Marks or unmarks [stretchId] straight away and saves it, putting the list
   /// back and rethrowing the server's reason if that fails. The daily plan is
   /// refreshed because the server rebuilds it without (or with) that stretch.

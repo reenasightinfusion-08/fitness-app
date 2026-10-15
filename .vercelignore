@@ -1,0 +1,15 @@
+build
+.dart_tool
+.idea
+.github
+android
+ios
+macos
+linux
+web
+windows
+lib
+assets
+test
+store
+*.iml

@@ -12,9 +12,12 @@ import 'package:fitness_app/services/auth_service.dart';
 /// divider — shared by the login and signup screens, matching the
 /// prototype's `socialBtns()`. Google signs in through
 /// [AuthService.loginWithGoogle] and Apple through
-/// [AuthService.loginWithApple]; Apple is shown on iOS only.
+/// [AuthService.loginWithApple]; Apple is shown on iOS only. On the signup
+/// screen ([isSignup]) Google refuses an account that already exists.
 class AuthSocialButtons extends ConsumerStatefulWidget {
-  const AuthSocialButtons({super.key});
+  const AuthSocialButtons({super.key, this.isSignup = false});
+
+  final bool isSignup;
 
   @override
   ConsumerState<AuthSocialButtons> createState() => AuthSocialButtonsState();
@@ -25,7 +28,7 @@ class AuthSocialButtonsState extends ConsumerState<AuthSocialButtons> {
   bool isAppleLoading = false;
 
   Future<void> signInWithGoogle() => _signIn(
-        (auth) => auth.loginWithGoogle(),
+        (auth) => auth.loginWithGoogle(isSignup: widget.isSignup),
         setLoading: (value) => isGoogleLoading = value,
         isLoading: () => isGoogleLoading || isAppleLoading,
       );

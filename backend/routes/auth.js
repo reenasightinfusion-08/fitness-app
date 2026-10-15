@@ -160,10 +160,11 @@ router.post('/login', limits.login, async (req, res) => {
   }
 });
 
-// POST /api/auth/google { idToken }
+// POST /api/auth/google { idToken, intent? }
 // Verifies a Google ID token, then signs in the matching account — creating a
 // verified one on first use, or linking Google to an existing account that has
-// the same (Google-verified) email.
+// the same (Google-verified) email. With intent "signup" (the sign-up screen) an
+// existing account is refused with 409 instead of being signed in.
 router.post('/google', limits.google, asyncHandler(async (req, res) => {
   const { idToken } = req.body;
   if (typeof idToken !== 'string' || !idToken) return fail(res, 400, 'Google ID token is required');
@@ -183,6 +184,9 @@ router.post('/google', limits.google, asyncHandler(async (req, res) => {
 
   const email = payload.email.trim().toLowerCase();
   let user = await User.findOne({ $or: [{ googleId: payload.sub }, { email }] });
+  if (user && req.body.intent === 'signup') {
+    return fail(res, 409, 'An account with this Google account already exists. Please log in instead.');
+  }
   if (!user) {
     user = await User.create({
       email,

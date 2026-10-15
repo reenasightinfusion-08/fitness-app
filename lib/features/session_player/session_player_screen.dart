@@ -509,7 +509,6 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                           videoUrl: stretch.model?.videoUrl,
                           thumbnailUrl: stretchThumbUrl,
                           holdSeconds: stretch.model?.defaultHoldSeconds ?? 30,
-                          pose: stretch.pose,
                           showVideo: step.kind == _StepKind.hold,
                           playing: !paused,
                         ),
@@ -579,53 +578,25 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
                             isOnDark: true,
                             child: nextStretch == null
                                 ? null
-                                : (hasNextThumb
-                                      ? ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            8.r,
-                                          ),
-                                          child: StretchVideoFrame(
-                                            videoUrl:
-                                                nextStretch.model?.videoUrl,
-                                            holdSeconds:
-                                                nextStretch
-                                                    .model
-                                                    ?.defaultHoldSeconds ??
-                                                30,
-                                            fallback: Image.network(
+                                : ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    child: StretchVideoFrame(
+                                      videoUrl: nextStretch.model?.videoUrl,
+                                      holdSeconds:
+                                          nextStretch.model?.defaultHoldSeconds ??
+                                          30,
+                                      isOnDark: true,
+                                      fallback: hasNextThumb
+                                          ? Image.network(
                                               nextThumbUrl,
                                               fit: BoxFit.cover,
                                               errorBuilder:
-                                                  (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) => CustomPaint(
-                                                    painter:
-                                                        StretchFigurePainter(
-                                                          pose:
-                                                              nextStretch.pose,
-                                                          nearColor:
-                                                              colors.playerInk,
-                                                          farColor:
-                                                              colors.playerDim,
-                                                          groundColor: Colors
-                                                              .transparent,
-                                                          showGround: false,
-                                                        ),
-                                                  ),
-                                            ),
-                                          ),
-                                        )
-                                      : CustomPaint(
-                                          painter: StretchFigurePainter(
-                                            pose: nextStretch.pose,
-                                            nearColor: colors.playerInk,
-                                            farColor: colors.playerDim,
-                                            groundColor: Colors.transparent,
-                                            showGround: false,
-                                          ),
-                                        )),
+                                                  (context, error, stackTrace) =>
+                                                      const StretchPlaceholder(isOnDark: true),
+                                            )
+                                          : const StretchPlaceholder(isOnDark: true),
+                                    ),
+                                  ),
                           ),
                           12.horizontalSpace,
                           Expanded(

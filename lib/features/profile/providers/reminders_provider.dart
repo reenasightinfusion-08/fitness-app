@@ -8,7 +8,7 @@ import 'package:fitness_app/services/reminder_notification_service.dart';
 
 /// The user's stretch reminders. Signed-in accounts load them from the server
 /// and every change is saved back and re-scheduled as local notifications on the
-/// phone; the sample account keeps its reminders in memory only.
+/// phone.
 class RemindersController extends Notifier<List<ReminderEntry>> {
   int _nextId = 1;
   bool _loaded = false;
