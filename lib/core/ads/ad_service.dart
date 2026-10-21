@@ -4,7 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'ad_ids.dart';
 
-/// Loads and shows full-screen ads (interstitial and app open). Banner and native ads are widgets — see
+/// Loads and shows full-screen ads (interstitial, rewarded, rewarded
+/// interstitial and app open). Banner and native ads are widgets — see
 /// BannerAdWidget and NativeAdWidget.
 class AdService {
   static bool get supported =>
@@ -13,21 +14,25 @@ class AdService {
   static bool _initialized = false;
 
   static InterstitialAd? _interstitial;
+  static RewardedAd? _rewarded;
+  static RewardedInterstitialAd? _rewardedInterstitial;
   static AppOpenAd? _appOpen;
 
   static DateTime? _interstitialAt;
+  static DateTime? _rewardedAt;
+  static DateTime? _rewardedInterstitialAt;
   static DateTime? _appOpenAt;
 
   static final Set<String> _loading = {};
 
   static bool _showingFullScreen = false;
   static DateTime? _lastFullScreenAt;
-  static int _interstitialTriggers = 0;
-  static const _interstitialEvery = 2;
+  static final Map<String, int> _actionTriggers = {};
+  static const int _defaultInterstitialEvery = 2;
 
-  // Interstitials: spaced out in release, unrestricted while testing.
+  // Interstitials: spaced out by 30s in release, unrestricted while testing.
   static Duration get _interstitialGap =>
-      kDebugMode ? Duration.zero : const Duration(minutes: 1);
+      kDebugMode ? Duration.zero : const Duration(seconds: 30);
   // Closing any full-screen ad makes the app resume; this keeps that resume
   // from immediately triggering an app open ad.
   static const _appOpenGap = Duration(seconds: 15);
@@ -54,28 +59,54 @@ class AdService {
   }
 
   static Future<bool> _gatherConsent() async {
-    final done = Completer<void>();
-    ConsentInformation.instance.requestConsentInfoUpdate(
-      ConsentRequestParameters(),
-      () async {
-        await ConsentForm.loadAndShowConsentFormIfRequired((_) {
+    try {
+      final done = Completer<void>();
+      ConsentInformation.instance.requestConsentInfoUpdate(
+        ConsentRequestParameters(),
+        () async {
+          try {
+            await ConsentForm.loadAndShowConsentFormIfRequired((formError) {
+              if (formError != null) {
+                debugPrint('Consent form error: ${formError.message}');
+              }
+              if (!done.isCompleted) done.complete();
+            });
+          } catch (e) {
+            if (!done.isCompleted) done.complete();
+          }
+        },
+        (error) {
+          debugPrint('Consent request error: ${error.message}');
           if (!done.isCompleted) done.complete();
-        });
-      },
-      (_) {
-        if (!done.isCompleted) done.complete();
-      },
-    );
-    await done.future;
-    return ConsentInformation.instance.canRequestAds();
+        },
+      );
+      await done.future.timeout(
+        const Duration(seconds: 4),
+        onTimeout: () => debugPrint('Consent gathering timed out'),
+      );
+      return await ConsentInformation.instance.canRequestAds();
+    } catch (e) {
+      debugPrint('Consent exception: $e');
+      return true;
+    }
   }
 
   static Future<void> initialize() async {
     if (!supported || _initialized) return;
     _initialized = true;
-    if (!await _gatherConsent()) return;
-    await MobileAds.instance.initialize();
+    try {
+      await _gatherConsent();
+    } catch (e) {
+      debugPrint('Consent check failed: $e');
+    }
+    try {
+      await MobileAds.instance.initialize();
+    } catch (e) {
+      debugPrint('MobileAds initialization error: $e');
+    }
     loadInterstitial();
+    loadRewarded();
+    loadRewardedInterstitial();
     loadAppOpen();
     AppStateEventNotifier.startListening();
     AppStateEventNotifier.appStateStream.listen((state) {
@@ -106,6 +137,8 @@ class AdService {
     );
   }
 
+  static bool get interstitialReady => _interstitialReady;
+
   static bool get _interstitialReady {
     if (_interstitial != null && _expired(_interstitialAt, _adMaxAge)) {
       _interstitial?.dispose();
@@ -115,15 +148,18 @@ class AdService {
     return _interstitial != null;
   }
 
-  /// Frequency-capped interstitial for natural breaks: shows on every
-  /// [_interstitialEvery]th call (or every call when [force]), and never
-  /// right after another full-screen ad. [onClosed] always fires.
+  /// Frequency-capped interstitial for natural breaks: shows every [every] calls
+  /// for [action] (defaults to every 2nd action), or every call when [force],
+  /// and never right after another full-screen ad. [onClosed] always fires.
   static void maybeShowInterstitial({
     VoidCallback? onClosed,
+    String action = 'default',
+    int every = _defaultInterstitialEvery,
     bool force = false,
   }) {
-    _interstitialTriggers++;
-    final due = force || _interstitialTriggers % _interstitialEvery == 0;
+    final count = (_actionTriggers[action] ?? 0) + 1;
+    _actionTriggers[action] = count;
+    final due = force || count % every == 0;
     if (!supported ||
         !due ||
         _showingFullScreen ||
@@ -151,6 +187,109 @@ class AdService {
       reload: loadInterstitial,
       onClosed: onClosed,
     );
+  }
+
+  // ── Rewarded ─────────────────────────────────────────────────────────────
+
+  static void loadRewarded([int attempt = 0]) {
+    if (!supported || !_loading.add('rewarded')) return;
+    RewardedAd.load(
+      adUnitId: AdIds.rewarded,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _loading.remove('rewarded');
+          _rewarded = ad;
+          _rewardedAt = DateTime.now();
+        },
+        onAdFailedToLoad: (e) {
+          debugPrint('Rewarded failed: $e');
+          _loading.remove('rewarded');
+          _rewarded = null;
+          _retry('rewarded', attempt, loadRewarded);
+        },
+      ),
+    );
+  }
+
+  static bool get rewardedReady {
+    if (_rewarded != null && _expired(_rewardedAt, _adMaxAge)) {
+      _rewarded?.dispose();
+      _rewarded = null;
+    }
+    if (_rewarded == null) loadRewarded();
+    return _rewarded != null;
+  }
+
+  /// Returns false if no ad was ready. [onReward] fires only when the user
+  /// actually earns the reward.
+  static bool showRewarded({
+    required void Function(RewardItem reward) onReward,
+    VoidCallback? onClosed,
+  }) {
+    if (!rewardedReady) return false;
+    final ad = _rewarded!;
+    _rewarded = null;
+    _show(
+      ad,
+      setCallback: (cb) => ad.fullScreenContentCallback = cb,
+      show: () => ad.show(onUserEarnedReward: (_, r) => onReward(r)),
+      dispose: ad.dispose,
+      reload: loadRewarded,
+      onClosed: onClosed,
+    );
+    return true;
+  }
+
+  // ── Rewarded interstitial ────────────────────────────────────────────────
+
+  static void loadRewardedInterstitial([int attempt = 0]) {
+    if (!supported || !_loading.add('rewardedInterstitial')) return;
+    RewardedInterstitialAd.load(
+      adUnitId: AdIds.rewardedInterstitial,
+      request: const AdRequest(),
+      rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _loading.remove('rewardedInterstitial');
+          _rewardedInterstitial = ad;
+          _rewardedInterstitialAt = DateTime.now();
+        },
+        onAdFailedToLoad: (e) {
+          debugPrint('Rewarded interstitial failed: $e');
+          _loading.remove('rewardedInterstitial');
+          _rewardedInterstitial = null;
+          _retry('rewardedInterstitial', attempt, loadRewardedInterstitial);
+        },
+      ),
+    );
+  }
+
+  static bool get rewardedInterstitialReady {
+    if (_rewardedInterstitial != null &&
+        _expired(_rewardedInterstitialAt, _adMaxAge)) {
+      _rewardedInterstitial?.dispose();
+      _rewardedInterstitial = null;
+    }
+    if (_rewardedInterstitial == null) loadRewardedInterstitial();
+    return _rewardedInterstitial != null;
+  }
+
+  static bool showRewardedInterstitial({
+    required void Function(RewardItem reward) onReward,
+    VoidCallback? onClosed,
+  }) {
+    if (!rewardedInterstitialReady) return false;
+    final ad = _rewardedInterstitial!;
+    _rewardedInterstitial = null;
+    _show(
+      ad,
+      setCallback: (cb) => ad.fullScreenContentCallback = cb,
+      show: () => ad.show(onUserEarnedReward: (_, r) => onReward(r)),
+      dispose: ad.dispose,
+      reload: loadRewardedInterstitial,
+      onClosed: onClosed,
+    );
+    return true;
   }
 
   // ── App open ─────────────────────────────────────────────────────────────

@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 /// Grabs a still frame from the middle of a stretch video so a separate
@@ -55,6 +54,7 @@ class VideoFrameService {
   }
 
   static Future<Uint8List?> _load(String key, String url, int timeMs) async {
+    if (kIsWeb) return null;
     final file = File('${Directory.systemTemp.path}/frame_${_hash(key)}.jpg');
     try {
       if (await file.exists()) {
@@ -114,13 +114,13 @@ class VideoFrameService {
     }
   }
 
-  /// FNV-1a, so the cache file name is stable across launches.
+  /// 32-bit FNV-1a, compatible with both native 64-bit Dart and JavaScript.
   static String _hash(String input) {
-    var hash = 0xcbf29ce484222325;
+    var hash = 0x811c9dc5;
     for (final unit in input.codeUnits) {
       hash ^= unit;
-      hash = (hash * 0x100000001b3) & 0xFFFFFFFFFFFFFFFF;
+      hash = (hash * 0x01000193) & 0xFFFFFFFF;
     }
-    return hash.toUnsigned(64).toRadixString(16);
+    return hash.toUnsigned(32).toRadixString(16);
   }
 }

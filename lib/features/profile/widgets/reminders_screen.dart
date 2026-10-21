@@ -8,8 +8,7 @@ import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/profile/models/reminder.dart';
 import 'package:fitness_app/features/profile/providers/reminders_provider.dart';
 
-/// Matches the prototype's `screens.reminders`: one or more push
-/// reminders, plus a desk-break nudge that repeats through work hours.
+/// Matches the prototype's `screens.reminders`: one or more push reminders.
 class RemindersScreen extends ConsumerWidget {
   const RemindersScreen({super.key});
 
@@ -31,8 +30,6 @@ class RemindersScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final reminders = ref.watch(remindersProvider);
-    final desk = ref.watch(deskNudgeProvider);
-    final deskNotifier = ref.read(deskNudgeProvider.notifier);
 
     return Scaffold(
       backgroundColor: colors.ground,
@@ -153,62 +150,6 @@ class RemindersScreen extends ConsumerWidget {
               icon: Icons.add_rounded,
               variant: AppButtonVariant.secondary,
               onPressed: () => ref.read(remindersProvider.notifier).add(),
-            ),
-            20.verticalSpace,
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Desk-break nudges',
-                              style: AppTextStyle.titleSmall,
-                            ),
-                            Text(
-                              'A 2-minute stretch prompt during work hours',
-                              style: AppTextStyle.meta.copyWith(
-                                color: colors.ink2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      AppSwitch(
-                        value: desk.isOn,
-                        onChanged: deskNotifier.setOn,
-                        semanticLabel: 'Desk-break nudges',
-                      ),
-                    ],
-                  ),
-                  if (desk.isOn) ...[
-                    14.verticalSpace,
-                    Text(
-                      'Every',
-                      style: AppTextStyle.label.copyWith(color: colors.ink2),
-                    ),
-                    8.verticalSpace,
-                    AppSegmentedControl<int>(
-                      segments: [
-                        for (final minutes in deskNudgeIntervalOptions)
-                          AppSegmentModel(value: minutes, label: '$minutes min'),
-                      ],
-                      value: desk.everyMinutes,
-                      onChanged: deskNotifier.setEveryMinutes,
-                    ),
-                    8.verticalSpace,
-                    Text(
-                      'Between ${desk.fromLabel} and ${desk.toLabel}, Monday '
-                      'to Friday.',
-                      style: AppTextStyle.meta.copyWith(color: colors.ink2),
-                    ),
-                  ],
-                ],
-              ),
             ),
           ],
         ),

@@ -5,7 +5,7 @@ import 'package:fitness_app/features/home/models/todays_plan_model.dart';
 
 /// Today's routine from `GET /api/plans/today`, which the server picks from the
 /// profile saved during onboarding.
-final todaysPlanProvider = FutureProvider.autoDispose<TodaysPlanModel>(
+final todaysPlanProvider = FutureProvider<TodaysPlanModel>(
   (ref) async => TodaysPlanModel.fromJson(
     await ref.watch(authServiceProvider).getTodaysPlan(),
   ),

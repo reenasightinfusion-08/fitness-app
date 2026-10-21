@@ -13,6 +13,7 @@ import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
 import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
 import 'package:fitness_app/features/stretch_detail/models/stretch_model.dart';
+import 'package:fitness_app/core/ads/ad_service.dart';
 import 'package:fitness_app/core/ads/ad_slot.dart';
 import 'package:fitness_app/features/stretch_detail/stretch_detail_sheet.dart';
 import 'package:fitness_app/services/stretch_service.dart';
@@ -248,160 +249,169 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
             onChanged: (value) => setState(() => _query = value),
           ),
           14.verticalSpace,
-        AppCard(
-          variant: AppCardVariant.list,
-          child: AppSettingRow(
-            title: 'Safe for me',
-            subtitle: "Hides stretches and routines that don't suit your body",
-            showDivider: false,
-            trailing: AppSwitch(
-              value: _safeForMe,
-              semanticLabel: 'Safe for me',
-              onChanged: (value) => setState(() => _safeForMe = value),
+          AppCard(
+            variant: AppCardVariant.list,
+            child: AppSettingRow(
+              title: 'Safe for me',
+              subtitle:
+                  "Hides stretches and routines that don't suit your body",
+              showDivider: false,
+              trailing: AppSwitch(
+                value: _safeForMe,
+                semanticLabel: 'Safe for me',
+                onChanged: (value) => setState(() => _safeForMe = value),
+              ),
             ),
           ),
-        ),
-        14.verticalSpace,
-        AppChipGroup(
-          isScrollable: true,
-          children: [
-            AppChip(
-              label: 'All areas',
-              isSelected: _area == null,
-              onTap: () => setState(() => _area = null),
-            ),
-            for (final area in ExploreDemoData.areas)
-              AppChip(
-                label: area.label,
-                isSelected: _area == area.key,
-                onTap: () => setState(() => _area = area.key),
-              ),
-          ],
-        ),
-        10.verticalSpace,
-        AppChipGroup(
-          children: [
-            for (final filter in ExploreTimeFilter.values)
-              AppChip(
-                label: filter.label,
-                isSelected: _time == filter,
-                onTap: () => setState(() => _time = filter),
-              ),
-          ],
-        ),
-        20.verticalSpace,
-        routinesAsync.when(
-          data: (apiRoutines) {
-            final routines = _filterRoutineSummaries(apiRoutines, safety);
-            if (routines.isEmpty) {
-              return AppEmptyState(
-                icon: Icons.search_off_rounded,
-                title: 'No routines match',
-                message: _safeForMe
-                    ? 'Try a different area or time, or turn off "Safe for me".'
-                    : 'Try a different area or time.',
-              );
-            }
-            return Column(
-              children: [
-                for (var i = 0; i < routines.length; i++) ...[
-                  if (i > 0) 10.verticalSpace,
-                  _ExploreRoutineTile(routine: routines[i]),
-                  if (i == 2 && routines.length > 3) const AdNative(small: true),
-                ],
-              ],
-            );
-          },
-          loading: () => Column(
+          14.verticalSpace,
+          AppChipGroup(
+            isScrollable: true,
             children: [
-              for (var i = 0; i < 5; i++) ...[
-                if (i > 0) 10.verticalSpace,
-                const ExploreRoutineCardShimmer(),
-              ],
+              AppChip(
+                label: 'All areas',
+                isSelected: _area == null,
+                onTap: () => setState(() => _area = null),
+              ),
+              for (final area in ExploreDemoData.areas)
+                AppChip(
+                  label: area.label,
+                  isSelected: _area == area.key,
+                  onTap: () => setState(() => _area = area.key),
+                ),
             ],
           ),
-          error: (err, stack) => Padding(
-            padding: EdgeInsets.symmetric(vertical: 12.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          10.verticalSpace,
+          AppChipGroup(
+            children: [
+              for (final filter in ExploreTimeFilter.values)
+                AppChip(
+                  label: filter.label,
+                  isSelected: _time == filter,
+                  onTap: () => setState(() => _time = filter),
+                ),
+            ],
+          ),
+          20.verticalSpace,
+          routinesAsync.when(
+            data: (apiRoutines) {
+              final routines = _filterRoutineSummaries(apiRoutines, safety);
+              if (routines.isEmpty) {
+                return AppEmptyState(
+                  icon: Icons.search_off_rounded,
+                  title: 'No routines match',
+                  message: _safeForMe
+                      ? 'Try a different area or time, or turn off "Safe for me".'
+                      : 'Try a different area or time.',
+                );
+              }
+              return Column(
+                children: [
+                  for (var i = 0; i < routines.length; i++) ...[
+                    if (i > 0) 10.verticalSpace,
+                    _ExploreRoutineTile(routine: routines[i]),
+                    if (i == (routines.length > 2 ? 1 : routines.length - 1))
+                      const AdNative(small: true),
+                  ],
+                ],
+              );
+            },
+            loading: () => Column(
               children: [
-                Text(
-                  'Failed to load routines from server.',
-                  style: AppTextStyle.bodySmall.copyWith(color: colors.danger),
-                ),
-                4.verticalSpace,
-                TextButton(
-                  onPressed: () => ref.invalidate(routinesProvider),
-                  child: const Text('Retry'),
-                ),
+                for (var i = 0; i < 5; i++) ...[
+                  if (i > 0) 10.verticalSpace,
+                  const ExploreRoutineCardShimmer(),
+                ],
               ],
             ),
-          ),
-        ),
-        24.verticalSpace,
-        Text(
-          'Stretch library · ${_isLoadingStretches ? '...' : stretches.length}',
-          style: AppTextStyle.sectionTitle,
-        ),
-        10.verticalSpace,
-        if (_isLoadingStretches)
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 6,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 8.h,
-              crossAxisSpacing: 8.w,
-              childAspectRatio: 0.78,
-            ),
-            itemBuilder: (context, index) => const ExploreLibraryTileShimmer(),
-          )
-        else if (_stretchesError != null)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 12.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Failed to load stretches from server.',
-                  style: AppTextStyle.bodySmall.copyWith(color: colors.danger),
-                ),
-                4.verticalSpace,
-                TextButton(
-                  onPressed: _fetchStretches,
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          )
-        else if (stretches.isEmpty)
-          Padding(
-            padding: EdgeInsets.only(top: 4.h),
-            child: Text(
-              'No stretches match your filters.',
-              style: AppTextStyle.bodySmall.copyWith(color: colors.ink2),
-            ),
-          )
-        else
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: stretches.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 8.h,
-              crossAxisSpacing: 8.w,
-              childAspectRatio: 0.78,
-            ),
-            itemBuilder: (context, index) => _LibraryTile(
-              stretch: stretches[index],
-              onTap: () =>
-                  StretchDetailSheet.open(context, model: stretches[index]),
+            error: (err, stack) => Padding(
+              padding: EdgeInsets.symmetric(vertical: 12.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Failed to load routines from server.',
+                    style: AppTextStyle.bodySmall.copyWith(
+                      color: colors.danger,
+                    ),
+                  ),
+                  4.verticalSpace,
+                  TextButton(
+                    onPressed: () => ref.invalidate(routinesProvider),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
             ),
           ),
-      ],
-    ),
+          18.verticalSpace,
+          const AdNative(small: false),
+          18.verticalSpace,
+          Text(
+            'Stretch library · ${_isLoadingStretches ? '...' : stretches.length}',
+            style: AppTextStyle.sectionTitle,
+          ),
+          10.verticalSpace,
+          if (_isLoadingStretches)
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 6,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 8.h,
+                crossAxisSpacing: 8.w,
+                childAspectRatio: 0.78,
+              ),
+              itemBuilder: (context, index) =>
+                  const ExploreLibraryTileShimmer(),
+            )
+          else if (_stretchesError != null)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 12.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Failed to load stretches from server.',
+                    style: AppTextStyle.bodySmall.copyWith(
+                      color: colors.danger,
+                    ),
+                  ),
+                  4.verticalSpace,
+                  TextButton(
+                    onPressed: _fetchStretches,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            )
+          else if (stretches.isEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 4.h),
+              child: Text(
+                'No stretches match your filters.',
+                style: AppTextStyle.bodySmall.copyWith(color: colors.ink2),
+              ),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: stretches.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 8.h,
+                crossAxisSpacing: 8.w,
+                childAspectRatio: 0.78,
+              ),
+              itemBuilder: (context, index) => _LibraryTile(
+                stretch: stretches[index],
+                onTap: () =>
+                    StretchDetailSheet.open(context, model: stretches[index]),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -465,8 +475,9 @@ class _ExploreRoutineTileState extends State<_ExploreRoutineTile> {
 
   Widget _buildCardContent(BuildContext context, Uint8List? frameBytes) {
     final routine = widget.routine;
-    final firstStretch =
-        routine.stretches.isNotEmpty ? routine.stretches.first : null;
+    final firstStretch = routine.stretches.isNotEmpty
+        ? routine.stretches.first
+        : null;
     final thumbUrl = firstStretch?.model?.thumbnailUrl;
     final hasThumb = thumbUrl != null && thumbUrl.trim().isNotEmpty;
 
@@ -486,7 +497,8 @@ class _ExploreRoutineTileState extends State<_ExploreRoutineTile> {
         child: Image.network(
           thumbUrl,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => const StretchPlaceholder(),
+          errorBuilder: (context, error, stackTrace) =>
+              const StretchPlaceholder(),
         ),
       );
     } else {
@@ -496,15 +508,19 @@ class _ExploreRoutineTileState extends State<_ExploreRoutineTile> {
     return AppRoutineCard(
       title: routine.name,
       meta: '${routine.durationText} · ${routine.stretches.length} stretches',
-      thumbnail: AppThumb(
-        size: AppThumbSize.large,
-        child: thumbnailWidget,
-      ),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => RoutineDetailScreen(routine: routine),
-        ),
-      ),
+      thumbnail: AppThumb(size: AppThumbSize.large, child: thumbnailWidget),
+      onTap: () {
+        void navigate() {
+          if (!context.mounted) return;
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RoutineDetailScreen(routine: routine),
+            ),
+          );
+        }
+
+        AdService.maybeShowInterstitial(action: 'routine', onClosed: navigate);
+      },
     );
   }
 }
@@ -607,11 +623,7 @@ class _LibraryTileState extends State<_LibraryTile> {
           padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 15.h),
           child: Column(
             children: [
-              SizedBox(
-                width: 80.r,
-                height: 80.r,
-                child: thumbnailWidget,
-              ),
+              SizedBox(width: 80.r, height: 80.r, child: thumbnailWidget),
               5.verticalSpace,
               Expanded(
                 child: Center(

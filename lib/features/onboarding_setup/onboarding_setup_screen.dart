@@ -43,8 +43,7 @@ class OnboardingSetupScreen extends ConsumerStatefulWidget {
       OnboardingSetupScreenState();
 }
 
-class OnboardingSetupScreenState
-    extends ConsumerState<OnboardingSetupScreen> {
+class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
   late int currentStep = widget.editStepIndex ?? 0;
 
   bool get isEditMode => widget.editStepIndex != null;
@@ -100,7 +99,8 @@ class OnboardingSetupScreenState
           .read(authServiceProvider)
           .updateMe(profile.toUserUpdate(markComplete: markComplete));
     } on AuthException catch (e) {
-      if (mounted) AppSnackBar.showError(context, "Couldn't save: ${e.message}");
+      if (mounted)
+        AppSnackBar.showError(context, "Couldn't save: ${e.message}");
     } finally {
       if (mounted) setState(() => isSyncing = false);
     }

@@ -1,3 +1,5 @@
+import 'package:fitness_app/core/ads/ad_gate.dart';
+import 'package:fitness_app/core/ads/ad_service.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -134,8 +136,19 @@ class MineView extends ConsumerWidget {
     }
   }
 
-  void _openBuilder(BuildContext context) => Navigator.of(context).push(
-    MaterialPageRoute(builder: (_) => const RoutineBuilderScreen()),
+  void _openBuilder(BuildContext context, WidgetRef ref) => AdGate.run(
+    context,
+    ref,
+    key: 'custom_routines',
+    title: 'Unlock custom routines',
+    message:
+        'Watch a short ad to build and customise your own routines for the next 24 hours.',
+    onUnlocked: () {
+      if (!context.mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const RoutineBuilderScreen()),
+      );
+    },
   );
 
   @override
@@ -181,7 +194,7 @@ class MineView extends ConsumerWidget {
         AppButton(
           label: 'Create a routine',
           icon: Icons.add_rounded,
-          onPressed: () => _openBuilder(context),
+          onPressed: () => _openBuilder(context, ref),
         ),
         pausedUserAsync.when(
           data: (otherPaused) {
@@ -512,14 +525,21 @@ class _RoutineCardState extends State<_RoutineCard> {
         size: AppThumbSize.large,
         child: thumbnailWidget,
       ),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => RoutineDetailScreen(
-            routine: routine,
-            routineType: widget.routineType,
-          ),
-        ),
-      ),
+      onTap: () {
+        void navigate() {
+          if (!context.mounted) return;
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RoutineDetailScreen(
+                routine: routine,
+                routineType: widget.routineType,
+              ),
+            ),
+          );
+        }
+
+        AdService.maybeShowInterstitial(action: 'routine', onClosed: navigate);
+      },
     );
   }
 }

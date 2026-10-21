@@ -1,3 +1,4 @@
+import 'package:fitness_app/core/ads/ad_gate.dart';
 import 'package:fitness_app/core/ads/ad_slot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -149,10 +150,22 @@ class ProgressView extends ConsumerWidget {
                 variant: AppButtonVariant.secondary,
                 size: AppButtonSize.small,
                 isExpanded: false,
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const FlexibilityCheckScreen(),
-                  ),
+                onPressed: () => AdGate.run(
+                  context,
+                  ref,
+                  key: 'flexibility_check',
+                  title: 'Retake your flexibility check',
+                  message:
+                      'Watch a short ad to update your flexibility level and refresh your plan.',
+                  interstitialStyle: true,
+                  onUnlocked: () {
+                    if (!context.mounted) return;
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const FlexibilityCheckScreen(),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],

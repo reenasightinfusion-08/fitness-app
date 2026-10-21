@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
@@ -47,10 +46,14 @@ class HomeScreenState extends ConsumerState<HomeScreen> {
     ),
   ];
 
+  final Set<int> _loadedTabs = {0};
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final tabIndex = ref.watch(homeTabProvider).index;
+    _loadedTabs.add(tabIndex);
+
     return Scaffold(
       backgroundColor: colors.ground,
       body: SafeArea(
@@ -59,10 +62,10 @@ class HomeScreenState extends ConsumerState<HomeScreen> {
           index: tabIndex,
           children: [
             const TodayView(),
-            const ExploreView(),
-            const MineView(),
-            const ProgressView(),
-            const ProfileView(),
+            _loadedTabs.contains(1) ? const ExploreView() : const SizedBox.shrink(),
+            _loadedTabs.contains(2) ? const MineView() : const SizedBox.shrink(),
+            _loadedTabs.contains(3) ? const ProgressView() : const SizedBox.shrink(),
+            _loadedTabs.contains(4) ? const ProfileView() : const SizedBox.shrink(),
           ],
         ),
       ),

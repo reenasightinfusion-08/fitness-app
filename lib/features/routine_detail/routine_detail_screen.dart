@@ -1,3 +1,4 @@
+import 'package:fitness_app/core/ads/ad_gate.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -249,11 +250,22 @@ class RoutineDetailScreen extends ConsumerWidget {
                 AppButton(
                   label: 'Customise a copy',
                   variant: AppButtonVariant.text,
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          RoutineBuilderScreen(initialRoutine: routine),
-                    ),
+                  onPressed: () => AdGate.run(
+                    context,
+                    ref,
+                    key: 'custom_routines',
+                    title: 'Unlock custom routines',
+                    message:
+                        'Watch a short ad to build and customise your own routines for the next 24 hours.',
+                    onUnlocked: () {
+                      if (!context.mounted) return;
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              RoutineBuilderScreen(initialRoutine: routine),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],

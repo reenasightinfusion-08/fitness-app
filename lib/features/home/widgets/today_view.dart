@@ -1,10 +1,8 @@
-import 'dart:typed_data';
-
+import 'package:fitness_app/core/ads/ad_service.dart';
 import 'package:fitness_app/core/ads/ad_slot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'package:fitness_app/core/providers/providers.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/greeting.dart';
@@ -21,7 +19,6 @@ import 'package:fitness_app/features/routine_detail/routine_detail_screen.dart';
 import 'package:fitness_app/features/session_player/session_player_screen.dart';
 import 'package:fitness_app/services/paused_session_cache.dart';
 import 'package:fitness_app/services/video_background_service.dart';
-import 'package:fitness_app/services/video_frame_service.dart';
 
 /// Full container shimmer placeholder for a single Quick Pick tile card.
 class QuickPickTileShimmer extends StatelessWidget {
@@ -122,11 +119,8 @@ class TodayView extends ConsumerWidget {
               return const SizedBox.shrink();
             }
             return Column(
-              children: [
-                const ResumeRoutineBannerShimmer(),
-                18.verticalSpace,
-              ],
-            ); 
+              children: [const ResumeRoutineBannerShimmer(), 18.verticalSpace],
+            );
           },
           error: (error, stack) => const SizedBox.shrink(),
         ),
@@ -134,7 +128,8 @@ class TodayView extends ConsumerWidget {
           data: (todaysPlan) => TodayPlanCard(
             plan: todaysPlan.routine,
             isCompleted: todaysPlan.completedToday,
-            resumeFromStretch: planActive != null && planActive.completedStretch > 0
+            resumeFromStretch:
+                planActive != null && planActive.completedStretch > 0
                 ? planActive.completedStretch
                 : null,
             onStart: () => Navigator.of(context).push(
@@ -147,7 +142,9 @@ class TodayView extends ConsumerWidget {
                 ? null
                 : () {
                     VideoBackgroundService.preloadUrls(
-                      planActive.routine.stretches.map((s) => s.model?.videoUrl),
+                      planActive.routine.stretches.map(
+                        (s) => s.model?.videoUrl,
+                      ),
                     );
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -170,14 +167,17 @@ class TodayView extends ConsumerWidget {
             ),
             onSeeStretches: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => RoutineDetailScreen(routine: todaysPlan.routine),
+                builder: (_) =>
+                    RoutineDetailScreen(routine: todaysPlan.routine),
               ),
             ),
           ),
           loading: () => const TodayPlanCardShimmer(),
           error: (error, stack) => TodaysPlanErrorCard(error: error),
         ),
-        24.verticalSpace,
+        18.verticalSpace,
+        const AdNative(small: false),
+        18.verticalSpace,
         Text('Quick picks', style: AppTextStyle.sectionTitle),
         10.verticalSpace,
         routinesAsync.when(
@@ -197,9 +197,7 @@ class TodayView extends ConsumerWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
-                          child: _QuickPickTile(routine: routines[i]),
-                        ),
+                        Expanded(child: _QuickPickTile(routine: routines[i])),
                         10.horizontalSpace,
                         Expanded(
                           child: i + 1 < routines.length
@@ -217,13 +215,13 @@ class TodayView extends ConsumerWidget {
             children: [
               for (var i = 0; i < 2; i++) ...[
                 if (i > 0) 10.verticalSpace,
-                const IntrinsicHeight(
+                IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(child: QuickPickTileShimmer()),
-                      SizedBox(width: 10),
-                      Expanded(child: QuickPickTileShimmer()),
+                      const Expanded(child: QuickPickTileShimmer()),
+                      10.horizontalSpace,
+                      const Expanded(child: QuickPickTileShimmer()),
                     ],
                   ),
                 ),
@@ -238,8 +236,9 @@ class TodayView extends ConsumerWidget {
             onAction: () => ref.invalidate(routinesProvider),
           ),
         ),
+        18.verticalSpace,
         const AdNative(small: true),
-        24.verticalSpace,
+        18.verticalSpace,
         Text('This week', style: AppTextStyle.sectionTitle),
         10.verticalSpace,
         AppCard(child: AppWeekStrip(days: stats.weekStrip())),
@@ -337,7 +336,6 @@ class _ResumeRoutineBannerState extends State<ResumeRoutineBanner> {
           ? null
           : StretchThumbnail(stretch: next, isOnDark: true),
       onResume: () {
-        _preload();
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => SessionPlayerScreen(
@@ -355,98 +353,39 @@ class _ResumeRoutineBannerState extends State<ResumeRoutineBanner> {
   }
 }
 
-/// A single "Quick picks" grid cell. Displays full container shimmer until
-/// both routine data and stretch thumbnail frame are available.
-class _QuickPickTile extends StatefulWidget {
+/// A single "Quick picks" grid cell. Displays routine data immediately and
+/// loads stretch thumbnail with smooth fallback to photo or placeholder.
+class _QuickPickTile extends StatelessWidget {
   const _QuickPickTile({required this.routine});
 
   final RoutineSummary routine;
 
   @override
-  State<_QuickPickTile> createState() => _QuickPickTileState();
-}
-
-class _QuickPickTileState extends State<_QuickPickTile> {
-  late Future<Uint8List?> _frameFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _initFrameFuture();
-  }
-
-  @override
-  void didUpdateWidget(covariant _QuickPickTile oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.routine != widget.routine) {
-      _initFrameFuture();
-    }
-  }
-
-  void _initFrameFuture() {
-    final firstStretch = widget.routine.stretches.isNotEmpty
-        ? widget.routine.stretches.first
-        : null;
-    final videoUrl = firstStretch?.model?.videoUrl;
-    if (videoUrl != null && videoUrl.trim().isNotEmpty) {
-      _frameFuture = VideoFrameService.frameAt(
-        videoUrl,
-        timeMs: VideoFrameService.midpointMs(
-          firstStretch?.model?.defaultHoldSeconds ?? 30,
-        ),
-      );
-    } else {
-      _frameFuture = Future.value(null);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Uint8List?>(
-      future: _frameFuture,
-      builder: (context, snapshot) {
-        // Show full container shimmer until data and image frame finish loading
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const QuickPickTileShimmer();
-        }
-        return _buildTileContent(context, snapshot.data);
-      },
-    );
-  }
+    final firstStretch = routine.stretches.isNotEmpty
+        ? routine.stretches.first
+        : null;
 
-  Widget _buildTileContent(BuildContext context, Uint8List? frameBytes) {
-    final routine = widget.routine;
-    final firstStretch =
-        routine.stretches.isNotEmpty ? routine.stretches.first : null;
-    final thumbUrl = firstStretch?.model?.thumbnailUrl;
-    final hasThumb = thumbUrl != null && thumbUrl.trim().isNotEmpty;
-
-    Widget thumbnailWidget;
-    if (frameBytes != null) {
-      thumbnailWidget = Image.memory(
-        frameBytes,
-        fit: BoxFit.cover,
-        gaplessPlayback: true,
-      );
-    } else if (hasThumb) {
-      thumbnailWidget = Image.network(
-        thumbUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => const StretchPlaceholder(),
-      );
-    } else {
-      thumbnailWidget = const StretchPlaceholder();
-    }
+    final Widget thumbnailWidget = firstStretch != null
+        ? StretchThumbnail(stretch: firstStretch)
+        : const AppThumb(child: StretchPlaceholder());
 
     return AppTileCard(
       title: routine.name,
       meta: routine.durationText,
-      thumbnail: AppThumb(child: thumbnailWidget),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => RoutineDetailScreen(routine: routine),
-        ),
-      ),
+      thumbnail: thumbnailWidget,
+      onTap: () {
+        void navigate() {
+          if (!context.mounted) return;
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RoutineDetailScreen(routine: routine),
+            ),
+          );
+        }
+
+        AdService.maybeShowInterstitial(action: 'routine', onClosed: navigate);
+      },
     );
   }
 }

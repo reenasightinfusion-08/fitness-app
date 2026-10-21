@@ -43,11 +43,13 @@ class ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       codeError = null;
     });
     try {
-      await ref.read(authServiceProvider).resetPassword(
-        email: pending.email,
-        code: codeController.text.trim(),
-        newPassword: passwordController.text,
-      );
+      await ref
+          .read(authServiceProvider)
+          .resetPassword(
+            email: pending.email,
+            code: codeController.text.trim(),
+            newPassword: passwordController.text,
+          );
       if (!mounted) return;
       ref.read(pendingAuthProvider.notifier).clear();
       ref.read(appFlowProvider.notifier).showLogin();
@@ -106,9 +108,7 @@ class ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 6.verticalSpace,
                 Text.rich(
                   TextSpan(
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: colors.ink2,
-                    ),
+                    style: AppTextStyle.bodyMedium.copyWith(color: colors.ink2),
                     children: [
                       const TextSpan(text: 'For '),
                       TextSpan(

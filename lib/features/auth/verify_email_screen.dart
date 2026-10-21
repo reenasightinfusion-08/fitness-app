@@ -41,10 +41,9 @@ class VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       codeError = null;
     });
     try {
-      await ref.read(authServiceProvider).verifyEmail(
-        email: pending.email,
-        code: codeController.text.trim(),
-      );
+      await ref
+          .read(authServiceProvider)
+          .verifyEmail(email: pending.email, code: codeController.text.trim());
       if (!mounted) return;
       ref.read(pendingAuthProvider.notifier).clear();
       ref.read(appFlowProvider.notifier).showOnboarding();
@@ -117,9 +116,7 @@ class VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                 6.verticalSpace,
                 Text.rich(
                   TextSpan(
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: colors.ink2,
-                    ),
+                    style: AppTextStyle.bodyMedium.copyWith(color: colors.ink2),
                     children: [
                       const TextSpan(text: 'We sent a 6-digit code to '),
                       TextSpan(

@@ -67,10 +67,7 @@ class ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Forgot your password?',
-                  style: AppTextStyle.headline,
-                ),
+                Text('Forgot your password?', style: AppTextStyle.headline),
                 6.verticalSpace,
                 Text(
                   "Enter your email and we'll send a code to reset it.",

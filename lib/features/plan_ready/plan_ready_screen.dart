@@ -44,7 +44,8 @@ class PlanReadyScreen extends ConsumerWidget {
                 AppButton(
                   label: 'Look around first',
                   variant: AppButtonVariant.text,
-                  onPressed: () => ref.read(appFlowProvider.notifier).enterApp(),
+                  onPressed: () =>
+                      ref.read(appFlowProvider.notifier).enterApp(),
                 ),
               ],
             ),

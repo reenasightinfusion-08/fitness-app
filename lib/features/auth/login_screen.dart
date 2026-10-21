@@ -45,10 +45,12 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => isLoading = true);
     try {
-      await ref.read(authServiceProvider).login(
-        email: emailController.text.trim(),
-        password: passwordController.text,
-      );
+      await ref
+          .read(authServiceProvider)
+          .login(
+            email: emailController.text.trim(),
+            password: passwordController.text,
+          );
       if (mounted) await ref.read(appFlowProvider.notifier).enterAfterSignIn();
     } on AuthException catch (e) {
       if (mounted) AppSnackBar.showError(context, e.message);

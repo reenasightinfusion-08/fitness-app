@@ -1,3 +1,5 @@
+import 'package:fitness_app/core/ads/ad_service.dart';
+import 'package:fitness_app/core/ads/ad_slot.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -187,8 +189,19 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
       );
       return;
     }
-    navigator.pop();
-    AppSnackBar.showSuccess(context, 'Routine saved.');
+    final messenger = context;
+    void done() {
+      navigator.pop();
+      if (messenger.mounted) {
+        AppSnackBar.showSuccess(messenger, 'Routine saved.');
+      }
+    }
+
+    if (ref.read(adsVisibleProvider)) {
+      AdService.maybeShowInterstitial(action: 'custom_routine', onClosed: done);
+    } else {
+      done();
+    }
   }
 
   @override

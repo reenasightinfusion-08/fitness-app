@@ -1,12 +1,9 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/widgets/widgets.dart';
 import 'package:fitness_app/features/home/models/today_plan.dart';
 import 'package:fitness_app/features/home/widgets/stretch_thumbnail.dart';
-import 'package:fitness_app/services/video_frame_service.dart';
 
 /// Full-container shimmer skeleton displayed while Today's Plan data or images are loading.
 class TodayPlanCardShimmer extends StatelessWidget {
@@ -43,11 +40,7 @@ class TodayPlanCardShimmer extends StatelessWidget {
           12.verticalSpace,
 
           // Tag Pill skeleton ("Full body")
-          AppShimmer.box(
-            width: 76.w,
-            height: 26.h,
-            borderRadius: 100.r,
-          ),
+          AppShimmer.box(width: 76.w, height: 26.h, borderRadius: 100.r),
           16.verticalSpace,
 
           // Start & See stretches buttons skeleton
@@ -71,7 +64,7 @@ class TodayPlanCardShimmer extends StatelessWidget {
 /// The prototype's `.card.plan`: today's routine name and length, a row of
 /// every stretch's photo (scrolls sideways when they don't fit), why-it-fits
 /// tags, and Start / See stretches actions.
-class TodayPlanCard extends StatefulWidget {
+class TodayPlanCard extends StatelessWidget {
   const TodayPlanCard({
     super.key,
     required this.plan,
@@ -99,61 +92,8 @@ class TodayPlanCard extends StatefulWidget {
   final VoidCallback? onRestart;
 
   @override
-  State<TodayPlanCard> createState() => _TodayPlanCardState();
-}
-
-class _TodayPlanCardState extends State<TodayPlanCard> {
-  late Future<List<Uint8List?>> _framesFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _initFramesFuture();
-  }
-
-  @override
-  void didUpdateWidget(covariant TodayPlanCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.plan != widget.plan) {
-      _initFramesFuture();
-    }
-  }
-
-  void _initFramesFuture() {
-    final futures = widget.plan.stretches.map((s) {
-      final model = s.model;
-      final videoUrl = model?.videoUrl;
-      if (videoUrl != null && videoUrl.trim().isNotEmpty) {
-        return VideoFrameService.frameAt(
-          videoUrl,
-          timeMs: VideoFrameService.midpointMs(model!.defaultHoldSeconds),
-        );
-      }
-      return Future.value(null);
-    }).toList();
-
-    _framesFuture = Future.wait(futures);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Uint8List?>>(
-      future: _framesFuture,
-      builder: (context, snapshot) {
-        // Show full container shimmer until all data and stretch images are loaded
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const TodayPlanCardShimmer();
-        }
-        return _buildCardContent(context);
-      },
-    );
-  }
-
-  Widget _buildCardContent(BuildContext context) {
     final colors = context.colors;
-    final plan = widget.plan;
-    final isCompleted = widget.isCompleted;
-    final resumeFromStretch = widget.resumeFromStretch;
 
     return AppCard(
       child: Column(
@@ -180,8 +120,8 @@ class _TodayPlanCardState extends State<TodayPlanCard> {
           if (resumeFromStretch != null && !isCompleted) ...[
             6.verticalSpace,
             Text(
-              'Paused · stretch ${resumeFromStretch + 1} of ${plan.stretches.length}'
-              '${plan.stretches.length > resumeFromStretch ? ': ${plan.stretches[resumeFromStretch].name}' : ''}',
+              'Paused · stretch ${resumeFromStretch! + 1} of ${plan.stretches.length}'
+              '${plan.stretches.length > resumeFromStretch! ? ': ${plan.stretches[resumeFromStretch!].name}' : ''}',
               style: AppTextStyle.meta.copyWith(color: colors.ink2),
             ),
           ],
@@ -211,7 +151,7 @@ class _TodayPlanCardState extends State<TodayPlanCard> {
                 child: AppButton(
                   label: 'See stretches',
                   variant: AppButtonVariant.secondary,
-                  onPressed: widget.onSeeStretches,
+                  onPressed: onSeeStretches,
                 ),
               ),
             ],
@@ -224,25 +164,25 @@ class _TodayPlanCardState extends State<TodayPlanCard> {
   /// Picks the right primary button for the card's three states: Restart when
   /// today's plan is done, Resume when a paused attempt exists, else Start.
   Widget _primaryAction() {
-    if (widget.isCompleted) {
+    if (isCompleted) {
       return AppButton(
         label: 'Restart',
         icon: Icons.refresh_rounded,
         variant: AppButtonVariant.secondary,
-        onPressed: widget.onRestart ?? widget.onStart,
+        onPressed: onRestart ?? onStart,
       );
     }
-    if (widget.resumeFromStretch != null) {
+    if (resumeFromStretch != null) {
       return AppButton(
         label: 'Resume',
         icon: Icons.play_arrow_rounded,
-        onPressed: widget.onResume ?? widget.onStart,
+        onPressed: onResume ?? onStart,
       );
     }
     return AppButton(
       label: 'Start',
       icon: Icons.play_arrow_rounded,
-      onPressed: widget.onStart,
+      onPressed: onStart,
     );
   }
 }

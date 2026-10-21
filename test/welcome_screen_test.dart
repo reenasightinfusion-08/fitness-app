@@ -56,13 +56,17 @@ void main() {
     final container = await pumpWelcome(tester, const Size(411, 900));
 
     await tester.ensureVisible(find.text('I already have an account'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('I already have an account'));
+    await tester.pumpAndSettle();
     expect(container.read(appFlowProvider), AppRoute.login);
 
     container.read(appFlowProvider.notifier).showWelcome();
-    await tester.pump();
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Get started'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Get started'));
+    await tester.pumpAndSettle();
     expect(container.read(appFlowProvider), AppRoute.signup);
   });
 }

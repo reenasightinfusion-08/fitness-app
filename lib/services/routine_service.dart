@@ -54,10 +54,14 @@ class RoutineService {
     final routines = list
         .map((json) => RoutineSummary.fromJson(json as Map<String, dynamic>))
         .toList();
-    for (final routine in routines) {
-      for (final stretch in routine.stretches) {
-        final model = stretch.model;
-        VideoFrameService.prefetch(model?.videoUrl, model?.defaultHoldSeconds ?? 30);
+    // Prefetch only the first stretch thumbnail of the initial routines (visible on home screen)
+    for (final routine in routines.take(4)) {
+      if (routine.stretches.isNotEmpty) {
+        final model = routine.stretches.first.model;
+        VideoFrameService.prefetch(
+          model?.videoUrl,
+          model?.defaultHoldSeconds ?? 30,
+        );
       }
     }
     return routines;

@@ -195,7 +195,7 @@ class SessionCompleteScreenState
       go();
       return;
     }
-    AdService.maybeShowInterstitial(onClosed: go);
+    AdService.maybeShowInterstitial(action: 'done', onClosed: go);
   }
 
   void _finish() {

@@ -31,7 +31,7 @@ Future<void> main() async {
 /// Counts open routes so app open ads never appear over a pushed screen
 /// (session player, dialogs, sheets).
 class _RouteDepth extends NavigatorObserver {
-  int depth = 1;
+  int depth = 0;
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) => depth++;
@@ -40,7 +40,8 @@ class _RouteDepth extends NavigatorObserver {
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) => depth--;
 
   @override
-  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) => depth--;
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      depth--;
 }
 
 final _routeDepth = _RouteDepth();
