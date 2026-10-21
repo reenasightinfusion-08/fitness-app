@@ -16,15 +16,22 @@ class AppTextStyle {
   static TextStyle display(
     double size, {
     FontWeight weight = FontWeight.w700,
-  }) => GoogleFonts.bricolageGrotesque(
-    fontSize: size.sp,
-    fontWeight: weight,
-    height: 1.1,
-    letterSpacing: -0.02 * size.sp,
-  );
+  }) {
+    final effectiveSize = (size.sp).clamp(size * 0.85, size * 1.2);
+    return GoogleFonts.bricolageGrotesque(
+      fontSize: effectiveSize,
+      fontWeight: weight,
+      height: 1.1,
+      letterSpacing: -0.02 * effectiveSize,
+    );
+  }
 
   static TextStyle body(double size, {FontWeight weight = FontWeight.w400}) =>
-      GoogleFonts.figtree(fontSize: size.sp, fontWeight: weight, height: 1.45);
+      GoogleFonts.figtree(
+        fontSize: (size.sp).clamp(size * 0.85, size * 1.2),
+        fontWeight: weight,
+        height: 1.45,
+      );
 
   // Display
   static TextStyle get timer =>

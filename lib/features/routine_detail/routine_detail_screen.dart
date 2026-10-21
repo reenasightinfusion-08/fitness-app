@@ -63,6 +63,9 @@ class RoutineDetailScreen extends ConsumerWidget {
         (ref.watch(favoritesProvider).valueOrNull?.contains(routineId) ??
             false);
 
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
     return Scaffold(
       backgroundColor: colors.ground,
       appBar: AppTopBar(
@@ -105,6 +108,8 @@ class RoutineDetailScreen extends ConsumerWidget {
                               ? Image.network(
                                   thumbUrl,
                                   fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
                                   errorBuilder: (context, error, stackTrace) =>
                                       const StretchPlaceholder(),
                                 )
@@ -113,20 +118,26 @@ class RoutineDetailScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  16.verticalSpace,
-                  Text(routine.name, style: AppTextStyle.headline),
+                  (isTablet ? 22.0 : 16.0).verticalSpace,
+                  Text(
+                    routine.name,
+                    style: AppTextStyle.headline.copyWith(
+                      fontSize: isTablet ? 42.0 : null,
+                    ),
+                  ),
                   if (routine.blurb != null && routine.blurb!.trim().isNotEmpty) ...[
-                    6.verticalSpace,
+                    (isTablet ? 10.0 : 6.0).verticalSpace,
                     Text(
                       routine.blurb!.trim(),
                       style: AppTextStyle.bodyMedium.copyWith(
                         color: colors.ink2,
+                        fontSize: isTablet ? 22.0 : null,
+                        height: 1.4,
                       ),
                     ),
                   ],
-                  16.verticalSpace,
+                  (isTablet ? 22.0 : 16.0).verticalSpace,
                   IntrinsicHeight(
-
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -136,14 +147,14 @@ class RoutineDetailScreen extends ConsumerWidget {
                             value: routine.durationText,
                           ),
                         ),
-                        8.horizontalSpace,
+                        (isTablet ? 14.0 : 8.0).horizontalSpace,
                         Expanded(
                           child: AppFactTile(
                             label: 'Level',
                             value: routine.level.label,
                           ),
                         ),
-                        8.horizontalSpace,
+                        (isTablet ? 14.0 : 8.0).horizontalSpace,
                         Expanded(
                           child: AppFactTile(
                             label: 'Equipment',
@@ -153,29 +164,30 @@ class RoutineDetailScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  12.verticalSpace,
+                  (isTablet ? 16.0 : 12.0).verticalSpace,
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
                         Icons.chevron_right_rounded,
-                        size: 16.r,
+                        size: isTablet ? 24.0 : 16.r,
                         color: colors.ink3,
                       ),
-                      6.horizontalSpace,
+                      (isTablet ? 10.0 : 6.0).horizontalSpace,
                       Expanded(
                         child: Text(
                           routine.sequenceLabel,
                           style: AppTextStyle.meta.copyWith(
                             color: colors.ink2,
                             fontWeight: FontWeight.w600,
+                            fontSize: isTablet ? 18.0 : null,
                           ),
                         ),
                       ),
                     ],
                   ),
                   if (routine.adaptedNotes.isNotEmpty) ...[
-                    12.verticalSpace,
+                    (isTablet ? 16.0 : 12.0).verticalSpace,
                     AppNote(
                       title: 'Adapted for you',
                       message: routine.adaptedNotes
@@ -183,8 +195,14 @@ class RoutineDetailScreen extends ConsumerWidget {
                           .join('\n'),
                     ),
                   ],
-                  20.verticalSpace,
-                  Text('Stretches', style: AppTextStyle.sectionTitle),
+                  (isTablet ? 28.0 : 20.0).verticalSpace,
+                  Text(
+                    'Stretches',
+                    style: AppTextStyle.sectionTitle.copyWith(
+                      fontSize: isTablet ? 28.0 : null,
+                    ),
+                  ),
+                  (isTablet ? 10.0 : 0.0).verticalSpace,
                   for (var i = 0; i < routine.stretches.length; i++) ...[
                     Builder(
                       builder: (context) {
@@ -199,6 +217,7 @@ class RoutineDetailScreen extends ConsumerWidget {
                               '${stretch.isEachSide ? ' each side' : ''}'
                               ' · ${stretch.position.label}',
                           leading: AppThumb(
+                            size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
                             child: StretchVideoFrame(
                               videoUrl: stretch.model?.videoUrl,
                               holdSeconds:
@@ -207,6 +226,8 @@ class RoutineDetailScreen extends ConsumerWidget {
                                   ? Image.network(
                                       thumbUrl,
                                       fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
                                       errorBuilder:
                                           (context, error, stackTrace) =>
                                               const StretchPlaceholder(),
@@ -216,7 +237,7 @@ class RoutineDetailScreen extends ConsumerWidget {
                           ),
                           trailing: Icon(
                             Icons.info_outline_rounded,
-                            size: 18.r,
+                            size: isTablet ? 26.0 : 18.r,
                             color: colors.ink3,
                           ),
                           onTap: () => StretchDetailSheet.open(
@@ -238,6 +259,7 @@ class RoutineDetailScreen extends ConsumerWidget {
                 AppButton(
                   label: 'Start · ${routine.durationText}',
                   icon: Icons.play_arrow_rounded,
+                  minHeight: isTablet ? 68.0 : null,
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => GetReadyScreen(
@@ -250,6 +272,7 @@ class RoutineDetailScreen extends ConsumerWidget {
                 AppButton(
                   label: 'Customise a copy',
                   variant: AppButtonVariant.text,
+                  minHeight: isTablet ? 54.0 : null,
                   onPressed: () => AdGate.run(
                     context,
                     ref,

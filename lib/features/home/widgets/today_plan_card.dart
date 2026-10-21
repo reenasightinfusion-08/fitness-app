@@ -94,42 +94,56 @@ class TodayPlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    final eyebrowStyle = AppTextStyle.eyebrow.copyWith(
+      color: colors.ink3,
+      fontSize: isTablet ? 18.0 : null,
+    );
+    final titleStyle = AppTextStyle.display(
+      isTablet ? 36 : 24,
+    ).copyWith(fontSize: isTablet ? 36.0 : null);
+    final metaStyle = AppTextStyle.meta.copyWith(
+      color: colors.ink2,
+      fontSize: isTablet ? 18.0 : null,
+    );
 
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Today's plan · ${plan.durationText}",
-            style: AppTextStyle.eyebrow.copyWith(color: colors.ink3),
-          ),
-          2.verticalSpace,
-          Text(plan.name, style: AppTextStyle.display(24)),
-          14.verticalSpace,
+          Text("Today's plan · ${plan.durationText}", style: eyebrowStyle),
+          (isTablet ? 4.0 : 2.0).verticalSpace,
+          Text(plan.name, style: titleStyle),
+          (isTablet ? 18.0 : 14.0).verticalSpace,
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 for (final stretch in plan.stretches) ...[
-                  StretchThumbnail(stretch: stretch),
-                  6.horizontalSpace,
+                  StretchThumbnail(
+                    stretch: stretch,
+                    size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
+                  ),
+                  (isTablet ? 10.0 : 6.0).horizontalSpace,
                 ],
               ],
             ),
           ),
           if (resumeFromStretch != null && !isCompleted) ...[
-            6.verticalSpace,
+            (isTablet ? 10.0 : 6.0).verticalSpace,
             Text(
               'Paused · stretch ${resumeFromStretch! + 1} of ${plan.stretches.length}'
               '${plan.stretches.length > resumeFromStretch! ? ': ${plan.stretches[resumeFromStretch!].name}' : ''}',
-              style: AppTextStyle.meta.copyWith(color: colors.ink2),
+              style: metaStyle,
             ),
           ],
           if (plan.tags.isNotEmpty || isCompleted) ...[
-            10.verticalSpace,
+            (isTablet ? 14.0 : 10.0).verticalSpace,
             Wrap(
-              spacing: 6.w,
-              runSpacing: 6.h,
+              spacing: isTablet ? 8.0 : 6.w,
+              runSpacing: isTablet ? 8.0 : 6.h,
               children: [
                 if (isCompleted)
                   const AppTag(
@@ -142,16 +156,17 @@ class TodayPlanCard extends StatelessWidget {
               ],
             ),
           ],
-          14.verticalSpace,
+          (isTablet ? 18.0 : 14.0).verticalSpace,
           Row(
             children: [
-              Expanded(child: _primaryAction()),
-              10.horizontalSpace,
+              Expanded(child: _primaryAction(isTablet ? 78.0 : null)),
+              (isTablet ? 14.0 : 10.0).horizontalSpace,
               Expanded(
                 child: AppButton(
                   label: 'See stretches',
                   variant: AppButtonVariant.secondary,
                   onPressed: onSeeStretches,
+                  minHeight: isTablet ? 68.0 : null,
                 ),
               ),
             ],
@@ -163,13 +178,15 @@ class TodayPlanCard extends StatelessWidget {
 
   /// Picks the right primary button for the card's three states: Restart when
   /// today's plan is done, Resume when a paused attempt exists, else Start.
-  Widget _primaryAction() {
+  Widget _primaryAction([double? minHeight]) {
     if (isCompleted) {
       return AppButton(
         label: 'Restart',
+
         icon: Icons.refresh_rounded,
         variant: AppButtonVariant.secondary,
         onPressed: onRestart ?? onStart,
+        minHeight: minHeight,
       );
     }
     if (resumeFromStretch != null) {
@@ -177,12 +194,14 @@ class TodayPlanCard extends StatelessWidget {
         label: 'Resume',
         icon: Icons.play_arrow_rounded,
         onPressed: onResume ?? onStart,
+        minHeight: minHeight,
       );
     }
     return AppButton(
       label: 'Start',
       icon: Icons.play_arrow_rounded,
       onPressed: onStart,
+      minHeight: minHeight,
     );
   }
 }

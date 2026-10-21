@@ -13,13 +13,21 @@ class AppStreakBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    final iconSize = isTablet ? 22.0 : 16.r;
+    final fontSize = isTablet ? (isLarge ? 20.0 : 18.0) : null;
+    final padH = isTablet ? (isLarge ? 20.0 : 18.0) : (isLarge ? 14.w : 11.w);
+    final padV = isTablet ? (isLarge ? 12.0 : 10.0) : (isLarge ? 9.h : 7.h);
+
     return Semantics(
       label: 'Current streak: $days ${days == 1 ? 'day' : 'days'}',
       excludeSemantics: true,
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: isLarge ? 14.w : 11.w,
-          vertical: isLarge ? 9.h : 7.h,
+          horizontal: padH,
+          vertical: padV,
         ),
         decoration: BoxDecoration(
           color: colors.warmSoft,
@@ -30,15 +38,16 @@ class AppStreakBadge extends StatelessWidget {
           children: [
             Icon(
               Icons.local_fire_department_rounded,
-              size: 16.r,
+              size: iconSize,
               color: colors.warm,
             ),
-            5.horizontalSpace,
+            (isTablet ? 8.0 : 5.0).horizontalSpace,
             Text(
               '$days ${days == 1 ? 'day' : 'days'}',
               style:
                   (isLarge ? AppTextStyle.titleSmall : AppTextStyle.bodySmall)
                       .copyWith(
+                        fontSize: fontSize,
                         color: colors.warm,
                         fontWeight: FontWeight.w800,
                         fontFeatures: AppTextStyle.tabular,

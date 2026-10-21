@@ -28,6 +28,17 @@ class AppOptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final h = size.height;
+
+    final radius = isTablet
+        ? BorderRadius.circular((h * 0.018).clamp(16.0, 24.0))
+        : AppBorderRadius.xl;
+    final padH = isTablet ? (h * 0.028).clamp(22.0, 38.0) : 16.w;
+    final padV = isTablet ? (h * 0.022).clamp(18.0, 28.0) : 14.h;
+    final titleFontSize = isTablet ? (h * 0.028).clamp(20.0, 30.0) : null;
+    final subFontSize = isTablet ? (h * 0.023).clamp(17.0, 25.0) : null;
 
     return Semantics(
       selected: isSelected,
@@ -36,36 +47,47 @@ class AppOptionTile extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         decoration: BoxDecoration(
           color: isSelected ? colors.accentSoft : colors.surface,
-          borderRadius: AppBorderRadius.xl,
+          borderRadius: radius,
           border: Border.all(
             color: isSelected ? colors.accent : colors.line,
-            width: 1.5,
+            width: isTablet ? 1.8 : 1.5,
           ),
         ),
         child: Material(
           type: MaterialType.transparency,
           child: InkWell(
             onTap: onTap,
-            borderRadius: AppBorderRadius.xl,
+            borderRadius: radius,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+              padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
               child: Row(
                 children: [
                   AppSelectionIndicator(isSelected: isSelected, shape: shape),
-                  12.horizontalSpace,
-                  if (leading != null) ...[leading!, 12.horizontalSpace],
+                  (isTablet ? 16.0 : 12.0).horizontalSpace,
+                  if (leading != null) ...[
+                    leading!,
+                    (isTablet ? 16.0 : 12.0).horizontalSpace,
+                  ],
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: AppTextStyle.titleSmall),
-                        if (subtitle != null)
+                        Text(
+                          title,
+                          style: AppTextStyle.titleSmall.copyWith(
+                            fontSize: titleFontSize,
+                          ),
+                        ),
+                        if (subtitle != null) ...[
+                          if (isTablet) const SizedBox(height: 4.0),
                           Text(
                             subtitle!,
                             style: AppTextStyle.meta.copyWith(
                               color: colors.ink2,
+                              fontSize: subFontSize,
                             ),
                           ),
+                        ],
                       ],
                     ),
                   ),

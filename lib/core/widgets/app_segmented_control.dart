@@ -29,6 +29,10 @@ class AppSegmentedControl<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final h = size.height;
+
     final selectedIndex = segments.indexWhere(
       (segment) => segment.value == value,
     );
@@ -36,12 +40,16 @@ class AppSegmentedControl<T> extends StatelessWidget {
         ? 0.0
         : -1 + 2 * selectedIndex / (segments.length - 1);
 
+    final controlHeight = isTablet
+        ? (isCompact ? 48.0 : 60.0)
+        : (isCompact ? 36.h : 44.h);
+
     return Container(
-      height: isCompact ? 36.h : 44.h,
-      padding: EdgeInsets.all(3.r),
+      height: controlHeight,
+      padding: EdgeInsets.all(isTablet ? 4.0 : 3.r),
       decoration: BoxDecoration(
         color: colors.surface2,
-        borderRadius: AppBorderRadius.md,
+        borderRadius: isTablet ? BorderRadius.circular(16.0) : AppBorderRadius.md,
       ),
       child: Stack(
         children: [
@@ -98,18 +106,25 @@ class AppSegmentButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final fontSize = isTablet
+        ? (isCompact ? 16.5 : 20.0)
+        : null;
+
     return Semantics(
       button: true,
       selected: isSelected,
       child: InkWell(
         onTap: onTap,
-        borderRadius: AppBorderRadius.sm,
+        borderRadius: isTablet ? BorderRadius.circular(12.0) : AppBorderRadius.sm,
         child: Center(
           child: AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 180),
             style: (isCompact ? AppTextStyle.meta : AppTextStyle.chip).copyWith(
               color: isSelected ? colors.ink : colors.ink2,
               fontWeight: FontWeight.w600,
+              fontSize: fontSize,
             ),
             child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
           ),

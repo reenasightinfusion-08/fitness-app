@@ -11,6 +11,11 @@ class AppFieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final labelSize = isTablet ? 20.0 : null;
+    final optSize = isTablet ? 16.0 : null;
+
     return Text.rich(
       TextSpan(
         text: text,
@@ -21,11 +26,15 @@ class AppFieldLabel extends StatelessWidget {
               style: AppTextStyle.label.copyWith(
                 fontWeight: FontWeight.w500,
                 color: colors.ink3,
+                fontSize: optSize,
               ),
             ),
         ],
       ),
-      style: AppTextStyle.label.copyWith(color: colors.ink2),
+      style: AppTextStyle.label.copyWith(
+        color: colors.ink2,
+        fontSize: labelSize,
+      ),
     );
   }
 }

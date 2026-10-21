@@ -52,13 +52,23 @@ class TimeStep extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Daily reminder', style: AppTextStyle.titleSmall),
+                    Text(
+                      'Daily reminder',
+                      style: AppTextStyle.titleSmall.copyWith(
+                        fontSize: MediaQuery.sizeOf(context).width >= 600
+                            ? (MediaQuery.sizeOf(context).height * 0.026).clamp(19.0, 28.0)
+                            : null,
+                      ),
+                    ),
                     Text(
                       profile.reminderOn
                           ? _formatTime(profile.reminderTime)
                           : "We won't nudge you",
                       style: AppTextStyle.meta.copyWith(
                         color: context.colors.ink2,
+                        fontSize: MediaQuery.sizeOf(context).width >= 600
+                            ? (MediaQuery.sizeOf(context).height * 0.020).clamp(15.5, 24.0)
+                            : null,
                       ),
                     ),
                   ],

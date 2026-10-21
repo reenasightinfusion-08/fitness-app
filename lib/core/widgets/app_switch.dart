@@ -19,6 +19,9 @@ class AppSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
     return Semantics(
       toggled: value,
       label: semanticLabel,
@@ -26,9 +29,9 @@ class AppSwitch extends StatelessWidget {
         onTap: onChanged == null ? null : () => onChanged!(!value),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          width: 50.r,
-          height: 30.r,
-          padding: EdgeInsets.all(3.r),
+          width: isTablet ? 60.0 : 50.r,
+          height: isTablet ? 36.0 : 30.r,
+          padding: EdgeInsets.all(isTablet ? 3.0 : 3.r),
           decoration: BoxDecoration(
             color: value ? colors.accent : colors.line,
             borderRadius: AppBorderRadius.pill,
@@ -38,8 +41,8 @@ class AppSwitch extends StatelessWidget {
             curve: Curves.easeOutCubic,
             alignment: value ? Alignment.centerRight : Alignment.centerLeft,
             child: Container(
-              width: 24.r,
-              height: 24.r,
+              width: isTablet ? 30.0 : 24.r,
+              height: isTablet ? 30.0 : 24.r,
               decoration: BoxDecoration(
                 color: AppColors.white,
                 shape: BoxShape.circle,

@@ -23,6 +23,19 @@ class AppTileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    final titleStyle = AppTextStyle.titleSmall.copyWith(
+      fontSize: isTablet ? 24.0 : null,
+      fontWeight: FontWeight.w700,
+      height: 1.25,
+    );
+    final metaStyle = AppTextStyle.meta.copyWith(
+      fontSize: isTablet ? 18.0 : null,
+      color: colors.ink2,
+    );
+
     return Material(
       color: colors.surface,
       shape: RoundedRectangleBorder(
@@ -33,26 +46,22 @@ class AppTileCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: EdgeInsets.all(12.r),
+          padding: EdgeInsets.all(isTablet ? 18.0 : 12.r),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              thumbnail ?? const AppThumb(),
-             6.verticalSpace,
-              Spacer(),
-              Text(
-                title,
-                style: AppTextStyle.titleSmall.copyWith(
-                  fontWeight: FontWeight.w700,
-                  height: 1.2
-                ),
-              ),
-              if (meta != null)
-                Text(
-                  meta!,
-                  style: AppTextStyle.meta.copyWith(color: colors.ink2),
-                ),
-             Spacer(),
+              thumbnail ??
+                  AppThumb(
+                    size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
+                  ),
+              (isTablet ? 10.0 : 6.0).verticalSpace,
+              const Spacer(),
+              Text(title, style: titleStyle),
+              if (meta != null) ...[
+                if (isTablet) 3.verticalSpace,
+                Text(meta!, style: metaStyle),
+              ],
+              const Spacer(),
             ],
           ),
         ),

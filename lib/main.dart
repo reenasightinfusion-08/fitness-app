@@ -62,6 +62,10 @@ class FitnessApp extends ConsumerWidget {
     return ScreenUtilInit(
       designSize: const Size(390, 844),
       minTextAdapt: true,
+      fontSizeResolver: (fontSize, instance) {
+        final scale = instance.scaleText.clamp(0.85, 1.15);
+        return fontSize * scale;
+      },
       builder: (context, child) => MaterialApp(
         title: 'Loosen',
         debugShowCheckedModeBanner: false,

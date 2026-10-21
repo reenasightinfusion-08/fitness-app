@@ -34,7 +34,11 @@ class BasicStep extends ConsumerWidget {
         inputDecoration: AppInputDecoration.build(
           colors,
           hint: 'Search country...',
-          prefixIcon: Icon(Icons.search_rounded, size: 20.r, color: colors.ink3),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            size: 20.r,
+            color: colors.ink3,
+          ),
         ),
         flagSize: 24.r,
       ),
@@ -51,84 +55,156 @@ class BasicStep extends ConsumerWidget {
         ? null
         : CountryService().findByName(profile.country);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AppTextField(
-          label: 'First name',
-          hint: 'What should we call you?',
-          initialValue: profile.name,
-          textCapitalization: TextCapitalization.words,
-          textInputAction: TextInputAction.next,
-          validator: AppValidators.required,
-          onChanged: controller.setName,
-        ),
-        14.verticalSpace,
-        AppTextField(
-          label: 'Age',
-          hint: 'Years',
-          isOptional: true,
-          initialValue: profile.age,
-          keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.next,
-          validator: AppValidators.optionalNumber(min: 10, max: 100),
-          onChanged: controller.setAge,
-        ),
-        14.verticalSpace,
-        AppFieldLabel(text: 'Country', isOptional: true),
-        6.verticalSpace,
-        InkWell(
-          onTap: () => _showAppCountryPicker(context, ref),
-          borderRadius: AppBorderRadius.lg,
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: AppBorderRadius.lg,
-              border: Border.all(color: colors.line),
-            ),
-            child: Row(
-              children: [
-                if (selectedCountry != null) ...[
-                  Text(
-                    selectedCountry.flagEmoji,
-                    style: TextStyle(fontSize: 20.r),
-                  ),
-                  10.horizontalSpace,
-                ],
-                Expanded(
-                  child: Text(
-                    profile.country.isEmpty
-                        ? 'Select your country'
-                        : profile.country,
-                    style: AppTextStyle.bodyLarge.copyWith(
-                      color: profile.country.isEmpty ? colors.ink3 : colors.ink,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 460;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (isWide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: AppTextField(
+                      label: 'First name',
+                      hint: 'What should we call you?',
+                      initialValue: profile.name,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      validator: AppValidators.required,
+                      onChanged: controller.setName,
                     ),
                   ),
+                  14.horizontalSpace,
+                  Expanded(
+                    flex: 2,
+                    child: AppTextField(
+                      label: 'Age',
+                      hint: 'Years',
+                      isOptional: true,
+                      initialValue: profile.age,
+                      keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.next,
+                      validator: AppValidators.optionalNumber(
+                        min: 10,
+                        max: 100,
+                      ),
+                      onChanged: controller.setAge,
+                    ),
+                  ),
+                ],
+              )
+            else ...[
+              AppTextField(
+                label: 'First name',
+                hint: 'What should we call you?',
+                initialValue: profile.name,
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                validator: AppValidators.required,
+                onChanged: controller.setName,
+              ),
+              14.verticalSpace,
+              AppTextField(
+                label: 'Age',
+                hint: 'Years',
+                isOptional: true,
+                initialValue: profile.age,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+                validator: AppValidators.optionalNumber(min: 10, max: 100),
+                onChanged: controller.setAge,
+              ),
+            ],
+            (isWide ? 24.0 : 14.0).verticalSpace,
+            AppFieldLabel(text: 'Country', isOptional: true),
+            (isWide ? 10.0 : 6.0).verticalSpace,
+            InkWell(
+              onTap: () => _showAppCountryPicker(context, ref),
+              borderRadius: isWide
+                  ? BorderRadius.circular(16.0)
+                  : AppBorderRadius.lg,
+              child: Container(
+                padding: isWide
+                    ? EdgeInsets.symmetric(
+                        horizontal: (MediaQuery.sizeOf(context).height * 0.026)
+                            .clamp(20.0, 32.0),
+                        vertical: (MediaQuery.sizeOf(context).height * 0.024)
+                            .clamp(18.0, 28.0),
+                      )
+                    : EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  borderRadius: isWide
+                      ? BorderRadius.circular(16.0)
+                      : AppBorderRadius.lg,
+                  border: Border.all(
+                    color: colors.line,
+                    width: isWide ? 1.2 : 1.0,
+                  ),
                 ),
-                Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: colors.ink2,
-                  size: 22.r,
+                child: Row(
+                  children: [
+                    if (selectedCountry != null) ...[
+                      Text(
+                        selectedCountry.flagEmoji,
+                        style: TextStyle(
+                          fontSize: isWide
+                              ? (MediaQuery.sizeOf(context).height * 0.038)
+                                    .clamp(30.0, 44.0)
+                              : 20.r,
+                        ),
+                      ),
+                      (isWide ? 16.0 : 10.0).horizontalSpace,
+                    ],
+                    Expanded(
+                      child: Text(
+                        profile.country.isEmpty
+                            ? 'Select your country'
+                            : profile.country,
+                        style: AppTextStyle.bodyLarge.copyWith(
+                          color: profile.country.isEmpty
+                              ? colors.ink3
+                              : colors.ink,
+                          fontSize: isWide
+                              ? (MediaQuery.sizeOf(context).height * 0.028)
+                                    .clamp(20.0, 30.0)
+                              : null,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: colors.ink2,
+                      size: isWide
+                          ? (MediaQuery.sizeOf(context).height * 0.032).clamp(
+                              28.0,
+                              40.0,
+                            )
+                          : 22.r,
+                    ),
+                  ],
                 ),
+              ),
+            ),
+            (isWide ? 28.0 : 18.0).verticalSpace,
+            AppFieldLabel(text: 'Gender', isOptional: true),
+            (isWide ? 14.0 : 8.0).verticalSpace,
+            AppChipGroup(
+              children: [
+                for (final option in genderOptions)
+                  AppChip(
+                    label: option,
+                    isSelected: profile.gender == option,
+                    onTap: () => controller.setGender(option),
+                  ),
               ],
             ),
-          ),
-        ),
-        18.verticalSpace,
-        AppFieldLabel(text: 'Gender', isOptional: true),
-        8.verticalSpace,
-        AppChipGroup(
-          children: [
-            for (final option in genderOptions)
-              AppChip(
-                label: option,
-                isSelected: profile.gender == option,
-                onTap: () => controller.setGender(option),
-              ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 }

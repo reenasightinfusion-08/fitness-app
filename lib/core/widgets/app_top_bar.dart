@@ -31,18 +31,23 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final barHeight = isTablet ? 64.0 : 54.h;
+    final slotWidth = isTablet ? 50.0 : 42.r;
+
     return Material(
       color: backgroundColor ?? colors.ground,
       child: SafeArea(
         bottom: false,
         child: SizedBox(
-          height: 54.h,
+          height: barHeight,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10.w),
+            padding: EdgeInsets.symmetric(horizontal: isTablet ? 14.0 : 10.w),
             child: Row(
               children: [
                 SizedBox(
-                  width: 42.r,
+                  width: slotWidth,
                   child: onBack == null
                       ? null
                       : AppIconButton(
@@ -52,7 +57,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
                           isOnDark: isOnDark,
                         ),
                 ),
-                8.horizontalSpace,
+                (isTablet ? 12.0 : 8.0).horizontalSpace,
                 Expanded(
                   child:
                       center ??
@@ -63,12 +68,13 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyle.titleMedium.copyWith(
                           color: isOnDark ? colors.playerInk : colors.ink,
+                          fontSize: isTablet ? 22.0 : null,
                         ),
                       ),
                 ),
-                8.horizontalSpace,
+                (isTablet ? 12.0 : 8.0).horizontalSpace,
                 ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: 42.r),
+                  constraints: BoxConstraints(minWidth: slotWidth),
                   child: trailing ?? const SizedBox.shrink(),
                 ),
               ],

@@ -39,6 +39,21 @@ class AppWeekDayCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    final circleSize = isTablet ? 60.0 : 32.r;
+    final labelStyle = AppTextStyle.eyebrow.copyWith(
+      color: colors.ink3,
+      fontSize: isTablet ? 18.0 : null,
+      fontWeight: isTablet ? FontWeight.w700 : null,
+    );
+    final numberStyle = AppTextStyle.numeric.copyWith(
+      fontSize: isTablet ? 22.0 : null,
+      fontWeight: isTablet ? FontWeight.w800 : null,
+      color: day.isDone ? colors.accentInk : colors.ink3,
+    );
+
     return Semantics(
       label:
           '${day.label} ${day.dayOfMonth}${day.isDone ? ', stretched' : ''}${day.isToday ? ', today' : ''}',
@@ -47,26 +62,24 @@ class AppWeekDayCell extends StatelessWidget {
         children: [
           Text(
             day.label,
-            style: AppTextStyle.eyebrow.copyWith(color: colors.ink3),
+            style: labelStyle,
           ),
-          6.verticalSpace,
+          (isTablet ? 12.0 : 6.0).verticalSpace,
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: 32.r,
-            height: 32.r,
+            width: circleSize,
+            height: circleSize,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: day.isDone ? colors.accent : colors.surface2,
               shape: BoxShape.circle,
               border: day.isToday
-                  ? Border.all(color: colors.warm, width: 2)
+                  ? Border.all(color: colors.warm, width: isTablet ? 3.0 : 2)
                   : null,
             ),
             child: Text(
               '${day.dayOfMonth}',
-              style: AppTextStyle.numeric.copyWith(
-                color: day.isDone ? colors.accentInk : colors.ink3,
-              ),
+              style: numberStyle,
             ),
           ),
         ],

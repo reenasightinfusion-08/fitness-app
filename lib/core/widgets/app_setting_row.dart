@@ -29,16 +29,27 @@ class AppSettingRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final titleFontSize = isTablet ? 22.0 : null;
+    final subFontSize = isTablet ? 17.5 : null;
+    final padV = isTablet ? 16.0 : 12.h;
+    final chevronSize = isTablet ? 26.0 : 20.r;
+
     final trailingWidget =
         trailing ??
         (onTap != null
-            ? Icon(Icons.chevron_right_rounded, size: 20.r, color: colors.ink3)
+            ? Icon(
+                Icons.chevron_right_rounded,
+                size: chevronSize,
+                color: colors.ink3,
+              )
             : null);
 
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12.h),
+        padding: EdgeInsets.symmetric(vertical: padV),
         decoration: BoxDecoration(
           border: showDivider
               ? Border(bottom: BorderSide(color: colors.line))
@@ -46,24 +57,38 @@ class AppSettingRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            if (leading != null) ...[leading!, 12.horizontalSpace],
+            if (leading != null) ...[
+              leading!,
+              (isTablet ? 16.0 : 12.0).horizontalSpace,
+            ],
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: AppTextStyle.titleSmall.copyWith(color: titleColor),
+                    style: AppTextStyle.titleSmall.copyWith(
+                      color: titleColor,
+                      fontSize: titleFontSize,
+                    ),
                   ),
-                  if (subtitle != null)
+                  if (subtitle != null) ...[
+                    if (isTablet) const SizedBox(height: 4.0),
                     Text(
                       subtitle!,
-                      style: AppTextStyle.meta.copyWith(color: colors.ink2),
+                      style: AppTextStyle.meta.copyWith(
+                        color: colors.ink2,
+                        fontSize: subFontSize,
+                      ),
                     ),
+                  ],
                 ],
               ),
             ),
-            if (trailingWidget != null) ...[12.horizontalSpace, trailingWidget],
+            if (trailingWidget != null) ...[
+              (isTablet ? 16.0 : 12.0).horizontalSpace,
+              trailingWidget,
+            ],
           ],
         ),
       ),

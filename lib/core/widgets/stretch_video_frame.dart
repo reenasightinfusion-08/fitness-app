@@ -27,7 +27,9 @@ class StretchVideoFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = videoUrl;
-    if (url == null || url.trim().isEmpty) return fallback;
+    if (url == null || url.trim().isEmpty) {
+      return SizedBox.expand(child: fallback);
+    }
     return FutureBuilder<Uint8List?>(
       future: VideoFrameService.frameAt(
         url,
@@ -46,15 +48,27 @@ class StretchVideoFrame extends StatelessWidget {
                 gaplessPlayback: true,
               )
             : snapshot.connectionState == ConnectionState.done
-            ? fallback
+            ? SizedBox.expand(child: fallback)
             : StretchPlaceholder(
                 key: const ValueKey('loading'),
                 isLoading: true,
                 isOnDark: isOnDark,
               );
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          child: child,
+        return SizedBox.expand(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            layoutBuilder: (currentChild, previousChildren) => Stack(
+              fit: StackFit.expand,
+              children: [
+                ...previousChildren,
+                ?currentChild,
+              ],
+            ),
+            child: SizedBox.expand(
+              key: child.key ?? ValueKey(snapshot.connectionState),
+              child: child,
+            ),
+          ),
         );
       },
     );

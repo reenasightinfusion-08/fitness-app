@@ -105,7 +105,9 @@ class RoutineSummary {
     this.tags = const [],
     this.adaptedNotes = const [],
     this.transitionSeconds,
-  }) : totalSeconds = totalSeconds > 0 ? totalSeconds : (minutes != null ? minutes * 60 : 0);
+  }) : totalSeconds = totalSeconds > 0
+           ? totalSeconds
+           : (minutes != null ? minutes * 60 : 0);
 
   factory RoutineSummary.fromJson(Map<String, dynamic> json) {
     final rawStretches = json['stretches'] as List? ?? [];
@@ -141,8 +143,11 @@ class RoutineSummary {
     final equipmentLabel = equipmentList.isEmpty
         ? 'None'
         : equipmentList
-            .map((e) => e.isNotEmpty ? '${e[0].toUpperCase()}${e.substring(1)}' : e)
-            .join(', ');
+              .map(
+                (e) =>
+                    e.isNotEmpty ? '${e[0].toUpperCase()}${e.substring(1)}' : e,
+              )
+              .join(', ');
 
     final rawLevel = json['level'] as String? ?? 'beginner';
     final level = RoutineLevel.values.firstWhere(
@@ -150,10 +155,12 @@ class RoutineSummary {
       orElse: () => RoutineLevel.beginner,
     );
 
-    final rawMinutes = (json['minutes'] as num?)?.toInt() ??
+    final rawMinutes =
+        (json['minutes'] as num?)?.toInt() ??
         (json['durationMinutes'] as num?)?.toInt() ??
         (json['duration'] as num?)?.toInt();
-    final totalSeconds = (json['totalSeconds'] as num?)?.toInt() ??
+    final totalSeconds =
+        (json['totalSeconds'] as num?)?.toInt() ??
         (rawMinutes != null ? rawMinutes * 60 : 0);
 
     return RoutineSummary(
@@ -203,6 +210,7 @@ class RoutineSummary {
     if (s > 0) return '$s sec';
     return '$minutes min';
   }
+
   final String? blurb;
   final RoutineLevel level;
   final String equipmentLabel;

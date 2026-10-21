@@ -76,6 +76,17 @@ class TodayView extends ConsumerWidget {
     final firstName = profile.name.isEmpty ? 'Runner' : profile.name;
     final now = DateTime.now();
 
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    final dateStyle = AppTextStyle.eyebrow.copyWith(
+      color: colors.ink3,
+      fontSize: isTablet ? 18.0 : null,
+    );
+    final greetingStyle = AppTextStyle.headline.copyWith(
+      fontSize: isTablet ? 42.0 : null,
+    );
+
     return ListView(
       padding: AppInsets.page,
       children: [
@@ -86,23 +97,20 @@ class TodayView extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    friendlyDate(now),
-                    style: AppTextStyle.eyebrow.copyWith(color: colors.ink3),
-                  ),
-                  4.verticalSpace,
+                  Text(friendlyDate(now), style: dateStyle),
+                  (isTablet ? 6.0 : 4.0).verticalSpace,
                   Text(
                     '${greetingForHour(now.hour)}, $firstName',
-                    style: AppTextStyle.headline,
+                    style: greetingStyle,
                   ),
                 ],
               ),
             ),
-            8.horizontalSpace,
+            (isTablet ? 16.0 : 8.0).horizontalSpace,
             AppStreakBadge(days: streakDays),
           ],
         ),
-        18.verticalSpace,
+        (isTablet ? 22.0 : 18.0).verticalSpace,
         pausedUserAsync.when(
           data: (pausedUser) {
             final paused = pausedUser.isNotEmpty ? pausedUser.first : null;
@@ -175,11 +183,16 @@ class TodayView extends ConsumerWidget {
           loading: () => const TodayPlanCardShimmer(),
           error: (error, stack) => TodaysPlanErrorCard(error: error),
         ),
-        18.verticalSpace,
+        (isTablet ? 22.0 : 18.0).verticalSpace,
         const AdNative(small: false),
-        18.verticalSpace,
-        Text('Quick picks', style: AppTextStyle.sectionTitle),
-        10.verticalSpace,
+        (isTablet ? 22.0 : 18.0).verticalSpace,
+        Text(
+          'Quick picks',
+          style: AppTextStyle.sectionTitle.copyWith(
+            fontSize: isTablet ? 28.0 : null,
+          ),
+        ),
+        (isTablet ? 14.0 : 10.0).verticalSpace,
         routinesAsync.when(
           data: (routines) {
             if (routines.isEmpty) {
@@ -192,13 +205,13 @@ class TodayView extends ConsumerWidget {
             return Column(
               children: [
                 for (var i = 0; i < routines.length; i += 2) ...[
-                  if (i > 0) 10.verticalSpace,
+                  if (i > 0) (isTablet ? 14.0 : 10.0).verticalSpace,
                   IntrinsicHeight(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Expanded(child: _QuickPickTile(routine: routines[i])),
-                        10.horizontalSpace,
+                        (isTablet ? 14.0 : 10.0).horizontalSpace,
                         Expanded(
                           child: i + 1 < routines.length
                               ? _QuickPickTile(routine: routines[i + 1])
@@ -214,13 +227,13 @@ class TodayView extends ConsumerWidget {
           loading: () => Column(
             children: [
               for (var i = 0; i < 2; i++) ...[
-                if (i > 0) 10.verticalSpace,
+                if (i > 0) (isTablet ? 14.0 : 10.0).verticalSpace,
                 IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const Expanded(child: QuickPickTileShimmer()),
-                      10.horizontalSpace,
+                      (isTablet ? 14.0 : 10.0).horizontalSpace,
                       const Expanded(child: QuickPickTileShimmer()),
                     ],
                   ),
@@ -236,12 +249,23 @@ class TodayView extends ConsumerWidget {
             onAction: () => ref.invalidate(routinesProvider),
           ),
         ),
-        18.verticalSpace,
+        (isTablet ? 22.0 : 18.0).verticalSpace,
         const AdNative(small: true),
-        18.verticalSpace,
-        Text('This week', style: AppTextStyle.sectionTitle),
-        10.verticalSpace,
-        AppCard(child: AppWeekStrip(days: stats.weekStrip())),
+        (isTablet ? 22.0 : 18.0).verticalSpace,
+        Text(
+          'This week',
+          style: AppTextStyle.sectionTitle.copyWith(
+            fontSize: isTablet ? 28.0 : null,
+          ),
+        ),
+        (isTablet ? 14.0 : 10.0).verticalSpace,
+        AppCard(
+          padding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 24.0 : 16.r,
+            vertical: isTablet ? 26.0 : 16.r,
+          ),
+          child: AppWeekStrip(days: stats.weekStrip()),
+        ),
       ],
     );
   }
@@ -324,6 +348,8 @@ class _ResumeRoutineBannerState extends State<ResumeRoutineBanner> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
     final active = widget.active;
     final next = active.nextStretch;
     final total = active.routine.stretches.length;
@@ -334,7 +360,11 @@ class _ResumeRoutineBannerState extends State<ResumeRoutineBanner> {
           : 'Stretch ${active.completedStretch + 1} of $total: ${next.name}',
       thumbnail: next == null
           ? null
-          : StretchThumbnail(stretch: next, isOnDark: true),
+          : StretchThumbnail(
+              stretch: next,
+              isOnDark: true,
+              size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
+            ),
       onResume: () {
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -362,13 +392,22 @@ class _QuickPickTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
     final firstStretch = routine.stretches.isNotEmpty
         ? routine.stretches.first
         : null;
 
     final Widget thumbnailWidget = firstStretch != null
-        ? StretchThumbnail(stretch: firstStretch)
-        : const AppThumb(child: StretchPlaceholder());
+        ? StretchThumbnail(
+            stretch: firstStretch,
+            size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
+          )
+        : AppThumb(
+            size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
+            child: const StretchPlaceholder(),
+          );
 
     return AppTileCard(
       title: routine.name,

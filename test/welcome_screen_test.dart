@@ -39,7 +39,13 @@ Future<ProviderContainer> pumpWelcome(WidgetTester tester, Size size) async {
 }
 
 void main() {
-  for (final size in const [Size(360, 560), Size(411, 900)]) {
+  for (final size in const [
+    Size(360, 560),
+    Size(411, 900),
+    Size(768, 1024), // Tablet portrait
+    Size(1024, 768), // Tablet landscape
+    Size(1280, 800), // Widescreen tablet
+  ]) {
     testWidgets('welcome offers sign up and login only at $size', (
       tester,
     ) async {
@@ -48,6 +54,11 @@ void main() {
       expect(find.text('Get started'), findsOneWidget);
       expect(find.text('I already have an account'), findsOneWidget);
       expect(find.textContaining('sample'), findsNothing);
+      if (size.height >= 700) {
+        expect(find.text('Voice-guided'), findsOneWidget);
+        expect(find.text('Built for your body'), findsOneWidget);
+        expect(find.text('Any equipment'), findsOneWidget);
+      }
       expect(tester.takeException(), isNull);
     });
   }

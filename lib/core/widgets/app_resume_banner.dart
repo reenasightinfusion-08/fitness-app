@@ -26,28 +26,43 @@ class AppResumeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final dimStyle = AppTextStyle.meta.copyWith(color: colors.playerDim);
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    final dimStyle = AppTextStyle.meta.copyWith(
+      color: colors.playerDim,
+      fontSize: isTablet ? 18.0 : null,
+    );
+    final titleStyle = AppTextStyle.titleMedium.copyWith(
+      color: colors.playerInk,
+      fontSize: isTablet ? 28.0 : null,
+    );
+
     return Container(
-      padding: EdgeInsets.all(14.r),
+      padding: EdgeInsets.all(isTablet ? 20.0 : 14.r),
       decoration: BoxDecoration(
         color: colors.playerBg,
         borderRadius: AppBorderRadius.xxl,
       ),
       child: Row(
         children: [
-          thumbnail ?? const AppThumb(isOnDark: true),
-          12.horizontalSpace,
+          thumbnail ??
+              AppThumb(
+                size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
+                isOnDark: true,
+              ),
+          (isTablet ? 18.0 : 12.0).horizontalSpace,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(eyebrow, style: dimStyle),
+                (isTablet ? 4.0 : 0.0).verticalSpace,
                 Text(
                   title,
-                  style: AppTextStyle.titleMedium.copyWith(
-                    color: colors.playerInk,
-                  ),
+                  style: titleStyle,
                 ),
+                (isTablet ? 4.0 : 0.0).verticalSpace,
                 Text(
                   subtitle,
                   style: dimStyle,
@@ -57,13 +72,13 @@ class AppResumeBanner extends StatelessWidget {
               ],
             ),
           ),
-          12.horizontalSpace,
+          (isTablet ? 18.0 : 12.0).horizontalSpace,
           AppButton(
             label: 'Resume',
             icon: Icons.play_arrow_rounded,
             onPressed: onResume,
             variant: AppButtonVariant.inverse,
-            size: AppButtonSize.small,
+            size: isTablet ? AppButtonSize.regular : AppButtonSize.small,
             isExpanded: false,
           ),
         ],

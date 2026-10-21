@@ -15,9 +15,14 @@ import 'package:fitness_app/services/auth_service.dart';
 /// [AuthService.loginWithApple]; Apple is shown on iOS only. On the signup
 /// screen ([isSignup]) Google refuses an account that already exists.
 class AuthSocialButtons extends ConsumerStatefulWidget {
-  const AuthSocialButtons({super.key, this.isSignup = false});
+  const AuthSocialButtons({
+    super.key,
+    this.isSignup = false,
+    this.dividerText,
+  });
 
   final bool isSignup;
+  final String? dividerText;
 
   @override
   ConsumerState<AuthSocialButtons> createState() => AuthSocialButtonsState();
@@ -88,7 +93,7 @@ class AuthSocialButtonsState extends ConsumerState<AuthSocialButtons> {
           ),
         ],
         14.verticalSpace,
-        const AppDividerText(text: 'or use email'),
+        AppDividerText(text: widget.dividerText ?? (widget.isSignup ? 'or use email' : 'or continue')),
       ],
     );
   }

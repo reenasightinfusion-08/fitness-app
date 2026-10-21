@@ -42,6 +42,22 @@ class AppBottomNav extends StatelessWidget {
     // high. Android keeps the full inset.
     final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
     final isIos = Theme.of(context).platform == TargetPlatform.iOS;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    final Widget tabRow = Row(
+      children: [
+        for (var i = 0; i < items.length; i++)
+          Expanded(
+            child: AppBottomNavTab(
+              item: items[i],
+              isActive: i == currentIndex,
+              onTap: () => onTap(i),
+            ),
+          ),
+      ],
+    );
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surface,
@@ -55,19 +71,20 @@ class AppBottomNav extends StatelessWidget {
           top: false,
           bottom: false,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 5.h),
-            child: Row(
-              children: [
-                for (var i = 0; i < items.length; i++)
-                  Expanded(
-                    child: AppBottomNavTab(
-                      item: items[i],
-                      isActive: i == currentIndex,
-                      onTap: () => onTap(i),
-                    ),
-                  ),
-              ],
+            padding: EdgeInsets.symmetric(
+              horizontal: isTablet ? 16.0 : 4.w,
+              vertical: isTablet ? 6.0 : 5.h,
             ),
+            child: isTablet
+                ? Align(
+                    alignment: Alignment.center,
+                    heightFactor: 1.0,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 580.0),
+                      child: tabRow,
+                    ),
+                  )
+                : tabRow,
           ),
         ),
       ),
@@ -91,6 +108,9 @@ class AppBottomNavTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final color = isActive ? colors.accent : colors.ink3;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
     return Semantics(
       selected: isActive,
       button: true,
@@ -100,7 +120,7 @@ class AppBottomNavTab extends StatelessWidget {
         onTap: onTap,
         borderRadius: AppBorderRadius.md,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 6.h),
+          padding: EdgeInsets.symmetric(vertical: isTablet ? 10.0 : 6.h),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -113,15 +133,18 @@ class AppBottomNavTab extends StatelessWidget {
                   tween: ColorTween(end: color),
                   builder: (context, animatedColor, child) => Icon(
                     isActive ? item.activeIcon : item.icon,
-                    size: 22.r,
+                    size: isTablet ? 28.0 : 22.r,
                     color: animatedColor,
                   ),
                 ),
               ),
-              2.verticalSpace,
+              (isTablet ? 4.0 : 2.0).verticalSpace,
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 180),
-                style: AppTextStyle.tab.copyWith(color: color),
+                style: AppTextStyle.tab.copyWith(
+                  color: color,
+                  fontSize: isTablet ? 15.0 : null,
+                ),
                 child: Text(item.label),
               ),
             ],

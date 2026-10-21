@@ -32,6 +32,8 @@ class AppIconButton extends StatelessWidget {
     final colors = context.colors;
     final baseColor = color ?? (isOnDark ? colors.playerInk : colors.ink);
     final showActive = isActive && activeIcon != null;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
 
     return Tooltip(
       message: tooltip,
@@ -45,7 +47,7 @@ class AppIconButton extends StatelessWidget {
               ? colors.playerInk.withValues(alpha: 0.08)
               : colors.surface2,
           child: SizedBox.square(
-            dimension: 42.r,
+            dimension: isTablet ? 50.0 : 42.r,
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               transitionBuilder: (child, animation) =>
@@ -53,7 +55,7 @@ class AppIconButton extends StatelessWidget {
               child: Icon(
                 showActive ? activeIcon : icon,
                 key: ValueKey(showActive),
-                size: 22.r,
+                size: isTablet ? 28.0 : 22.r,
                 color: showActive ? (activeColor ?? colors.danger) : baseColor,
               ),
             ),

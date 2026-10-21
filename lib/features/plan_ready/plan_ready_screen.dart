@@ -13,6 +13,7 @@ import 'package:fitness_app/features/home/widgets/todays_plan_error_card.dart';
 import 'package:fitness_app/features/onboarding_setup/models/onboarding_options.dart';
 import 'package:fitness_app/features/onboarding_setup/models/onboarding_profile.dart';
 import 'package:fitness_app/features/onboarding_setup/providers/onboarding_profile_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Matches the prototype's `screens.ready`: the reveal after the setup
 /// wizard, before the person ever sees the tabbed home shell. Tells them how
@@ -33,21 +34,26 @@ class PlanReadyScreen extends ConsumerWidget {
           loading: () => const Center(child: AppLoader()),
           error: (error, stack) => Padding(
             padding: AppInsets.page,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TodaysPlanErrorCard(
-                  error: error,
-                  onRetry: () => ref.invalidate(planOverviewProvider),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TodaysPlanErrorCard(
+                      error: error,
+                      onRetry: () => ref.invalidate(planOverviewProvider),
+                    ),
+                    16.verticalSpace,
+                    AppButton(
+                      label: 'Look around first',
+                      variant: AppButtonVariant.text,
+                      onPressed: () =>
+                          ref.read(appFlowProvider.notifier).enterApp(),
+                    ),
+                  ],
                 ),
-                16.verticalSpace,
-                AppButton(
-                  label: 'Look around first',
-                  variant: AppButtonVariant.text,
-                  onPressed: () =>
-                      ref.read(appFlowProvider.notifier).enterApp(),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -72,6 +78,50 @@ class PlanReadyContent extends ConsumerWidget {
     final days = overview.planDays;
     final reasons = planReasons(profile);
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 600) {
+          final isLandscape = constraints.maxWidth >= constraints.maxHeight;
+          if (isLandscape || constraints.maxWidth >= 840) {
+            return _buildTabletLandscape(
+              context: context,
+              ref: ref,
+              firstName: firstName,
+              days: days,
+              reasons: reasons,
+              constraints: constraints,
+            );
+          } else {
+            return _buildTabletPortrait(
+              context: context,
+              ref: ref,
+              firstName: firstName,
+              days: days,
+              reasons: reasons,
+              constraints: constraints,
+            );
+          }
+        }
+
+        return _buildMobile(
+          context: context,
+          ref: ref,
+          firstName: firstName,
+          days: days,
+          reasons: reasons,
+        );
+      },
+    );
+  }
+
+  /// Mobile layout preserved exactly.
+  Widget _buildMobile({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String firstName,
+    required int days,
+    required List<String> reasons,
+  }) {
     return Column(
       children: [
         Expanded(
@@ -133,6 +183,350 @@ class PlanReadyContent extends ConsumerWidget {
               onPressed: () => ref.read(appFlowProvider.notifier).enterApp(),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  /// Tablet landscape split layout: Left hero image card & right plan cards.
+  Widget _buildTabletLandscape({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String firstName,
+    required int days,
+    required List<String> reasons,
+    required BoxConstraints constraints,
+  }) {
+    final colors = context.colors;
+    final h = constraints.maxHeight;
+    final w = constraints.maxWidth;
+
+    final colW = w / 2;
+    final formWidth = (colW * 0.90).clamp(520.0, 800.0);
+
+    return Row(
+      children: [
+        // Left hero card
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.all((h * 0.024).clamp(16.0, 32.0)),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28.0),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    'assets/images/onboarding_hero.jpg',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.0),
+                          Colors.black.withValues(alpha: 0.2),
+                          Colors.black.withValues(alpha: 0.8),
+                        ],
+                        stops: const [0.4, 0.65, 1.0],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 24.0,
+                    right: 24.0,
+                    bottom: 24.0,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: (h * 0.026).clamp(20.0, 32.0),
+                        vertical: (h * 0.020).clamp(16.0, 24.0),
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.94),
+                        borderRadius: BorderRadius.circular(22.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.14),
+                            blurRadius: 18,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: (h * 0.016).clamp(14.0, 20.0),
+                              vertical: (h * 0.008).clamp(6.0, 10.0),
+                            ),
+                            decoration: BoxDecoration(
+                              color: colors.accent.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            child: Text(
+                              'PLAN READY',
+                              style: GoogleFonts.figtree(
+                                fontSize: (h * 0.020).clamp(15.0, 22.0),
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: colors.accent,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: (h * 0.012).clamp(8.0, 14.0)),
+                          Text(
+                            '$firstName, your $days-day stretching plan is ready.',
+                            style: GoogleFonts.bricolageGrotesque(
+                              fontSize: (h * 0.030).clamp(22.0, 32.0),
+                              fontWeight: FontWeight.w700,
+                              color: colors.ink,
+                            ),
+                          ),
+                          SizedBox(height: (h * 0.008).clamp(6.0, 10.0)),
+                          Text(
+                            overview.summary.isNotEmpty
+                                ? overview.summary
+                                : 'Tailored specifically to your goals, pain areas, and schedule.',
+                            style: GoogleFonts.figtree(
+                              fontSize: (h * 0.022).clamp(16.5, 24.0),
+                              color: colors.ink2,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Right details list
+        Expanded(
+          child: Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: formWidth),
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20.0,
+                        vertical: 24.0,
+                      ),
+                      children: [
+                        Text(
+                          'YOUR SCHEDULE',
+                          style: GoogleFonts.figtree(
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.w700,
+                            color: colors.accent,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 6.0),
+                        Text(
+                          days == 1
+                              ? '1-day routine'
+                              : '$days-day flexibility plan',
+                          style: GoogleFonts.bricolageGrotesque(
+                            fontSize: (h * 0.040).clamp(28.0, 40.0),
+                            fontWeight: FontWeight.w700,
+                            color: colors.ink,
+                            height: 1.15,
+                          ),
+                        ),
+                        const SizedBox(height: 8.0),
+                        Text(
+                          overview.summary.isNotEmpty
+                              ? overview.summary
+                              : days == 1
+                              ? 'One routine, repeated each day.'
+                              : 'A different routine each day. After day $days it starts again from day 1.',
+                          style: GoogleFonts.figtree(
+                            fontSize: (h * 0.022).clamp(16.0, 22.0),
+                            color: colors.ink2,
+                            height: 1.45,
+                          ),
+                        ),
+                        const SizedBox(height: 20.0),
+                        AppCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome_rounded,
+                                    color: colors.accent,
+                                    size: 20.0,
+                                  ),
+                                  const SizedBox(width: 8.0),
+                                  Text(
+                                    'Why this plan',
+                                    style: GoogleFonts.figtree(
+                                      fontSize: 18.0,
+                                      fontWeight: FontWeight.w700,
+                                      color: colors.ink,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14.0),
+                              AppReasonList(items: reasons),
+                            ],
+                          ),
+                        ),
+                        for (final day in overview.days) ...[
+                          const SizedBox(height: 16.0),
+                          PlanDayCard(day: day),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Bottom action buttons: Stacked cleanly full-width
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20.0, 12.0, 20.0, 24.0),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: formWidth),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: (h * 0.070).clamp(58.0, 74.0),
+                        child: AppButton(
+                          label: "Start today's plan",
+                          icon: Icons.play_arrow_rounded,
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => GetReadyScreen(
+                                plan: overview.today.routine,
+                                source: 'plan',
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      AppButton(
+                        label: 'Look around first',
+                        variant: AppButtonVariant.text,
+                        size: AppButtonSize.small,
+                        isExpanded: false,
+                        onPressed: () =>
+                            ref.read(appFlowProvider.notifier).enterApp(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Tablet portrait layout: Centered single column.
+  Widget _buildTabletPortrait({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String firstName,
+    required int days,
+    required List<String> reasons,
+    required BoxConstraints constraints,
+  }) {
+    final formWidth = (constraints.maxWidth * 0.85).clamp(480.0, 640.0);
+
+    return Column(
+      children: [
+        Expanded(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: formWidth),
+              child: ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 24.0,
+                ),
+                children: [
+                  AppPageHeader(
+                    eyebrow: 'Your plan is ready',
+                    title: days == 1
+                        ? '$firstName, you got a 1-day plan.'
+                        : '$firstName, you got a $days-day plan.',
+                  ),
+                  const SizedBox(height: 8.0),
+                  Text(
+                    overview.summary.isNotEmpty
+                        ? overview.summary
+                        : days == 1
+                        ? 'One routine, repeated each day.'
+                        : 'A different routine each day. After day $days it starts again from day 1.',
+                    style: AppTextStyle.bodySmall.copyWith(
+                      color: context.colors.ink2,
+                    ),
+                  ),
+                  const SizedBox(height: 20.0),
+                  AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Why this plan', style: AppTextStyle.titleMedium),
+                        const SizedBox(height: 12.0),
+                        AppReasonList(items: reasons),
+                      ],
+                    ),
+                  ),
+                  for (final day in overview.days) ...[
+                    const SizedBox(height: 16.0),
+                    PlanDayCard(day: day),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: formWidth),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 52.0,
+                  child: AppButton(
+                    label: "Start today's plan",
+                    icon: Icons.play_arrow_rounded,
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => GetReadyScreen(
+                          plan: overview.today.routine,
+                          source: 'plan',
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8.0),
+                AppButton(
+                  label: 'Look around first',
+                  variant: AppButtonVariant.text,
+                  onPressed: () =>
+                      ref.read(appFlowProvider.notifier).enterApp(),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -200,6 +594,14 @@ class PlanDayCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final routine = day.routine;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final h = size.height;
+
+    final eyebrowSize = isTablet ? (h * 0.018).clamp(13.5, 18.0) : null;
+    final titleSize = isTablet ? (h * 0.028).clamp(20.0, 28.0) : null;
+    final reasonSize = isTablet ? (h * 0.020).clamp(15.0, 20.0) : null;
+
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,37 +611,55 @@ class PlanDayCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Day ${day.day} · ${routine.durationText} · ${routine.stretches.length} stretches',
-                  style: AppTextStyle.eyebrow.copyWith(color: colors.ink3),
+                  style: AppTextStyle.eyebrow.copyWith(
+                    color: colors.ink3,
+                    fontSize: eyebrowSize,
+                  ),
                 ),
               ),
               if (day.isToday)
                 const AppTag(label: 'Today', tone: AppTone.accent),
             ],
           ),
-          2.verticalSpace,
-          Text(routine.name, style: AppTextStyle.display(22)),
+          (isTablet ? 6.0 : 2.0).verticalSpace,
+          Text(
+            routine.name,
+            style: AppTextStyle.display(22).copyWith(
+              fontSize: titleSize,
+            ),
+          ),
           if (day.reason.isNotEmpty) ...[
-            4.verticalSpace,
+            (isTablet ? 6.0 : 4.0).verticalSpace,
             Text(
               day.reason,
-              style: AppTextStyle.bodySmall.copyWith(color: colors.ink2),
+              style: AppTextStyle.bodySmall.copyWith(
+                color: colors.ink2,
+                fontSize: reasonSize,
+              ),
             ),
           ] else if (routine.blurb != null &&
               routine.blurb!.trim().isNotEmpty) ...[
-            4.verticalSpace,
+            (isTablet ? 6.0 : 4.0).verticalSpace,
             Text(
               routine.blurb!,
-              style: AppTextStyle.bodySmall.copyWith(color: colors.ink2),
+              style: AppTextStyle.bodySmall.copyWith(
+                color: colors.ink2,
+                fontSize: reasonSize,
+              ),
             ),
           ],
-          12.verticalSpace,
+          (isTablet ? 16.0 : 12.0).verticalSpace,
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
             child: Row(
               children: [
                 for (final stretch in routine.stretches) ...[
-                  StretchThumbnail(stretch: stretch),
-                  6.horizontalSpace,
+                  StretchThumbnail(
+                    stretch: stretch,
+                    size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
+                  ),
+                  (isTablet ? 10.0 : 6.0).horizontalSpace,
                 ],
               ],
             ),

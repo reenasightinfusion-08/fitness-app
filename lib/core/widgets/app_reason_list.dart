@@ -18,20 +18,35 @@ class AppReasonList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final h = size.height;
+
+    final textFontSize = isTablet ? (h * 0.024).clamp(18.0, 26.0) : null;
+    final iconSize = isTablet ? (h * 0.028).clamp(22.0, 32.0) : 18.r;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var i = 0; i < items.length; i++) ...[
-          if (i > 0) 9.verticalSpace,
+          if (i > 0) (isTablet ? 14.0 : 9.0).verticalSpace,
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: EdgeInsets.only(top: 2.h),
-                child: Icon(icon, size: 18.r, color: colors.accent),
+                padding: EdgeInsets.only(top: isTablet ? 3.0 : 2.h),
+                child: Icon(icon, size: iconSize, color: colors.accent),
               ),
-              10.horizontalSpace,
-              Expanded(child: Text(items[i], style: AppTextStyle.bodyMedium)),
+              (isTablet ? 14.0 : 10.0).horizontalSpace,
+              Expanded(
+                child: Text(
+                  items[i],
+                  style: AppTextStyle.bodyMedium.copyWith(
+                    fontSize: textFontSize,
+                    height: 1.45,
+                  ),
+                ),
+              ),
             ],
           ),
         ],

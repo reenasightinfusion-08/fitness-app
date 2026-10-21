@@ -28,8 +28,14 @@ class AppTag extends StatelessWidget {
       AppTone.danger => (colors.dangerSoft, colors.danger),
     };
 
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 14.0 : (9.w).clamp(9.0, 16.0),
+        vertical: isTablet ? 8.0 : (4.h).clamp(4.0, 8.0),
+      ),
       decoration: BoxDecoration(
         color: background,
         borderRadius: AppBorderRadius.pill,
@@ -38,10 +44,22 @@ class AppTag extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 12.r, color: foreground),
-            4.horizontalSpace,
+            Icon(
+              icon,
+              size: isTablet ? 18.0 : (12.r).clamp(12.0, 16.0),
+              color: foreground,
+            ),
+            SizedBox(width: isTablet ? 6.0 : 4.0),
           ],
-          Text(label, style: AppTextStyle.tag.copyWith(color: foreground)),
+          Flexible(
+            child: Text(
+              label,
+              style: AppTextStyle.tag.copyWith(
+                color: foreground,
+                fontSize: isTablet ? 16.0 : null,
+              ),
+            ),
+          ),
         ],
       ),
     );

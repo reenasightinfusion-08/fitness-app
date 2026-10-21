@@ -71,13 +71,24 @@ class AppTextFieldState extends State<AppTextField> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final h = size.height;
+    final tabletFontSize = isTablet ? (h * 0.028).clamp(20.0, 30.0) : null;
+    final tabletPadding = isTablet
+        ? EdgeInsets.symmetric(
+            horizontal: (h * 0.026).clamp(20.0, 32.0),
+            vertical: (h * 0.024).clamp(18.0, 28.0),
+          )
+        : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.label != null) ...[
           AppFieldLabel(text: widget.label!, isOptional: widget.isOptional),
-          6.verticalSpace,
+          (isTablet ? (h * 0.010).clamp(8.0, 14.0) : 6.0).verticalSpace,
         ],
         TextFormField(
           controller: widget.controller,
@@ -99,6 +110,7 @@ class AppTextFieldState extends State<AppTextField> {
           textAlign: isOtp ? TextAlign.center : TextAlign.start,
           style: (isOtp ? AppTextStyle.otp : AppTextStyle.bodyLarge).copyWith(
             color: colors.ink,
+            fontSize: isTablet ? (isOtp ? null : tabletFontSize) : null,
           ),
           cursorColor: colors.accent,
           onChanged: widget.onChanged,
@@ -108,8 +120,11 @@ class AppTextFieldState extends State<AppTextField> {
           decoration: AppInputDecoration.build(
             colors,
             hint: widget.hint,
+            isTablet: isTablet,
+            fontSize: tabletFontSize,
+            contentPadding: tabletPadding,
             prefixIcon: widget.variant == AppTextFieldVariant.search
-                ? Icon(Icons.search_rounded, size: 22.r)
+                ? Icon(Icons.search_rounded, size: isTablet ? 28.0 : 22.r)
                 : null,
             suffixIcon: isPassword
                 ? IconButton(

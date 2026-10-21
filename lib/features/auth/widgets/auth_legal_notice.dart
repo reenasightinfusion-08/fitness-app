@@ -1,13 +1,15 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 import 'package:fitness_app/core/theme/theme.dart';
 import 'package:fitness_app/core/utils/legal_links.dart';
 
 /// "By creating an account you agree to our" over "Terms of Use and Privacy
 /// Policy." — two fixed lines, so a link never wraps on its own.
 class AuthLegalNotice extends StatefulWidget {
-  const AuthLegalNotice({super.key});
+  const AuthLegalNotice({super.key, this.fontSize});
+
+  final double? fontSize;
 
   @override
   State<AuthLegalNotice> createState() => _AuthLegalNoticeState();
@@ -29,7 +31,14 @@ class _AuthLegalNoticeState extends State<AuthLegalNotice> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final base = AppTextStyle.body(12).copyWith(color: colors.ink3, height: 1.5);
+    final base = widget.fontSize != null
+        ? GoogleFonts.figtree(
+            fontSize: widget.fontSize,
+            fontWeight: FontWeight.w400,
+            color: colors.ink3,
+            height: 1.5,
+          )
+        : AppTextStyle.body(12).copyWith(color: colors.ink3, height: 1.5);
     final link = base.copyWith(
       color: colors.ink,
       fontWeight: FontWeight.w600,

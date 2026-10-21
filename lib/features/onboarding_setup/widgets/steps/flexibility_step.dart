@@ -38,11 +38,16 @@ class FlexibilityStep extends ConsumerWidget {
                   showGround: false,
                 ),
               ),
-              12.horizontalSpace,
+              (MediaQuery.sizeOf(context).width >= 600 ? 16.0 : 12.0).horizontalSpace,
               Expanded(
                 child: Text(
                   flexibilityQuestions[i].question,
-                  style: AppTextStyle.titleSmall,
+                  style: AppTextStyle.titleSmall.copyWith(
+                    fontSize: MediaQuery.sizeOf(context).width >= 600
+                        ? (MediaQuery.sizeOf(context).height * 0.026).clamp(19.0, 28.0)
+                        : null,
+                    height: 1.35,
+                  ),
                 ),
               ),
             ],

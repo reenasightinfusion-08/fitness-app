@@ -47,8 +47,14 @@ class AppNote extends StatelessWidget {
       ),
     };
 
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 18.0 : 14.w,
+        vertical: isTablet ? 16.0 : 12.h,
+      ),
       decoration: BoxDecoration(
         color: background,
         borderRadius: AppBorderRadius.xl,
@@ -56,14 +62,30 @@ class AppNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon ?? defaultIcon, size: 20.r, color: foreground),
-          10.horizontalSpace,
+          Icon(
+            icon ?? defaultIcon,
+            size: isTablet ? 26.0 : 20.r,
+            color: foreground,
+          ),
+          (isTablet ? 14.0 : 10.0).horizontalSpace,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (title != null) Text(title!, style: AppTextStyle.titleSmall),
-                Text(message, style: AppTextStyle.bodySmall),
+                if (title != null)
+                  Text(
+                    title!,
+                    style: AppTextStyle.titleSmall.copyWith(
+                      fontSize: isTablet ? 20.0 : null,
+                    ),
+                  ),
+                if (title != null && isTablet) 4.verticalSpace,
+                Text(
+                  message,
+                  style: AppTextStyle.bodySmall.copyWith(
+                    fontSize: isTablet ? 17.0 : null,
+                  ),
+                ),
               ],
             ),
           ),

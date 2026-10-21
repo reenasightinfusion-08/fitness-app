@@ -107,6 +107,9 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
     final firstStretch =
         widget.plan.stretches.isNotEmpty ? widget.plan.stretches.first : null;
     final thumbUrl = firstStretch?.model?.thumbnailUrl;
@@ -144,6 +147,8 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                               ? Image.network(
                                   thumbUrl,
                                   fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
                                   errorBuilder: (context, error, stackTrace) =>
                                       const StretchPlaceholder(),
                                 )
@@ -152,30 +157,37 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                       ),
                     ),
                   ),
-                  16.verticalSpace,
+                  (isTablet ? 22.0 : 16.0).verticalSpace,
                   Text(
                     '${widget.plan.name} · ${widget.plan.durationText}',
-                    style: AppTextStyle.eyebrow.copyWith(color: colors.ink3),
+                    style: AppTextStyle.eyebrow.copyWith(
+                      color: colors.ink3,
+                      fontSize: isTablet ? 18.0 : null,
+                    ),
                   ),
-                  4.verticalSpace,
+                  (isTablet ? 6.0 : 4.0).verticalSpace,
                   Text(
                     'First up: ${firstStretch?.name ?? ''}',
-                    style: AppTextStyle.headline,
+                    style: AppTextStyle.headline.copyWith(
+                      fontSize: isTablet ? 40.0 : null,
+                    ),
                   ),
-                  4.verticalSpace,
+                  (isTablet ? 6.0 : 4.0).verticalSpace,
                   Text(
                     '${widget.plan.stretches.length} stretches',
                     style: AppTextStyle.bodyMedium.copyWith(
                       color: colors.ink2,
+                      fontSize: isTablet ? 20.0 : null,
                     ),
                   ),
-                  20.verticalSpace,
+                  (isTablet ? 26.0 : 20.0).verticalSpace,
                   AppCard(
+                    padding: EdgeInsets.all(isTablet ? 24.0 : 16.r),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const AppFieldLabel(text: 'Guidance'),
-                        8.verticalSpace,
+                        (isTablet ? 12.0 : 8.0).verticalSpace,
                         AppSegmentedControl<GuideMode>(
                           segments: const [
                             AppSegmentModel(
@@ -195,14 +207,15 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                           onChanged: (value) =>
                               setState(() => guideMode = value),
                         ),
-                        8.verticalSpace,
+                        (isTablet ? 12.0 : 8.0).verticalSpace,
                         Text(
                           _guideDescription,
                           style: AppTextStyle.meta.copyWith(
                             color: colors.ink2,
+                            fontSize: isTablet ? 17.5 : null,
                           ),
                         ),
-                        4.verticalSpace,
+                        (isTablet ? 8.0 : 4.0).verticalSpace,
                         AppSettingRow(
                           title: 'Calm background music',
                           subtitle: 'Gets quieter whenever the voice speaks',
@@ -214,28 +227,17 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                             semanticLabel: 'Background music',
                           ),
                         ),
-                        // AppSettingRow(
-                        //   title: 'Hold time',
-                        //   subtitle: 'For this session',
-                        //   showDivider: false,
-                        //   trailing: AppStepper(
-                        //     valueLabel: '${holdSeconds}s',
-                        //     onDecrement: holdSeconds <= _minHoldSeconds
-                        //         ? null
-                        //         : () => _adjustHold(-_holdStepSeconds),
-                        //     onIncrement: holdSeconds >= _maxHoldSeconds
-                        //         ? null
-                        //         : () => _adjustHold(_holdStepSeconds),
-                        //   ),
-                        // ),
                       ],
                     ),
                   ),
-                  12.verticalSpace,
+                  (isTablet ? 16.0 : 12.0).verticalSpace,
                   Text(
                     "Tip: prop your phone where you can hear it. "
                     "You won't need to look at it.",
-                    style: AppTextStyle.meta.copyWith(color: colors.ink2),
+                    style: AppTextStyle.meta.copyWith(
+                      color: colors.ink2,
+                      fontSize: isTablet ? 17.5 : null,
+                    ),
                   ),
                 ],
               ),
@@ -246,6 +248,7 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                   label: 'Begin',
                   icon: Icons.play_arrow_rounded,
                   isLoading: isStarting,
+                  minHeight: isTablet ? 68.0 : null,
                   onPressed: begin,
                 ),
               ],

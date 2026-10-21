@@ -31,6 +31,7 @@ class AppButton extends StatefulWidget {
     this.leading,
     this.isLoading = false,
     this.isExpanded = true,
+    this.minHeight,
   });
 
   final String label;
@@ -43,6 +44,7 @@ class AppButton extends StatefulWidget {
   final Widget? leading;
   final bool isLoading;
   final bool isExpanded;
+  final double? minHeight;
 
   @override
   State<AppButton> createState() => AppButtonState();
@@ -101,12 +103,21 @@ class AppButtonState extends State<AppButton> {
       context.colors,
       isDark: Theme.of(context).brightness == Brightness.dark,
     );
-    final radius = isSmall ? AppBorderRadius.md : AppBorderRadius.xl;
-    final minHeight = switch ((widget.size, widget.variant)) {
-      (AppButtonSize.small, _) => 38.h,
-      (_, AppButtonVariant.text || AppButtonVariant.dangerText) => 44.h,
-      _ => 52.h,
-    };
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final h = size.height;
+    final radius = isTablet
+        ? BorderRadius.circular((h * 0.024).clamp(16.0, 28.0))
+        : (isSmall ? AppBorderRadius.md : AppBorderRadius.xl);
+    final minHeight =
+        widget.minHeight ??
+        switch ((widget.size, widget.variant)) {
+          (AppButtonSize.small, _) =>
+            isTablet ? 48.0 : (38.h).clamp(38.0, 44.0),
+          (_, AppButtonVariant.text || AppButtonVariant.dangerText) =>
+            isTablet ? 54.0 : (44.h).clamp(44.0, 48.0),
+          _ => isTablet ? 66.0 : (52.h).clamp(52.0, 56.0),
+        };
 
     return Semantics(
       button: true,
@@ -136,7 +147,7 @@ class AppButtonState extends State<AppButton> {
                 ),
                 child: Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: isSmall ? 14.w : 18.w,
+                    horizontal: (isSmall ? 14.w : 18.w).clamp(14.0, 24.0),
                   ),
                   child: AppButtonContent(
                     label: widget.label,
@@ -176,19 +187,34 @@ class AppButtonContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = (isSmall ? AppTextStyle.buttonSmall : AppTextStyle.button)
-        .copyWith(color: color);
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    final btnFontSize = isTablet ? (isSmall ? 18.0 : 22.0) : null;
+    final iconSize = isTablet ? (isSmall ? 22.0 : 26.0) : 20.r;
+
+    final baseStyle = isSmall ? AppTextStyle.buttonSmall : AppTextStyle.button;
+    final style =
+        (btnFontSize != null
+                ? baseStyle.copyWith(fontSize: btnFontSize)
+                : baseStyle)
+            .copyWith(color: color);
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (isLoading)
-          AppLoader(size: 18, strokeWidth: 2, color: color)
+          AppLoader(
+            size: isTablet ? 24 : 18,
+            strokeWidth: isTablet ? 2.5 : 2,
+            color: color,
+          )
         else if (leading != null)
           leading!
         else if (icon != null)
-          Icon(icon, size: 20.r, color: color),
-        if (isLoading || leading != null || icon != null) 8.horizontalSpace,
+          Icon(icon, size: iconSize, color: color),
+        if (isLoading || leading != null || icon != null)
+          isTablet ? const SizedBox(width: 5.0) : 8.0.horizontalSpace,
         Flexible(
           child: Text(
             label,
