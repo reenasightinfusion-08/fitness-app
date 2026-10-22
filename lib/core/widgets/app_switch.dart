@@ -29,8 +29,8 @@ class AppSwitch extends StatelessWidget {
         onTap: onChanged == null ? null : () => onChanged!(!value),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          width: isTablet ? 60.0 : 50.r,
-          height: isTablet ? 36.0 : 30.r,
+          width: isTablet ? 50.0 : 50.r,
+          height: isTablet ? 30.0 : 30.r,
           padding: EdgeInsets.all(isTablet ? 3.0 : 3.r),
           decoration: BoxDecoration(
             color: value ? colors.accent : colors.line,
@@ -41,8 +41,8 @@ class AppSwitch extends StatelessWidget {
             curve: Curves.easeOutCubic,
             alignment: value ? Alignment.centerRight : Alignment.centerLeft,
             child: Container(
-              width: isTablet ? 30.0 : 24.r,
-              height: isTablet ? 30.0 : 24.r,
+              width: isTablet ? 24.0 : 24.r,
+              height: isTablet ? 24.0 : 24.r,
               decoration: BoxDecoration(
                 color: AppColors.white,
                 shape: BoxShape.circle,

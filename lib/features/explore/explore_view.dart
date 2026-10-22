@@ -26,36 +26,56 @@ class ExploreRoutineCardShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
     return Material(
       color: colors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: AppBorderRadius.xxl,
+        borderRadius:
+            isTablet ? BorderRadius.circular(18.0) : AppBorderRadius.xxl,
         side: BorderSide(color: colors.line),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: EdgeInsets.all(12.r),
+        padding: EdgeInsets.all(isTablet ? 14.0 : 12.r),
         child: Row(
           children: [
             // Thumbnail large square skeleton (64x64)
-            AppShimmer.box(width: 64.r, height: 64.r, borderRadius: 16.r),
-            14.horizontalSpace,
+            AppShimmer.box(
+              width: isTablet ? 64.0 : 64.r,
+              height: isTablet ? 64.0 : 64.r,
+              borderRadius: isTablet ? 16.0 : 16.r,
+            ),
+            (isTablet ? 16.0 : 14.0).horizontalSpace,
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Title text line skeleton
-                  AppShimmer.box(width: 140.w, height: 16.h, borderRadius: 4.r),
-                  6.verticalSpace,
+                  AppShimmer.box(
+                    width: isTablet ? 160.0 : 140.w,
+                    height: isTablet ? 16.0 : 16.h,
+                    borderRadius: 4.r,
+                  ),
+                  (isTablet ? 6.0 : 6.0).verticalSpace,
                   // Duration/stretches count meta text line skeleton
-                  AppShimmer.box(width: 110.w, height: 12.h, borderRadius: 4.r),
+                  AppShimmer.box(
+                    width: isTablet ? 120.0 : 110.w,
+                    height: isTablet ? 12.0 : 12.h,
+                    borderRadius: 4.r,
+                  ),
                 ],
               ),
             ),
-            12.horizontalSpace,
+            (isTablet ? 12.0 : 12.0).horizontalSpace,
             // Chevron arrow icon skeleton
-            AppShimmer.box(width: 12.w, height: 18.h, borderRadius: 4.r),
+            AppShimmer.box(
+              width: isTablet ? 12.0 : 12.w,
+              height: isTablet ? 18.0 : 18.h,
+              borderRadius: 4.r,
+            ),
           ],
         ),
       ),
@@ -70,22 +90,41 @@ class ExploreLibraryTileShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final thumbSize = isTablet
+        ? (size.width >= 1100 ? 98.0 : (size.width >= 850 ? 92.0 : 88.0))
+        : 80.r;
+
     return Material(
       color: colors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: AppBorderRadius.xl,
+        borderRadius:
+            isTablet ? BorderRadius.circular(18.0) : AppBorderRadius.xl,
         side: BorderSide(color: colors.line),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 15.h),
+        padding: isTablet
+            ? const EdgeInsets.symmetric(horizontal: 10.0, vertical: 12.0)
+            : EdgeInsets.symmetric(horizontal: 6.w, vertical: 15.h),
         child: Column(
           children: [
-            // Centered stretch thumbnail 80x80 skeleton
-            AppShimmer.box(width: 80.r, height: 80.r, borderRadius: 12.r),
-            6.verticalSpace,
-            // Stretch name text line skeleton
-            AppShimmer.box(width: 60.w, height: 12.h, borderRadius: 4.r),
+            AppShimmer.box(
+              width: thumbSize,
+              height: thumbSize,
+              borderRadius: isTablet ? 14.0 : 12.r,
+            ),
+            (isTablet ? 10.0 : 6.0).verticalSpace,
+            Expanded(
+              child: Center(
+                child: AppShimmer.box(
+                  width: isTablet ? 80.0 : 60.w,
+                  height: isTablet ? 14.0 : 12.h,
+                  borderRadius: 4.r,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -231,16 +270,54 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
     final safety = _safety;
     final stretches = _filteredStretches(safety);
     final routinesAsync = ref.watch(routinesProvider);
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    final pagePadding = isTablet
+        ? EdgeInsets.symmetric(
+            horizontal: size.width >= 1100
+                ? 36.0
+                : (size.width >= 850 ? 28.0 : 22.0),
+            vertical: 24.0,
+          )
+        : AppInsets.page;
+
+    int libraryColumns;
+    double libraryAspectRatio;
+    double gridSpacing;
+
+    if (size.width >= 1100) {
+      libraryColumns = 6;
+      libraryAspectRatio = 0.82;
+      gridSpacing = 16.0;
+    } else if (size.width >= 850) {
+      libraryColumns = 5;
+      libraryAspectRatio = 0.82;
+      gridSpacing = 14.0;
+    } else if (size.width >= 600) {
+      libraryColumns = 4;
+      libraryAspectRatio = 0.80;
+      gridSpacing = 12.0;
+    } else {
+      libraryColumns = 3;
+      libraryAspectRatio = 0.78;
+      gridSpacing = 8.w;
+    }
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       behavior: HitTestBehavior.translucent,
       child: ListView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: AppInsets.page,
+        padding: pagePadding,
         children: [
-          Text('Explore', style: AppTextStyle.headline),
-          14.verticalSpace,
+          Text(
+            'Explore',
+            style: AppTextStyle.headline.copyWith(
+              fontSize: isTablet ? 30.0 : null,
+            ),
+          ),
+          (isTablet ? 16.0 : 14.0).verticalSpace,
           AppTextField(
             controller: _searchController,
             validator: AppValidators.none,
@@ -248,7 +325,7 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
             hint: 'Search routines, stretches, body areas',
             onChanged: (value) => setState(() => _query = value),
           ),
-          14.verticalSpace,
+          (isTablet ? 16.0 : 14.0).verticalSpace,
           AppCard(
             variant: AppCardVariant.list,
             child: AppSettingRow(
@@ -263,7 +340,7 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
               ),
             ),
           ),
-          14.verticalSpace,
+          (isTablet ? 16.0 : 14.0).verticalSpace,
           AppChipGroup(
             isScrollable: true,
             children: [
@@ -280,7 +357,7 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
                 ),
             ],
           ),
-          10.verticalSpace,
+          (isTablet ? 12.0 : 10.0).verticalSpace,
           AppChipGroup(
             children: [
               for (final filter in ExploreTimeFilter.values)
@@ -291,7 +368,7 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
                 ),
             ],
           ),
-          20.verticalSpace,
+          (isTablet ? 24.0 : 20.0).verticalSpace,
           routinesAsync.when(
             data: (apiRoutines) {
               final routines = _filterRoutineSummaries(apiRoutines, safety);
@@ -302,6 +379,21 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
                   message: _safeForMe
                       ? 'Try a different area or time, or turn off "Safe for me".'
                       : 'Try a different area or time.',
+                );
+              }
+              if (isTablet && size.width >= 800) {
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: routines.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 14.0,
+                    mainAxisSpacing: 12.0,
+                    childAspectRatio: size.width >= 1100 ? 4.8 : 4.0,
+                  ),
+                  itemBuilder: (context, i) =>
+                      _ExploreRoutineTile(routine: routines[i]),
                 );
               }
               return Column(
@@ -315,14 +407,31 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
                 ],
               );
             },
-            loading: () => Column(
-              children: [
-                for (var i = 0; i < 5; i++) ...[
-                  if (i > 0) 10.verticalSpace,
-                  const ExploreRoutineCardShimmer(),
+            loading: () {
+              if (isTablet && size.width >= 800) {
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 4,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 14.0,
+                    mainAxisSpacing: 12.0,
+                    childAspectRatio: size.width >= 1100 ? 4.8 : 4.0,
+                  ),
+                  itemBuilder: (context, i) =>
+                      const ExploreRoutineCardShimmer(),
+                );
+              }
+              return Column(
+                children: [
+                  for (var i = 0; i < 5; i++) ...[
+                    if (i > 0) 10.verticalSpace,
+                    const ExploreRoutineCardShimmer(),
+                  ],
                 ],
-              ],
-            ),
+              );
+            },
             error: (err, stack) => Padding(
               padding: EdgeInsets.symmetric(vertical: 12.h),
               child: Column(
@@ -343,24 +452,26 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
               ),
             ),
           ),
-          18.verticalSpace,
+          (isTablet ? 24.0 : 18.0).verticalSpace,
           const AdNative(small: false),
-          18.verticalSpace,
+          (isTablet ? 24.0 : 18.0).verticalSpace,
           Text(
             'Stretch library · ${_isLoadingStretches ? '...' : stretches.length}',
-            style: AppTextStyle.sectionTitle,
+            style: AppTextStyle.sectionTitle.copyWith(
+              fontSize: isTablet ? 22.0 : null,
+            ),
           ),
-          10.verticalSpace,
+          (isTablet ? 14.0 : 10.0).verticalSpace,
           if (_isLoadingStretches)
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: 6,
+              itemCount: libraryColumns * 2,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 8.h,
-                crossAxisSpacing: 8.w,
-                childAspectRatio: 0.78,
+                crossAxisCount: libraryColumns,
+                mainAxisSpacing: isTablet ? gridSpacing : 8.h,
+                crossAxisSpacing: gridSpacing,
+                childAspectRatio: libraryAspectRatio,
               ),
               itemBuilder: (context, index) =>
                   const ExploreLibraryTileShimmer(),
@@ -399,10 +510,10 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: stretches.length,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 8.h,
-                crossAxisSpacing: 8.w,
-                childAspectRatio: 0.78,
+                crossAxisCount: libraryColumns,
+                mainAxisSpacing: isTablet ? gridSpacing : 8.h,
+                crossAxisSpacing: gridSpacing,
+                childAspectRatio: libraryAspectRatio,
               ),
               itemBuilder: (context, index) => _LibraryTile(
                 stretch: stretches[index],
@@ -414,6 +525,7 @@ class _ExploreViewState extends ConsumerState<ExploreView> {
       ),
     );
   }
+
 }
 
 /// Routine card tile with thumbnail preloading + shimmer loading state.
@@ -583,13 +695,21 @@ class _LibraryTileState extends State<_LibraryTile> {
   Widget _buildTileContent(BuildContext context, Uint8List? frameBytes) {
     final colors = context.colors;
     final stretch = widget.stretch;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
     final hasThumb =
         stretch.thumbnailUrl != null && stretch.thumbnailUrl!.trim().isNotEmpty;
+
+    final thumbSize = isTablet
+        ? (size.width >= 1100 ? 98.0 : (size.width >= 850 ? 92.0 : 88.0))
+        : 80.r;
+    final thumbRadius =
+        isTablet ? BorderRadius.circular(14.0) : AppBorderRadius.md;
 
     Widget thumbnailWidget;
     if (frameBytes != null) {
       thumbnailWidget = ClipRRect(
-        borderRadius: AppBorderRadius.md,
+        borderRadius: thumbRadius,
         child: Image.memory(
           frameBytes,
           fit: BoxFit.cover,
@@ -598,7 +718,7 @@ class _LibraryTileState extends State<_LibraryTile> {
       );
     } else if (hasThumb) {
       thumbnailWidget = ClipRRect(
-        borderRadius: AppBorderRadius.md,
+        borderRadius: thumbRadius,
         child: Image.network(
           stretch.thumbnailUrl!,
           fit: BoxFit.cover,
@@ -613,18 +733,25 @@ class _LibraryTileState extends State<_LibraryTile> {
     return Material(
       color: colors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: AppBorderRadius.xl,
+        borderRadius:
+            isTablet ? BorderRadius.circular(18.0) : AppBorderRadius.xl,
         side: BorderSide(color: colors.line),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: widget.onTap,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 15.h),
+          padding: isTablet
+              ? const EdgeInsets.symmetric(horizontal: 10.0, vertical: 12.0)
+              : EdgeInsets.symmetric(horizontal: 6.w, vertical: 15.h),
           child: Column(
             children: [
-              SizedBox(width: 80.r, height: 80.r, child: thumbnailWidget),
-              5.verticalSpace,
+              SizedBox(
+                width: thumbSize,
+                height: thumbSize,
+                child: thumbnailWidget,
+              ),
+              (isTablet ? 10.0 : 5.0).verticalSpace,
               Expanded(
                 child: Center(
                   child: Text(
@@ -634,7 +761,8 @@ class _LibraryTileState extends State<_LibraryTile> {
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyle.caption.copyWith(
                       fontWeight: FontWeight.w600,
-                      height: 1.2,
+                      fontSize: isTablet ? 13.5 : null,
+                      height: 1.25,
                     ),
                   ),
                 ),

@@ -31,7 +31,6 @@ class AppSegmentedControl<T> extends StatelessWidget {
     final colors = context.colors;
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.width >= 600;
-    final h = size.height;
 
     final selectedIndex = segments.indexWhere(
       (segment) => segment.value == value,
@@ -41,15 +40,15 @@ class AppSegmentedControl<T> extends StatelessWidget {
         : -1 + 2 * selectedIndex / (segments.length - 1);
 
     final controlHeight = isTablet
-        ? (isCompact ? 48.0 : 60.0)
+        ? (isCompact ? 36.0 : 44.0)
         : (isCompact ? 36.h : 44.h);
 
     return Container(
       height: controlHeight,
-      padding: EdgeInsets.all(isTablet ? 4.0 : 3.r),
+      padding: EdgeInsets.all(isTablet ? 3.0 : 3.r),
       decoration: BoxDecoration(
         color: colors.surface2,
-        borderRadius: isTablet ? BorderRadius.circular(16.0) : AppBorderRadius.md,
+        borderRadius: AppBorderRadius.md,
       ),
       child: Stack(
         children: [
@@ -109,7 +108,7 @@ class AppSegmentButton extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.width >= 600;
     final fontSize = isTablet
-        ? (isCompact ? 16.5 : 20.0)
+        ? (isCompact ? 13.0 : 14.0)
         : null;
 
     return Semantics(
@@ -117,7 +116,7 @@ class AppSegmentButton extends StatelessWidget {
       selected: isSelected,
       child: InkWell(
         onTap: onTap,
-        borderRadius: isTablet ? BorderRadius.circular(12.0) : AppBorderRadius.sm,
+        borderRadius: AppBorderRadius.sm,
         child: Center(
           child: AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 180),

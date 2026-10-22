@@ -14,6 +14,7 @@ class SplashActivity : AppCompatActivity() {
         // Native splash plays animation & app title, then seamless handoff to Flutter
         Handler(Looper.getMainLooper()).postDelayed({
             startActivity(Intent(this@SplashActivity, MainActivity::class.java))
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
             finish()
         }, 1200)
     }

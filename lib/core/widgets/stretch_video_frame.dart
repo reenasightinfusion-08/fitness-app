@@ -37,6 +37,7 @@ class StretchVideoFrame extends StatelessWidget {
       ),
       builder: (context, snapshot) {
         final bytes = snapshot.data;
+        final isFallbackImage = fallback is! StretchPlaceholder;
         final Widget child = bytes != null
             ? Image.memory(
                 bytes,
@@ -47,13 +48,14 @@ class StretchVideoFrame extends StatelessWidget {
                 filterQuality: FilterQuality.high,
                 gaplessPlayback: true,
               )
-            : snapshot.connectionState == ConnectionState.done
-            ? SizedBox.expand(child: fallback)
-            : StretchPlaceholder(
-                key: const ValueKey('loading'),
-                isLoading: true,
-                isOnDark: isOnDark,
-              );
+            : (snapshot.connectionState == ConnectionState.done ||
+                    isFallbackImage)
+                ? SizedBox.expand(child: fallback)
+                : StretchPlaceholder(
+                    key: const ValueKey('loading'),
+                    isLoading: true,
+                    isOnDark: isOnDark,
+                  );
         return SizedBox.expand(
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),

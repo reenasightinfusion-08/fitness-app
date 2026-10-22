@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 /// How the session narrates itself — mirrors the prototype's
@@ -181,16 +182,27 @@ class AudioService {
     } catch (_) {}
     await duck(true);
     if (gen != _speechGen || _paused) return;
-    // The speech engine can still be starting up when the first cues arrive
-    // and then refuses them silently, so try again a couple of times.
-    for (var attempt = 0; attempt < 3; attempt++) {
+    // Web speech synthesis manages its own queuing and returns null (not 1),
+    // so we never run the retry loop on Web.
+    if (kIsWeb) {
       try {
         await _tts.setSpeechRate((0.5 * rate).clamp(0.3, 0.7));
-        final result = await _tts.speak(text);
-        if (result == 1 || gen != _speechGen || _paused) break;
+        await _tts.speak(text);
       } catch (_) {}
-      await Future.delayed(const Duration(milliseconds: 350));
-      if (gen != _speechGen || _paused) break;
+    } else {
+      // The native speech engine can still be starting up when the first cues arrive
+      // and then refuses them silently, so try again a couple of times on native mobile.
+      for (var attempt = 0; attempt < 3; attempt++) {
+        try {
+          await _tts.setSpeechRate((0.5 * rate).clamp(0.3, 0.7));
+          final result = await _tts.speak(text);
+          if (result == 1 || result == null || gen != _speechGen || _paused) {
+            break;
+          }
+        } catch (_) {}
+        await Future.delayed(const Duration(milliseconds: 350));
+        if (gen != _speechGen || _paused) break;
+      }
     }
     if (gen == _speechGen) await duck(false);
   }

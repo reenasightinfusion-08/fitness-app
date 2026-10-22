@@ -186,17 +186,27 @@ class MineView extends ConsumerWidget {
         ? favoriteIds.length
         : (favorites.isNotEmpty ? favorites.length : 1);
 
-    return ListView(
-      padding: AppInsets.page,
-      children: [
-        Text('My routines', style: AppTextStyle.headline),
-        18.verticalSpace,
-        AppButton(
-          label: 'Create a routine',
-          icon: Icons.add_rounded,
-          onPressed: () => _openBuilder(context, ref),
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isTablet ? 840.0 : double.infinity,
         ),
-        pausedUserAsync.when(
+        child: ListView(
+          padding: isTablet
+              ? const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0)
+              : AppInsets.page,
+          children: [
+            Text('My routines', style: AppTextStyle.headline),
+            18.verticalSpace,
+            AppButton(
+              label: 'Create a routine',
+              icon: Icons.add_rounded,
+              onPressed: () => _openBuilder(context, ref),
+            ),
+            pausedUserAsync.when(
           data: (otherPaused) {
             if (otherPaused.isEmpty) return const SizedBox.shrink();
             return Column(
@@ -293,8 +303,10 @@ class MineView extends ConsumerWidget {
                   ? 'custom'
                   : 'system',
             ),
+            ],
           ],
-      ],
+        ),
+      ),
     );
   }
 }

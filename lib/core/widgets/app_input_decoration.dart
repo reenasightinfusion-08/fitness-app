@@ -28,11 +28,11 @@ class AppInputDecoration {
     double? fontSize,
     EdgeInsetsGeometry? contentPadding,
   }) {
-    final effectiveFontSize = fontSize ?? (isTablet ? 21.0 : null);
+    final effectiveFontSize = fontSize ?? (isTablet ? 15.0 : null);
     final effectivePadding =
         contentPadding ??
         (isTablet
-            ? const EdgeInsets.symmetric(horizontal: 22.0, vertical: 20.0)
+            ? const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0)
             : EdgeInsets.symmetric(horizontal: 14.w, vertical: 15.h));
 
     return InputDecoration(

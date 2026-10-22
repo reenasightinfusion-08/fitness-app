@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/splash_bg"
+    android:gravity="center"
+    android:padding="32dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <!-- Tablet Sized Animated Circle Loader -->
+        <ProgressBar
+            android:id="@+id/splashLoader"
+            android:layout_width="68dp"
+            android:layout_height="68dp"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/splash_loader"
+            android:indeterminateTintMode="src_in" />
+
+        <!-- Tablet Brand Title -->
+        <TextView
+            android:id="@+id/splashTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="Loosen"
+            android:textColor="@color/splash_title"
+            android:textSize="46sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.04" />
+
+        <!-- Tablet Tagline -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Stretching that fits your body."
+            android:textColor="@color/splash_tagline"
+            android:textSize="20sp" />
+
+    </LinearLayout>
+
+</RelativeLayout>

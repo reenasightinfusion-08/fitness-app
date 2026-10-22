@@ -52,8 +52,8 @@ class AppNote extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isTablet ? 18.0 : 14.w,
-        vertical: isTablet ? 16.0 : 12.h,
+        horizontal: isTablet ? 14.0 : 14.w,
+        vertical: isTablet ? 12.0 : 12.h,
       ),
       decoration: BoxDecoration(
         color: background,
@@ -64,10 +64,10 @@ class AppNote extends StatelessWidget {
         children: [
           Icon(
             icon ?? defaultIcon,
-            size: isTablet ? 26.0 : 20.r,
+            size: isTablet ? 20.0 : 20.r,
             color: foreground,
           ),
-          (isTablet ? 14.0 : 10.0).horizontalSpace,
+          (isTablet ? 10.0 : 10.0).horizontalSpace,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,14 +76,14 @@ class AppNote extends StatelessWidget {
                   Text(
                     title!,
                     style: AppTextStyle.titleSmall.copyWith(
-                      fontSize: isTablet ? 20.0 : null,
+                      fontSize: isTablet ? 15.0 : null,
                     ),
                   ),
                 if (title != null && isTablet) 4.verticalSpace,
                 Text(
                   message,
                   style: AppTextStyle.bodySmall.copyWith(
-                    fontSize: isTablet ? 17.0 : null,
+                    fontSize: isTablet ? 13.5 : null,
                   ),
                 ),
               ],

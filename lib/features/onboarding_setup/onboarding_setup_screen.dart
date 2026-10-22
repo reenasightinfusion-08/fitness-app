@@ -245,7 +245,7 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
     );
   }
 
-  /// Tablet landscape split view: Hero image on left & proportionally scaled step form on right.
+  /// Tablet landscape split view: Hero image on left & step form on right.
   Widget _buildTabletLandscapeLayout({
     required BuildContext context,
     required AppColors colors,
@@ -253,18 +253,17 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
     required OnboardingStepDef step,
     required bool isValid,
   }) {
-    final h = constraints.maxHeight;
     final w = constraints.maxWidth;
 
     final colW = w / 2;
-    // Form occupies generous width in right column
-    final formWidth = (colW * 0.88).clamp(500.0, 960.0);
+    // Form occupies comfortable, ergonomic width in right column
+    final formWidth = (colW * 0.85).clamp(420.0, 520.0);
 
-    // Bold, comfortable typography matching tablet viewport
-    final titleSize = (h * 0.058).clamp(40.0, 64.0);
-    final subtitleSize = (h * 0.028).clamp(19.0, 30.0);
-    final eyebrowSize = (h * 0.024).clamp(17.0, 26.0);
-    final buttonHeight = (h * 0.075).clamp(64.0, 88.0);
+    // Balanced tablet typography and button sizing
+    const titleSize = 28.0;
+    const subtitleSize = 15.0;
+    const eyebrowSize = 12.0;
+    const buttonHeight = 52.0;
 
     final canGoBack = (!isEditMode && currentStep > 0) || isEditMode;
 
@@ -276,9 +275,9 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
             // Left column: Editorial hero card
             Expanded(
               child: Padding(
-                padding: EdgeInsets.all((h * 0.024).clamp(16.0, 32.0)),
+                padding: const EdgeInsets.all(20.0),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28.0),
+                  borderRadius: BorderRadius.circular(24.0),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -308,7 +307,7 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
                           top: 20.0,
                           left: 20.0,
                           child: Material(
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: colors.surface.withValues(alpha: 0.92),
                             shape: const CircleBorder(),
                             elevation: 2,
                             child: InkWell(
@@ -317,13 +316,13 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
                                   ? () => Navigator.of(context).pop()
                                   : goBack,
                               child: Container(
-                                width: 44.0,
-                                height: 44.0,
+                                width: 40.0,
+                                height: 40.0,
                                 alignment: Alignment.center,
                                 child: Icon(
                                   Icons.arrow_back_rounded,
                                   color: colors.ink,
-                                  size: 22.0,
+                                  size: 20.0,
                                 ),
                               ),
                             ),
@@ -331,21 +330,25 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
                         ),
                       // Bottom inspirational floating card
                       Positioned(
-                        left: 24.0,
-                        right: 24.0,
-                        bottom: 24.0,
+                        left: 20.0,
+                        right: 20.0,
+                        bottom: 20.0,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 24.0,
-                            vertical: 18.0,
+                            horizontal: 20.0,
+                            vertical: 16.0,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.94),
-                            borderRadius: BorderRadius.circular(22.0),
+                            color: colors.surface.withValues(alpha: 0.94),
+                            borderRadius: BorderRadius.circular(18.0),
+                            border: Border.all(
+                              color: colors.line.withValues(alpha: 0.5),
+                              width: 1.0,
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.14),
-                                blurRadius: 20,
+                                color: Colors.black.withValues(alpha: 0.16),
+                                blurRadius: 16,
                                 offset: const Offset(0, 4),
                               ),
                             ],
@@ -357,22 +360,22 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
                               Row(
                                 children: [
                                   Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: (h * 0.016).clamp(14.0, 20.0),
-                                      vertical: (h * 0.008).clamp(6.0, 10.0),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12.0,
+                                      vertical: 5.0,
                                     ),
                                     decoration: BoxDecoration(
                                       color: colors.accent.withValues(
                                         alpha: 0.15,
                                       ),
-                                      borderRadius: BorderRadius.circular(12.0),
+                                      borderRadius: BorderRadius.circular(10.0),
                                     ),
                                     child: Text(
                                       isEditMode
                                           ? 'EDIT PROFILE'
                                           : 'STEP ${currentStep + 1} OF ${onboardingSteps.length}',
                                       style: GoogleFonts.figtree(
-                                        fontSize: (h * 0.020).clamp(15.0, 22.0),
+                                        fontSize: 12.0,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 0.8,
                                         color: colors.accent,
@@ -384,20 +387,20 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
                                     Text(
                                       '${((currentStep + 1) / onboardingSteps.length * 100).round()}% done',
                                       style: GoogleFonts.figtree(
-                                        fontSize: (h * 0.022).clamp(16.5, 24.0),
+                                        fontSize: 13.0,
                                         fontWeight: FontWeight.w700,
                                         color: colors.ink2,
                                       ),
                                     ),
                                 ],
                               ),
-                              SizedBox(height: (h * 0.014).clamp(10.0, 16.0)),
+                              const SizedBox(height: 10.0),
                               Text(
                                 isEditMode
                                     ? 'Updating your personal fitness preferences.'
                                     : 'Building your personalized daily flexibility routine.',
                                 style: GoogleFonts.figtree(
-                                  fontSize: (h * 0.026).clamp(19.0, 28.0),
+                                  fontSize: 16.0,
                                   fontWeight: FontWeight.w600,
                                   color: colors.ink,
                                   height: 1.35,
@@ -417,54 +420,54 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
             Expanded(
               child: Column(
                 children: [
-                  // Top progress bar header
+                  // Top progress bar header aligned with form
                   Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: (colW - formWidth) / 2 > 24
-                          ? (colW - formWidth) / 2
-                          : 24.0,
-                      vertical: 16.0,
-                    ),
-                    child: Row(
-                      children: [
-                        if (canGoBack) ...[
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back_rounded),
-                            color: colors.ink,
-                            onPressed: isEditMode
-                                ? () => Navigator.of(context).pop()
-                                : goBack,
-                            tooltip: 'Back',
-                          ),
-                          const SizedBox(width: 8.0),
-                        ],
-                        if (isEditMode)
-                          Text(
-                            'Edit profile',
-                            style: GoogleFonts.bricolageGrotesque(
-                              fontSize: 24.0,
-                              fontWeight: FontWeight.w700,
-                              color: colors.ink,
-                            ),
-                          )
-                        else
-                          Expanded(
-                            child: AppProgressBar(
-                              value: (currentStep + 1) / onboardingSteps.length,
-                              height: 8,
-                            ),
-                          ),
-                        if (!isEditMode && step.skippable) ...[
-                          const SizedBox(width: 16.0),
-                          AppButton(
-                            label: 'Skip',
-                            variant: AppButtonVariant.text,
-                            size: AppButtonSize.small,
-                            isExpanded: false,
-                            onPressed: skip,
-                          ),
-                        ],
-                      ],
+                    padding: const EdgeInsets.fromLTRB(28.0, 16.0, 28.0, 12.0),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: formWidth),
+                        child: Row(
+                          children: [
+                            if (canGoBack) ...[
+                              IconButton(
+                                icon: const Icon(Icons.arrow_back_rounded),
+                                color: colors.ink,
+                                onPressed: isEditMode
+                                    ? () => Navigator.of(context).pop()
+                                    : goBack,
+                                tooltip: 'Back',
+                              ),
+                              const SizedBox(width: 8.0),
+                            ],
+                            if (isEditMode)
+                              Text(
+                                'Edit profile',
+                                style: GoogleFonts.bricolageGrotesque(
+                                  fontSize: 22.0,
+                                  fontWeight: FontWeight.w700,
+                                  color: colors.ink,
+                                ),
+                              )
+                            else
+                              Expanded(
+                                child: AppProgressBar(
+                                  value: (currentStep + 1) / onboardingSteps.length,
+                                  height: 6,
+                                ),
+                              ),
+                            if (!isEditMode && step.skippable) ...[
+                              const SizedBox(width: 16.0),
+                              AppButton(
+                                label: 'Skip',
+                                variant: AppButtonVariant.text,
+                                size: AppButtonSize.small,
+                                isExpanded: false,
+                                onPressed: skip,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
                   ),
 
@@ -473,7 +476,7 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
                     child: Center(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 24.0,
+                          horizontal: 28.0,
                           vertical: 12.0,
                         ),
                         child: ConstrainedBox(
@@ -492,7 +495,7 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
                                     letterSpacing: 0.5,
                                   ),
                                 ),
-                                const SizedBox(height: 12.0),
+                                const SizedBox(height: 8.0),
                               ],
                               Text(
                                 step.title,
@@ -500,22 +503,22 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
                                   fontSize: titleSize,
                                   fontWeight: FontWeight.w700,
                                   color: colors.ink,
-                                  height: 1.15,
+                                  height: 1.18,
                                 ),
                               ),
                               if (step.why != null) ...[
-                                const SizedBox(height: 12.0),
+                                const SizedBox(height: 8.0),
                                 Text(
                                   step.why!,
                                   style: GoogleFonts.figtree(
                                     fontSize: subtitleSize,
                                     fontWeight: FontWeight.w400,
                                     color: colors.ink2,
-                                    height: 1.45,
+                                    height: 1.4,
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 32.0),
+                              const SizedBox(height: 24.0),
                               stepContent(currentStep),
                             ],
                           ),
@@ -526,20 +529,19 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
 
                   // Bottom continue button
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 24.0,
-                    ),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: formWidth),
-                      child: SizedBox(
-                        height: buttonHeight,
-                        child: AppButton(
-                          label: isEditMode
-                              ? 'Save'
-                              : (isLastStep ? 'Build my plan' : 'Continue'),
-                          onPressed: isValid && !isSyncing ? advance : null,
-                          isLoading: isSyncing,
+                    padding: const EdgeInsets.fromLTRB(28.0, 12.0, 28.0, 20.0),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: formWidth),
+                        child: SizedBox(
+                          height: buttonHeight,
+                          child: AppButton(
+                            label: isEditMode
+                                ? 'Save'
+                                : (isLastStep ? 'Build my plan' : 'Continue'),
+                            onPressed: isValid && !isSyncing ? advance : null,
+                            isLoading: isSyncing,
+                          ),
                         ),
                       ),
                     ),
@@ -561,12 +563,11 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
     required OnboardingStepDef step,
     required bool isValid,
   }) {
-    final h = constraints.maxHeight;
-    final formWidth = (constraints.maxWidth * 0.88).clamp(520.0, 750.0);
-    final titleSize = (h * 0.046).clamp(36.0, 52.0);
-    final subtitleSize = (h * 0.024).clamp(18.5, 26.0);
-    final eyebrowSize = (h * 0.020).clamp(16.0, 22.0);
-    final buttonHeight = (h * 0.068).clamp(60.0, 78.0);
+    final formWidth = (constraints.maxWidth * 0.88).clamp(420.0, 520.0);
+    const titleSize = 28.0;
+    const subtitleSize = 15.0;
+    const eyebrowSize = 12.0;
+    const buttonHeight = 52.0;
 
     return Scaffold(
       backgroundColor: colors.ground,
@@ -584,7 +585,7 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: AppProgressBar(
                       value: (currentStep + 1) / onboardingSteps.length,
-                      height: 8,
+                      height: 6,
                     ),
                   ),
                 ),
@@ -607,8 +608,8 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 32.0,
-                    vertical: 24.0,
+                    horizontal: 28.0,
+                    vertical: 20.0,
                   ),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: formWidth),
@@ -626,7 +627,7 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
                               letterSpacing: 0.5,
                             ),
                           ),
-                          const SizedBox(height: 10.0),
+                          const SizedBox(height: 8.0),
                         ],
                         Text(
                           step.title,
@@ -634,11 +635,11 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
                             fontSize: titleSize,
                             fontWeight: FontWeight.w700,
                             color: colors.ink,
-                            height: 1.2,
+                            height: 1.18,
                           ),
                         ),
                         if (step.why != null) ...[
-                          const SizedBox(height: 10.0),
+                          const SizedBox(height: 8.0),
                           Text(
                             step.why!,
                             style: GoogleFonts.figtree(
@@ -649,7 +650,7 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
                             ),
                           ),
                         ],
-                        const SizedBox(height: 32.0),
+                        const SizedBox(height: 24.0),
                         stepContent(currentStep),
                       ],
                     ),
@@ -658,20 +659,19 @@ class OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 32.0,
-                vertical: 24.0,
-              ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: formWidth),
-                child: SizedBox(
-                  height: buttonHeight,
-                  child: AppButton(
-                    label: isEditMode
-                        ? 'Save'
-                        : (isLastStep ? 'Build my plan' : 'Continue'),
-                    onPressed: isValid && !isSyncing ? advance : null,
-                    isLoading: isSyncing,
+              padding: const EdgeInsets.fromLTRB(28.0, 12.0, 28.0, 20.0),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: formWidth),
+                  child: SizedBox(
+                    height: buttonHeight,
+                    child: AppButton(
+                      label: isEditMode
+                          ? 'Save'
+                          : (isLastStep ? 'Build my plan' : 'Continue'),
+                      onPressed: isValid && !isSyncing ? advance : null,
+                      isLoading: isSyncing,
+                    ),
                   ),
                 ),
               ),

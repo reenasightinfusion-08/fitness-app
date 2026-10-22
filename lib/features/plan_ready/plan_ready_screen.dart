@@ -198,20 +198,19 @@ class PlanReadyContent extends ConsumerWidget {
     required BoxConstraints constraints,
   }) {
     final colors = context.colors;
-    final h = constraints.maxHeight;
     final w = constraints.maxWidth;
 
     final colW = w / 2;
-    final formWidth = (colW * 0.90).clamp(520.0, 800.0);
+    final formWidth = (colW * 0.85).clamp(420.0, 520.0);
 
     return Row(
       children: [
         // Left hero card
         Expanded(
           child: Padding(
-            padding: EdgeInsets.all((h * 0.024).clamp(16.0, 32.0)),
+            padding: const EdgeInsets.all(20.0),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(28.0),
+              borderRadius: BorderRadius.circular(24.0),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -234,73 +233,77 @@ class PlanReadyContent extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  Positioned(
-                    left: 24.0,
-                    right: 24.0,
-                    bottom: 24.0,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: (h * 0.026).clamp(20.0, 32.0),
-                        vertical: (h * 0.020).clamp(16.0, 24.0),
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.94),
-                        borderRadius: BorderRadius.circular(22.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.14),
-                            blurRadius: 18,
-                            offset: const Offset(0, 4),
+                    Positioned(
+                      left: 20.0,
+                      right: 20.0,
+                      bottom: 20.0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0,
+                          vertical: 16.0,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.surface.withValues(alpha: 0.94),
+                          borderRadius: BorderRadius.circular(18.0),
+                          border: Border.all(
+                            color: colors.line.withValues(alpha: 0.5),
+                            width: 1.0,
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: (h * 0.016).clamp(14.0, 20.0),
-                              vertical: (h * 0.008).clamp(6.0, 10.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.16),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
                             ),
-                            decoration: BoxDecoration(
-                              color: colors.accent.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            child: Text(
-                              'PLAN READY',
-                              style: GoogleFonts.figtree(
-                                fontSize: (h * 0.020).clamp(15.0, 22.0),
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                                color: colors.accent,
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12.0,
+                                vertical: 5.0,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colors.accent.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              child: Text(
+                                'PLAN READY',
+                                style: GoogleFonts.figtree(
+                                  fontSize: 12.0,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                  color: colors.accent,
+                                ),
                               ),
                             ),
-                          ),
-                          SizedBox(height: (h * 0.012).clamp(8.0, 14.0)),
-                          Text(
-                            '$firstName, your $days-day stretching plan is ready.',
-                            style: GoogleFonts.bricolageGrotesque(
-                              fontSize: (h * 0.030).clamp(22.0, 32.0),
-                              fontWeight: FontWeight.w700,
-                              color: colors.ink,
+                            const SizedBox(height: 10.0),
+                            Text(
+                              '$firstName, your $days-day stretching plan is ready.',
+                              style: GoogleFonts.bricolageGrotesque(
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.w700,
+                                color: colors.ink,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: (h * 0.008).clamp(6.0, 10.0)),
-                          Text(
-                            overview.summary.isNotEmpty
-                                ? overview.summary
-                                : 'Tailored specifically to your goals, pain areas, and schedule.',
-                            style: GoogleFonts.figtree(
-                              fontSize: (h * 0.022).clamp(16.5, 24.0),
-                              color: colors.ink2,
-                              height: 1.35,
+                            const SizedBox(height: 6.0),
+                            Text(
+                              overview.summary.isNotEmpty
+                                  ? overview.summary
+                                  : 'Tailored specifically to your goals, pain areas, and schedule.',
+                              style: GoogleFonts.figtree(
+                                fontSize: 14.0,
+                                color: colors.ink2,
+                                height: 1.35,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -336,7 +339,7 @@ class PlanReadyContent extends ConsumerWidget {
                               ? '1-day routine'
                               : '$days-day flexibility plan',
                           style: GoogleFonts.bricolageGrotesque(
-                            fontSize: (h * 0.040).clamp(28.0, 40.0),
+                            fontSize: 28.0,
                             fontWeight: FontWeight.w700,
                             color: colors.ink,
                             height: 1.15,
@@ -350,7 +353,7 @@ class PlanReadyContent extends ConsumerWidget {
                               ? 'One routine, repeated each day.'
                               : 'A different routine each day. After day $days it starts again from day 1.',
                           style: GoogleFonts.figtree(
-                            fontSize: (h * 0.022).clamp(16.0, 22.0),
+                            fontSize: 15.0,
                             color: colors.ink2,
                             height: 1.45,
                           ),
@@ -402,7 +405,7 @@ class PlanReadyContent extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       SizedBox(
-                        height: (h * 0.070).clamp(58.0, 74.0),
+                        height: 52.0,
                         child: AppButton(
                           label: "Start today's plan",
                           icon: Icons.play_arrow_rounded,
@@ -445,7 +448,7 @@ class PlanReadyContent extends ConsumerWidget {
     required List<String> reasons,
     required BoxConstraints constraints,
   }) {
-    final formWidth = (constraints.maxWidth * 0.85).clamp(480.0, 640.0);
+    final formWidth = (constraints.maxWidth * 0.85).clamp(420.0, 520.0);
 
     return Column(
       children: [
@@ -596,11 +599,10 @@ class PlanDayCard extends StatelessWidget {
     final routine = day.routine;
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.width >= 600;
-    final h = size.height;
 
-    final eyebrowSize = isTablet ? (h * 0.018).clamp(13.5, 18.0) : null;
-    final titleSize = isTablet ? (h * 0.028).clamp(20.0, 28.0) : null;
-    final reasonSize = isTablet ? (h * 0.020).clamp(15.0, 20.0) : null;
+    final eyebrowSize = isTablet ? 12.0 : null;
+    final titleSize = isTablet ? 16.0 : null;
+    final reasonSize = isTablet ? 14.0 : null;
 
     return AppCard(
       child: Column(

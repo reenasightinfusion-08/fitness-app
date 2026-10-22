@@ -51,12 +51,22 @@ class ProgressView extends ConsumerWidget {
     final markedAreas = profile.painAreas;
     final heat = {for (final area in markedAreas) area: 1};
 
-    return ListView(
-      padding: AppInsets.page,
-      children: [
-        Text('Progress', style: AppTextStyle.headline),
-        18.verticalSpace,
-        Row(
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isTablet ? 840.0 : double.infinity,
+        ),
+        child: ListView(
+          padding: isTablet
+              ? const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0)
+              : AppInsets.page,
+          children: [
+            Text('Progress', style: AppTextStyle.headline),
+            18.verticalSpace,
+            Row(
           children: [
             Expanded(
               child: AppStatTile(
@@ -181,11 +191,12 @@ class ProgressView extends ConsumerWidget {
           error: (error, stack) => AppEmptyState(
             icon: Icons.cloud_off_rounded,
             title: "Couldn't load history",
-            message: 'Check your connection and try again.',
           ),
         ),
       ],
-    );
+    ),
+  ),
+);
   }
 }
 

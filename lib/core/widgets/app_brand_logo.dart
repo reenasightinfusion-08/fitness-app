@@ -17,7 +17,23 @@ class AppBrandLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final markSize = isLarge ? 64.r : 30.r;
+    final isTablet = MediaQuery.sizeOf(context).width >= 600;
+
+    final markSize = isTablet
+        ? (isLarge ? 96.0 : 38.0)
+        : (isLarge ? 64.r : 30.r);
+
+    final wordmarkStyle = isTablet
+        ? (isLarge
+            ? AppTextStyle.display(58, weight: FontWeight.w800)
+                .copyWith(letterSpacing: -1.6)
+            : AppTextStyle.display(32, weight: FontWeight.w800)
+                .copyWith(letterSpacing: -0.9))
+        : (isLarge ? AppTextStyle.hero : AppTextStyle.brandWord).copyWith(
+            fontWeight: FontWeight.w800,
+            letterSpacing: isLarge ? -1.2 : -0.7,
+          );
+
     return Semantics(
       label: 'Loosen',
       excludeSemantics: true,
@@ -32,14 +48,13 @@ class AppBrandLogo extends StatelessWidget {
             ),
           ),
           if (showWordmark) ...[
-            (isLarge ? 12 : 8).horizontalSpace,
+            (isTablet
+                    ? (isLarge ? 18.0 : 12.0)
+                    : (isLarge ? 12 : 8).w)
+                .horizontalSpace,
             Text(
               'loosen',
-              style: (isLarge ? AppTextStyle.hero : AppTextStyle.brandWord)
-                  .copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: isLarge ? -1.2 : -0.7,
-                  ),
+              style: wordmarkStyle,
             ),
           ],
         ],

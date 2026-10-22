@@ -33,8 +33,8 @@ class AppTag extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isTablet ? 14.0 : (9.w).clamp(9.0, 16.0),
-        vertical: isTablet ? 8.0 : (4.h).clamp(4.0, 8.0),
+        horizontal: isTablet ? 10.0 : (9.w).clamp(9.0, 16.0),
+        vertical: isTablet ? 5.0 : (4.h).clamp(4.0, 8.0),
       ),
       decoration: BoxDecoration(
         color: background,
@@ -46,17 +46,17 @@ class AppTag extends StatelessWidget {
           if (icon != null) ...[
             Icon(
               icon,
-              size: isTablet ? 18.0 : (12.r).clamp(12.0, 16.0),
+              size: isTablet ? 14.0 : (12.r).clamp(12.0, 16.0),
               color: foreground,
             ),
-            SizedBox(width: isTablet ? 6.0 : 4.0),
+            SizedBox(width: isTablet ? 5.0 : 4.0),
           ],
           Flexible(
             child: Text(
               label,
               style: AppTextStyle.tag.copyWith(
                 color: foreground,
-                fontSize: isTablet ? 16.0 : null,
+                fontSize: isTablet ? 12.0 : null,
               ),
             ),
           ),

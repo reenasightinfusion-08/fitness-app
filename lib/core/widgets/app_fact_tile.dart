@@ -19,10 +19,10 @@ class AppFactTile extends StatelessWidget {
 
     return AppCard(
       padding: EdgeInsets.symmetric(
-        horizontal: isTablet ? 18.0 : 12.w,
-        vertical: isTablet ? 16.0 : 10.h,
+        horizontal: isTablet ? 14.0 : 12.w,
+        vertical: isTablet ? 10.0 : 10.h,
       ),
-      borderRadius: isTablet ? AppBorderRadius.xl : AppBorderRadius.lg,
+      borderRadius: AppBorderRadius.lg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -30,15 +30,15 @@ class AppFactTile extends StatelessWidget {
             label.toUpperCase(),
             style: AppTextStyle.eyebrow.copyWith(
               color: context.colors.ink3,
-              fontSize: isTablet ? 16.0 : null,
+              fontSize: isTablet ? 11.5 : null,
             ),
           ),
-          (isTablet ? 6.0 : 2.0).verticalSpace,
+          (isTablet ? 4.0 : 2.0).verticalSpace,
           Text(
             value,
             style: AppTextStyle.bodySmall.copyWith(
               fontWeight: FontWeight.w700,
-              fontSize: isTablet ? 20.0 : null,
+              fontSize: isTablet ? 14.5 : null,
             ),
           ),
         ],

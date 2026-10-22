@@ -29,7 +29,9 @@ class ProfileView extends ConsumerWidget {
     final reminders = ref.watch(remindersProvider);
     final profile = ref.watch(onboardingProfileProvider);
     final displayName = profile.name.isEmpty ? 'Runner' : profile.name;
-    final displayEmail = profile.email.isNotEmpty ? profile.email : profile.country;
+    final displayEmail = profile.email.isNotEmpty
+        ? profile.email
+        : profile.country;
     final onReminders = reminders.where((r) => r.isOn).toList();
     final remindersSubtitle = reminders.isEmpty
         ? 'No reminder set yet'
@@ -75,55 +77,72 @@ class ProfileView extends ConsumerWidget {
       ),
     ];
 
-    return ListView(
-      padding: AppInsets.page,
-      children: [
-        Row(
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isTablet ? 720.0 : double.infinity,
+        ),
+        child: ListView(
+          padding: isTablet
+              ? const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0)
+              : AppInsets.page,
           children: [
-            AppAvatar(name: displayName),
-            14.horizontalSpace,
-            Expanded(
+            Row(
+              children: [
+                AppAvatar(name: displayName),
+                14.horizontalSpace,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(displayName, style: AppTextStyle.titleLarge),
+                      if (displayEmail.isNotEmpty)
+                        Text(
+                          displayEmail,
+                          style: AppTextStyle.meta.copyWith(color: colors.ink2),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            20.verticalSpace,
+            AppCard(
+              variant: AppCardVariant.list,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(displayName, style: AppTextStyle.titleLarge),
-                  if (displayEmail.isNotEmpty)
-                    Text(
-                      displayEmail,
-                      style: AppTextStyle.meta.copyWith(color: colors.ink2),
+                  for (final item in menu)
+                    AppSettingRow(
+                      title: item.$1,
+                      subtitle: item.$2,
+                      onTap: item.$3,
+                      showDivider: item != menu.last,
                     ),
                 ],
               ),
             ),
+            20.verticalSpace,
+            AppButton(
+              label: 'Log out',
+              variant: AppButtonVariant.secondary,
+              onPressed: () async {
+                debugPrint('[LOGOUT] 1. Starting logout');
+                await ref.read(authServiceProvider).logout();
+                debugPrint('[LOGOUT] 2. Logged out of authService');
+                final flow = ref.read(appFlowProvider.notifier);
+                debugPrint('[LOGOUT] 3. Got flow notifier');
+                await flow.resetUserState();
+                debugPrint('[LOGOUT] 4. Reset user state');
+                flow.showWelcome();
+                debugPrint('[LOGOUT] 5. Called showWelcome');
+              },
+            ),
           ],
         ),
-        20.verticalSpace,
-        AppCard(
-          variant: AppCardVariant.list,
-          child: Column(
-            children: [
-              for (final item in menu)
-                AppSettingRow(
-                  title: item.$1,
-                  subtitle: item.$2,
-                  onTap: item.$3,
-                  showDivider: item != menu.last,
-                ),
-            ],
-          ),
-        ),
-        20.verticalSpace,
-        AppButton(
-          label: 'Log out',
-          variant: AppButtonVariant.secondary,
-          onPressed: () async {
-            await ref.read(authServiceProvider).logout();
-            final flow = ref.read(appFlowProvider.notifier);
-            await flow.resetUserState();
-            flow.showWelcome();
-          },
-        ),
-      ],
+      ),
     );
   }
 }

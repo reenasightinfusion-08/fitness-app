@@ -208,6 +208,8 @@ class SessionCompleteScreenState
     final colors = context.colors;
     final plan = widget.plan;
     final stretchNames = {for (final s in plan.stretches) s.name}.toList();
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
 
     return PopScope(
       canPop: false,
@@ -215,119 +217,128 @@ class SessionCompleteScreenState
         if (!didPop) _exit();
       },
       child: Scaffold(
-      backgroundColor: colors.ground,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: AppInsets.page,
+        backgroundColor: colors.ground,
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isTablet ? 680.0 : double.infinity,
+              ),
+              child: Column(
                 children: [
-                  AppStreakBadge(
-                    days: ref.watch(progressStatsProvider).streakDays,
-                    isLarge: true,
-                  ),
-                  14.verticalSpace,
-                  Text('Nicely done.', style: AppTextStyle.headlineLarge),
-                  6.verticalSpace,
-                  Text(
-                    '${plan.name} · ${plan.durationText} · '
-                    '${plan.stretches.length} stretches',
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: colors.ink2,
-                    ),
-                  ),
-                  if (ref.watch(sessionSettingsProvider).showCalories) ...[
-                    6.verticalSpace,
-                    Text(
-                      '≈ $estimatedCalories kcal burned (estimate)',
-                      style: AppTextStyle.meta.copyWith(color: colors.ink2),
-                    ),
-                  ],
-                  24.verticalSpace,
-                  AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  Expanded(
+                    child: ListView(
+                      padding: isTablet
+                          ? const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0)
+                          : AppInsets.page,
                       children: [
-                        Text(
-                          'How did that feel?',
-                          style: AppTextStyle.titleMedium,
+                        AppStreakBadge(
+                          days: ref.watch(progressStatsProvider).streakDays,
+                          isLarge: true,
                         ),
-                        12.verticalSpace,
-                        AppSegmentedControl<SessionFeel>(
-                          segments: [
-                            for (final value in SessionFeel.values)
-                              AppSegmentModel(value: value, label: value.label),
-                          ],
-                          value: feel,
-                          onChanged: (value) => setState(() => feel = value),
-                        ),
-                        10.verticalSpace,
+                        14.verticalSpace,
+                        Text('Nicely done.', style: AppTextStyle.headlineLarge),
+                        6.verticalSpace,
                         Text(
-                          feel?.tuningNote ??
-                              "Your answer tunes tomorrow's plan.",
-                          style: AppTextStyle.meta.copyWith(
+                          '${plan.name} · ${plan.durationText} · '
+                          '${plan.stretches.length} stretches',
+                          style: AppTextStyle.bodyMedium.copyWith(
                             color: colors.ink2,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  16.verticalSpace,
-                  AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Did anything hurt?',
-                          style: AppTextStyle.titleMedium,
-                        ),
-                        4.verticalSpace,
-                        Text(
-                          "Tap it and we'll leave it out of your plans. "
-                          'Undo anytime in Edit profile.',
-                          style: AppTextStyle.bodySmall.copyWith(
-                            color: colors.ink2,
+                        if (ref.watch(sessionSettingsProvider).showCalories) ...[
+                          6.verticalSpace,
+                          Text(
+                            '≈ $estimatedCalories kcal burned (estimate)',
+                            style: AppTextStyle.meta.copyWith(color: colors.ink2),
                           ),
-                        ),
-                        12.verticalSpace,
-                        Wrap(
-                          spacing: 8.w,
-                          runSpacing: 8.h,
-                          children: [
-                            for (final name in stretchNames)
-                              AppChip(
-                                label: name,
-                                isCompact: true,
-                                isSelected: hurtNames.contains(name),
-                                onTap: () => _toggleHurt(name),
+                        ],
+                        24.verticalSpace,
+                        AppCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'How did that feel?',
+                                style: AppTextStyle.titleMedium,
                               ),
-                          ],
+                              12.verticalSpace,
+                              AppSegmentedControl<SessionFeel>(
+                                segments: [
+                                  for (final value in SessionFeel.values)
+                                    AppSegmentModel(value: value, label: value.label),
+                                ],
+                                value: feel,
+                                onChanged: (value) => setState(() => feel = value),
+                              ),
+                              10.verticalSpace,
+                              Text(
+                                feel?.tuningNote ??
+                                    "Your answer tunes tomorrow's plan.",
+                                style: AppTextStyle.meta.copyWith(
+                                  color: colors.ink2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        16.verticalSpace,
+                        AppCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Did anything hurt?',
+                                style: AppTextStyle.titleMedium,
+                              ),
+                              4.verticalSpace,
+                              Text(
+                                "Tap it and we'll leave it out of your plans. "
+                                'Undo anytime in Edit profile.',
+                                style: AppTextStyle.bodySmall.copyWith(
+                                  color: colors.ink2,
+                                ),
+                              ),
+                              12.verticalSpace,
+                              Wrap(
+                                spacing: isTablet ? 8.0 : 8.w,
+                                runSpacing: isTablet ? 8.0 : 8.h,
+                                children: [
+                                  for (final name in stretchNames)
+                                    AppChip(
+                                      label: name,
+                                      isCompact: true,
+                                      isSelected: hurtNames.contains(name),
+                                      onTap: () => _toggleHurt(name),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
+                  ),
+                  AppBottomActionBar(
+                    children: [
+                      AppButton(
+                        label: 'Done',
+                        onPressed: _exit,
+                      ),
+                      if (canSave)
+                        AppButton(
+                          label: 'Save as my routine',
+                          variant: AppButtonVariant.text,
+                          isLoading: isSaving,
+                          onPressed: _saveAsMyRoutine,
+                        ),
+                    ],
                   ),
                 ],
               ),
             ),
-            AppBottomActionBar(
-              children: [
-                AppButton(
-                  label: 'Done',
-                  onPressed: _exit,
-                ),
-                if (canSave)
-                  AppButton(
-                    label: 'Save as my routine',
-                    variant: AppButtonVariant.text,
-                    isLoading: isSaving,
-                    onPressed: _saveAsMyRoutine,
-                  ),
-              ],
-            ),
-          ],
+          ),
         ),
-      ),
       ),
     );
   }

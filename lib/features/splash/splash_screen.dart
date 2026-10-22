@@ -22,10 +22,31 @@ class SplashScreen extends ConsumerStatefulWidget {
   ConsumerState<SplashScreen> createState() => SplashScreenState();
 }
 
-class SplashScreenState extends ConsumerState<SplashScreen> {
+class SplashScreenState extends ConsumerState<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animController;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<double> _scaleAnimation;
+
   @override
   void initState() {
     super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOut,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.94, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+    _animController.forward();
+
     Future.delayed(const Duration(milliseconds: 900), () async {
       if (!mounted) return;
       final authService = ref.read(authServiceProvider);
@@ -64,21 +85,41 @@ class SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isTablet = MediaQuery.sizeOf(context).width >= 600;
+
     return Scaffold(
       backgroundColor: colors.ground,
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AppBrandLogo(isLarge: true),
-            10.verticalSpace,
-            Text(
-              'Stretching that fits your body.',
-              style: AppTextStyle.bodyMedium.copyWith(color: colors.ink2),
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppBrandLogo(isLarge: true),
+                (isTablet ? 16.0 : 10.0).verticalSpace,
+                Text(
+                  'Stretching that fits your body.',
+                  style: (isTablet
+                          ? AppTextStyle.body(19.0, weight: FontWeight.w500)
+                          : AppTextStyle.bodyMedium)
+                      .copyWith(
+                        color: colors.ink2,
+                        letterSpacing: isTablet ? 0.2 : null,
+                      ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

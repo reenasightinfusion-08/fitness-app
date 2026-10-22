@@ -4,6 +4,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
+import 'package:fitness_app/services/web_frame_extractor_stub.dart'
+    if (dart.library.html) 'package:fitness_app/services/web_frame_extractor_web.dart';
+
 /// Grabs a still frame from the middle of a stretch video so a separate
 /// thumbnail image doesn't have to be stored.
 ///
@@ -11,7 +14,7 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 /// launches read it from a local file instead of re-fetching the video.
 /// Extraction runs a few at a time so a long list doesn't flood the network.
 class VideoFrameService {
-  static const int maxConcurrent = 3;
+  static int get maxConcurrent => kIsWeb ? 6 : 3;
   static const int width = 720;
   static const Duration _retryAfter = Duration(seconds: 30);
 
@@ -54,7 +57,14 @@ class VideoFrameService {
   }
 
   static Future<Uint8List?> _load(String key, String url, int timeMs) async {
-    if (kIsWeb) return null;
+    if (kIsWeb) {
+      await _acquire(key);
+      try {
+        return await grabWebFrame(url, timeMs);
+      } finally {
+        _release();
+      }
+    }
     final file = File('${Directory.systemTemp.path}/frame_${_hash(key)}.jpg');
     try {
       if (await file.exists()) {

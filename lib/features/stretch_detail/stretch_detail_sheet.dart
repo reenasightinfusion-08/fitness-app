@@ -49,6 +49,7 @@ class StretchDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isTablet = MediaQuery.sizeOf(context).width >= 600;
     final effectivePose = model?.pose ?? pose ?? StretchPoses.neutral;
     final effectiveName = model?.name ?? name ?? '';
     final guide = model?.toGuide() ?? (pose != null ? StretchLibrary.guideFor(pose!) : null);
@@ -73,7 +74,7 @@ class StretchDetailSheet extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AspectRatio(
-          aspectRatio: 4 / 3,
+          aspectRatio: isTablet ? (16 / 10) : (4 / 3),
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: colors.surface2,
@@ -117,8 +118,8 @@ class StretchDetailSheet extends StatelessWidget {
           if (areaLabels.isNotEmpty) ...[
             8.verticalSpace,
             Wrap(
-              spacing: 6.w,
-              runSpacing: 6.h,
+              spacing: isTablet ? 8.0 : 6.w,
+              runSpacing: isTablet ? 8.0 : 6.h,
               children: [
                 for (final area in areaLabels) AppTag(label: area),
               ],
@@ -135,14 +136,14 @@ class StretchDetailSheet extends StatelessWidget {
                     value: guide.position.label,
                   ),
                 ),
-                8.horizontalSpace,
+                (isTablet ? 10.0 : 8.0).horizontalSpace,
                 Expanded(
                   child: AppFactTile(
                     label: 'Level',
                     value: guide.level.label,
                   ),
                 ),
-                8.horizontalSpace,
+                (isTablet ? 10.0 : 8.0).horizontalSpace,
                 Expanded(
                   child: AppFactTile(
                     label: 'Equipment',
@@ -204,7 +205,7 @@ class StretchDetailSheet extends StatelessWidget {
                       child: _MiniCard(label: 'Easier', body: guide.easier),
                     ),
                   if (guide.easier.isNotEmpty && guide.harder.isNotEmpty)
-                    10.horizontalSpace,
+                    (isTablet ? 12.0 : 10.0).horizontalSpace,
                   if (guide.harder.isNotEmpty)
                     Expanded(
                       child: _MiniCard(label: 'Harder', body: guide.harder),
@@ -260,22 +261,25 @@ class _MiniCard extends StatelessWidget {
   final String body;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.all(12.r),
-    decoration: BoxDecoration(
-      color: context.colors.surface2,
-      borderRadius: AppBorderRadius.xl,
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: AppTextStyle.eyebrow.copyWith(color: context.colors.ink3),
-        ),
-        4.verticalSpace,
-        Text(body, style: AppTextStyle.bodySmall),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final isTablet = MediaQuery.sizeOf(context).width >= 600;
+    return Container(
+      padding: EdgeInsets.all(isTablet ? 14.0 : 12.r),
+      decoration: BoxDecoration(
+        color: context.colors.surface2,
+        borderRadius: AppBorderRadius.xl,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppTextStyle.eyebrow.copyWith(color: context.colors.ink3),
+          ),
+          4.verticalSpace,
+          Text(body, style: AppTextStyle.bodySmall),
+        ],
+      ),
+    );
+  }
 }

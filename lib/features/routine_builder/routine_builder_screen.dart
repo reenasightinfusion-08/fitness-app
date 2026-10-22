@@ -505,17 +505,21 @@ class _StretchPickerSheetState extends ConsumerState<_StretchPickerSheet> {
     final results = _filtered(library.valueOrNull ?? const []);
 
     // Fills the sheet (it opens at 85% of the space below the status bar,
-    // minus its own handle and padding), so the button sits at the bottom.
     final media = MediaQuery.of(context);
-    final sheetHeight =
-        0.85 * (media.size.height - media.viewPadding.top) - 66.h;
+    final isTablet = media.size.width >= 600;
+    final sheetHeight = isTablet
+        ? (media.size.height * 0.78).clamp(440.0, 680.0)
+        : 0.85 * (media.size.height - media.viewPadding.top) - 66.h;
 
     return SizedBox(
       height: sheetHeight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Add stretches', style: AppTextStyle.titleLarge),
+          Padding(
+            padding: EdgeInsets.only(right: isTablet ? 36.0 : 0.0),
+            child: Text('Add stretches', style: AppTextStyle.titleLarge),
+          ),
           14.verticalSpace,
           AppTextField(
             controller: _searchController,

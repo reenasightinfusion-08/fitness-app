@@ -198,30 +198,29 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
     final w = constraints.maxWidth;
 
     final colW = w / 2;
-    // Form occupies ~72% of right column width
-    final formWidth = (colW * 0.72).clamp(440.0, 750.0);
+    final formWidth = (colW * 0.75).clamp(400.0, 480.0);
 
-    // Dynamic proportional sizing
-    final fieldHeight = (h * 0.065).clamp(52.0, 96.0);
-    final labelFontSize = (h * 0.020).clamp(14.5, 28.0);
-    final inputFontSize = (h * 0.022).clamp(15.5, 32.0);
-    final googleFontSize = (h * 0.022).clamp(16.0, 32.0);
-    final googleIconSize = (h * 0.030).clamp(20.0, 44.0);
-    final dividerFontSize = (h * 0.018).clamp(13.0, 24.0);
-    final forgotFontSize = (h * 0.019).clamp(14.0, 26.0);
-    final buttonFontSize = (h * 0.024).clamp(17.0, 34.0);
-    final linkFontSize = (h * 0.020).clamp(14.5, 28.0);
+    // Balanced tablet sizing
+    const fieldHeight = 50.0;
+    const labelFontSize = 14.0;
+    const inputFontSize = 15.0;
+    const googleFontSize = 15.0;
+    const googleIconSize = 20.0;
+    const dividerFontSize = 13.0;
+    const forgotFontSize = 13.5;
+    const buttonFontSize = 16.0;
+    const linkFontSize = 14.0;
 
-    final inputRadius = (h * 0.018).clamp(12.0, 24.0);
-    final buttonRadius = (h * 0.022).clamp(16.0, 28.0);
+    const inputRadius = 14.0;
+    const buttonRadius = 14.0;
 
-    final gapSocialToDiv = (h * 0.024).clamp(14.0, 36.0);
-    final gapDivToEmail = (h * 0.024).clamp(14.0, 36.0);
-    final gapLabelToField = (h * 0.010).clamp(6.0, 16.0);
-    final gapEmailToPass = (h * 0.020).clamp(12.0, 32.0);
-    final gapPassToForgot = (h * 0.012).clamp(6.0, 18.0);
-    final gapForgotToBtn = (h * 0.032).clamp(18.0, 48.0);
-    final gapBtnToLink = (h * 0.024).clamp(14.0, 36.0);
+    const gapSocialToDiv = 16.0;
+    const gapDivToEmail = 16.0;
+    const gapLabelToField = 6.0;
+    const gapEmailToPass = 16.0;
+    const gapPassToForgot = 10.0;
+    const gapForgotToBtn = 20.0;
+    const gapBtnToLink = 16.0;
 
     return Scaffold(
       backgroundColor: colors.ground,

@@ -81,14 +81,16 @@ class TodayView extends ConsumerWidget {
 
     final dateStyle = AppTextStyle.eyebrow.copyWith(
       color: colors.ink3,
-      fontSize: isTablet ? 18.0 : null,
+      fontSize: isTablet ? 12.0 : null,
     );
     final greetingStyle = AppTextStyle.headline.copyWith(
-      fontSize: isTablet ? 42.0 : null,
+      fontSize: isTablet ? 28.0 : null,
     );
 
     return ListView(
-      padding: AppInsets.page,
+      padding: isTablet
+          ? const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0)
+          : AppInsets.page,
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +191,7 @@ class TodayView extends ConsumerWidget {
         Text(
           'Quick picks',
           style: AppTextStyle.sectionTitle.copyWith(
-            fontSize: isTablet ? 28.0 : null,
+            fontSize: isTablet ? 20.0 : null,
           ),
         ),
         (isTablet ? 14.0 : 10.0).verticalSpace,
@@ -255,14 +257,14 @@ class TodayView extends ConsumerWidget {
         Text(
           'This week',
           style: AppTextStyle.sectionTitle.copyWith(
-            fontSize: isTablet ? 28.0 : null,
+            fontSize: isTablet ? 18.0 : null,
           ),
         ),
-        (isTablet ? 14.0 : 10.0).verticalSpace,
+        (isTablet ? 10.0 : 10.0).verticalSpace,
         AppCard(
           padding: EdgeInsets.symmetric(
-            horizontal: isTablet ? 24.0 : 16.r,
-            vertical: isTablet ? 26.0 : 16.r,
+            horizontal: isTablet ? 16.0 : 16.r,
+            vertical: isTablet ? 12.0 : 16.r,
           ),
           child: AppWeekStrip(days: stats.weekStrip()),
         ),
@@ -392,9 +394,6 @@ class _QuickPickTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-    final isTablet = size.width >= 600;
-
     final firstStretch = routine.stretches.isNotEmpty
         ? routine.stretches.first
         : null;
@@ -402,11 +401,11 @@ class _QuickPickTile extends StatelessWidget {
     final Widget thumbnailWidget = firstStretch != null
         ? StretchThumbnail(
             stretch: firstStretch,
-            size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
+            size: AppThumbSize.medium,
           )
-        : AppThumb(
-            size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
-            child: const StretchPlaceholder(),
+        : const AppThumb(
+            size: AppThumbSize.medium,
+            child: StretchPlaceholder(),
           );
 
     return AppTileCard(

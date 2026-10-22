@@ -30,15 +30,12 @@ class AppOptionTile extends StatelessWidget {
     final colors = context.colors;
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.width >= 600;
-    final h = size.height;
 
-    final radius = isTablet
-        ? BorderRadius.circular((h * 0.018).clamp(16.0, 24.0))
-        : AppBorderRadius.xl;
-    final padH = isTablet ? (h * 0.028).clamp(22.0, 38.0) : 16.w;
-    final padV = isTablet ? (h * 0.022).clamp(18.0, 28.0) : 14.h;
-    final titleFontSize = isTablet ? (h * 0.028).clamp(20.0, 30.0) : null;
-    final subFontSize = isTablet ? (h * 0.023).clamp(17.0, 25.0) : null;
+    final radius = AppBorderRadius.xl;
+    final padH = isTablet ? 16.0 : 16.w;
+    final padV = isTablet ? 14.0 : 14.h;
+    final titleFontSize = isTablet ? 16.0 : null;
+    final subFontSize = isTablet ? 14.0 : null;
 
     return Semantics(
       selected: isSelected,
@@ -50,7 +47,7 @@ class AppOptionTile extends StatelessWidget {
           borderRadius: radius,
           border: Border.all(
             color: isSelected ? colors.accent : colors.line,
-            width: isTablet ? 1.8 : 1.5,
+            width: 1.5,
           ),
         ),
         child: Material(

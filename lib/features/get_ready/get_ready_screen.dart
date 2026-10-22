@@ -157,37 +157,37 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                       ),
                     ),
                   ),
-                  (isTablet ? 22.0 : 16.0).verticalSpace,
+                  (isTablet ? 16.0 : 16.0).verticalSpace,
                   Text(
                     '${widget.plan.name} · ${widget.plan.durationText}',
                     style: AppTextStyle.eyebrow.copyWith(
                       color: colors.ink3,
-                      fontSize: isTablet ? 18.0 : null,
+                      fontSize: isTablet ? 11.5 : null,
                     ),
                   ),
-                  (isTablet ? 6.0 : 4.0).verticalSpace,
+                  (isTablet ? 4.0 : 4.0).verticalSpace,
                   Text(
                     'First up: ${firstStretch?.name ?? ''}',
                     style: AppTextStyle.headline.copyWith(
-                      fontSize: isTablet ? 40.0 : null,
+                      fontSize: isTablet ? 26.0 : null,
                     ),
                   ),
-                  (isTablet ? 6.0 : 4.0).verticalSpace,
+                  (isTablet ? 4.0 : 4.0).verticalSpace,
                   Text(
                     '${widget.plan.stretches.length} stretches',
                     style: AppTextStyle.bodyMedium.copyWith(
                       color: colors.ink2,
-                      fontSize: isTablet ? 20.0 : null,
+                      fontSize: isTablet ? 14.5 : null,
                     ),
                   ),
-                  (isTablet ? 26.0 : 20.0).verticalSpace,
+                  (isTablet ? 18.0 : 20.0).verticalSpace,
                   AppCard(
-                    padding: EdgeInsets.all(isTablet ? 24.0 : 16.r),
+                    padding: EdgeInsets.all(isTablet ? 16.0 : 16.r),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const AppFieldLabel(text: 'Guidance'),
-                        (isTablet ? 12.0 : 8.0).verticalSpace,
+                        (isTablet ? 10.0 : 8.0).verticalSpace,
                         AppSegmentedControl<GuideMode>(
                           segments: const [
                             AppSegmentModel(
@@ -207,12 +207,12 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                           onChanged: (value) =>
                               setState(() => guideMode = value),
                         ),
-                        (isTablet ? 12.0 : 8.0).verticalSpace,
+                        (isTablet ? 10.0 : 8.0).verticalSpace,
                         Text(
                           _guideDescription,
                           style: AppTextStyle.meta.copyWith(
                             color: colors.ink2,
-                            fontSize: isTablet ? 17.5 : null,
+                            fontSize: isTablet ? 13.0 : null,
                           ),
                         ),
                         (isTablet ? 8.0 : 4.0).verticalSpace,
@@ -230,13 +230,13 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                       ],
                     ),
                   ),
-                  (isTablet ? 16.0 : 12.0).verticalSpace,
+                  (isTablet ? 14.0 : 12.0).verticalSpace,
                   Text(
                     "Tip: prop your phone where you can hear it. "
                     "You won't need to look at it.",
                     style: AppTextStyle.meta.copyWith(
                       color: colors.ink2,
-                      fontSize: isTablet ? 17.5 : null,
+                      fontSize: isTablet ? 13.0 : null,
                     ),
                   ),
                 ],
@@ -248,7 +248,7 @@ class GetReadyScreenState extends ConsumerState<GetReadyScreen> {
                   label: 'Begin',
                   icon: Icons.play_arrow_rounded,
                   isLoading: isStarting,
-                  minHeight: isTablet ? 68.0 : null,
+                  minHeight: isTablet ? 52.0 : null,
                   onPressed: begin,
                 ),
               ],

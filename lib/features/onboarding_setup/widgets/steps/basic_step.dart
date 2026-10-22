@@ -118,9 +118,9 @@ class BasicStep extends ConsumerWidget {
                 onChanged: controller.setAge,
               ),
             ],
-            (isWide ? 24.0 : 14.0).verticalSpace,
+            (isWide ? 18.0 : 14.0).verticalSpace,
             AppFieldLabel(text: 'Country', isOptional: true),
-            (isWide ? 10.0 : 6.0).verticalSpace,
+            (isWide ? 6.0 : 6.0).verticalSpace,
             InkWell(
               onTap: () => _showAppCountryPicker(context, ref),
               borderRadius: isWide
@@ -128,11 +128,9 @@ class BasicStep extends ConsumerWidget {
                   : AppBorderRadius.lg,
               child: Container(
                 padding: isWide
-                    ? EdgeInsets.symmetric(
-                        horizontal: (MediaQuery.sizeOf(context).height * 0.026)
-                            .clamp(20.0, 32.0),
-                        vertical: (MediaQuery.sizeOf(context).height * 0.024)
-                            .clamp(18.0, 28.0),
+                    ? const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 14.0,
                       )
                     : EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
                 decoration: BoxDecoration(
@@ -142,7 +140,7 @@ class BasicStep extends ConsumerWidget {
                       : AppBorderRadius.lg,
                   border: Border.all(
                     color: colors.line,
-                    width: isWide ? 1.2 : 1.0,
+                    width: 1.0,
                   ),
                 ),
                 child: Row(
@@ -151,13 +149,10 @@ class BasicStep extends ConsumerWidget {
                       Text(
                         selectedCountry.flagEmoji,
                         style: TextStyle(
-                          fontSize: isWide
-                              ? (MediaQuery.sizeOf(context).height * 0.038)
-                                    .clamp(30.0, 44.0)
-                              : 20.r,
+                          fontSize: isWide ? 20.0 : 20.r,
                         ),
                       ),
-                      (isWide ? 16.0 : 10.0).horizontalSpace,
+                      (isWide ? 12.0 : 10.0).horizontalSpace,
                     ],
                     Expanded(
                       child: Text(
@@ -168,30 +163,22 @@ class BasicStep extends ConsumerWidget {
                           color: profile.country.isEmpty
                               ? colors.ink3
                               : colors.ink,
-                          fontSize: isWide
-                              ? (MediaQuery.sizeOf(context).height * 0.028)
-                                    .clamp(20.0, 30.0)
-                              : null,
+                          fontSize: isWide ? 15.0 : null,
                         ),
                       ),
                     ),
                     Icon(
                       Icons.keyboard_arrow_down_rounded,
                       color: colors.ink2,
-                      size: isWide
-                          ? (MediaQuery.sizeOf(context).height * 0.032).clamp(
-                              28.0,
-                              40.0,
-                            )
-                          : 22.r,
+                      size: isWide ? 22.0 : 22.r,
                     ),
                   ],
                 ),
               ),
             ),
-            (isWide ? 28.0 : 18.0).verticalSpace,
+            (isWide ? 20.0 : 18.0).verticalSpace,
             AppFieldLabel(text: 'Gender', isOptional: true),
-            (isWide ? 14.0 : 8.0).verticalSpace,
+            (isWide ? 8.0 : 8.0).verticalSpace,
             AppChipGroup(
               children: [
                 for (final option in genderOptions)

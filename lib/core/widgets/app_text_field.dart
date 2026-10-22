@@ -73,13 +73,9 @@ class AppTextFieldState extends State<AppTextField> {
 
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.width >= 600;
-    final h = size.height;
-    final tabletFontSize = isTablet ? (h * 0.028).clamp(20.0, 30.0) : null;
+    final tabletFontSize = isTablet ? 15.0 : null;
     final tabletPadding = isTablet
-        ? EdgeInsets.symmetric(
-            horizontal: (h * 0.026).clamp(20.0, 32.0),
-            vertical: (h * 0.024).clamp(18.0, 28.0),
-          )
+        ? const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0)
         : null;
 
     return Column(
@@ -88,7 +84,7 @@ class AppTextFieldState extends State<AppTextField> {
       children: [
         if (widget.label != null) ...[
           AppFieldLabel(text: widget.label!, isOptional: widget.isOptional),
-          (isTablet ? (h * 0.010).clamp(8.0, 14.0) : 6.0).verticalSpace,
+          6.0.verticalSpace,
         ],
         TextFormField(
           controller: widget.controller,
@@ -115,7 +111,8 @@ class AppTextFieldState extends State<AppTextField> {
           cursorColor: colors.accent,
           onChanged: widget.onChanged,
           onFieldSubmitted: widget.onSubmitted,
-          onTapOutside: widget.onTapOutside ??
+          onTapOutside:
+              widget.onTapOutside ??
               (event) => FocusManager.instance.primaryFocus?.unfocus(),
           decoration: AppInputDecoration.build(
             colors,
@@ -124,7 +121,7 @@ class AppTextFieldState extends State<AppTextField> {
             fontSize: tabletFontSize,
             contentPadding: tabletPadding,
             prefixIcon: widget.variant == AppTextFieldVariant.search
-                ? Icon(Icons.search_rounded, size: isTablet ? 28.0 : 22.r)
+                ? Icon(Icons.search_rounded, size: isTablet ? 22.0 : 22.r)
                 : null,
             suffixIcon: isPassword
                 ? IconButton(

@@ -216,24 +216,24 @@ class VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     final w = constraints.maxWidth;
 
     final colW = w / 2;
-    final formWidth = (colW * 0.72).clamp(440.0, 750.0);
+    final formWidth = (colW * 0.75).clamp(400.0, 480.0);
 
-    final fieldHeight = (h * 0.065).clamp(52.0, 96.0);
-    final headlineSize = (h * 0.045).clamp(32.0, 60.0);
-    final bodySize = (h * 0.022).clamp(15.5, 32.0);
-    final labelFontSize = (h * 0.020).clamp(14.5, 28.0);
-    final otpFontSize = (h * 0.028).clamp(20.0, 42.0);
-    final buttonFontSize = (h * 0.024).clamp(17.0, 34.0);
-    final secondaryFontSize = (h * 0.021).clamp(15.0, 30.0);
+    const fieldHeight = 50.0;
+    const headlineSize = 28.0;
+    const bodySize = 15.0;
+    const labelFontSize = 14.0;
+    const otpFontSize = 24.0;
+    const buttonFontSize = 16.0;
+    const secondaryFontSize = 14.0;
 
-    final inputRadius = (h * 0.018).clamp(12.0, 24.0);
-    final buttonRadius = (h * 0.022).clamp(16.0, 28.0);
+    const inputRadius = 14.0;
+    const buttonRadius = 14.0;
 
-    final gapHeadToBody = (h * 0.016).clamp(10.0, 24.0);
-    final gapBodyToField = (h * 0.030).clamp(18.0, 44.0);
-    final gapLabelToField = (h * 0.010).clamp(6.0, 16.0);
-    final gapFieldToBtn = (h * 0.032).clamp(18.0, 48.0);
-    final gapBtnToSecondary = (h * 0.018).clamp(12.0, 28.0);
+    const gapHeadToBody = 10.0;
+    const gapBodyToField = 20.0;
+    const gapLabelToField = 6.0;
+    const gapFieldToBtn = 24.0;
+    const gapBtnToSecondary = 16.0;
 
     return Scaffold(
       backgroundColor: colors.ground,

@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="@color/splash_bg"
     android:gravity="center">
 
     <LinearLayout
@@ -17,7 +17,7 @@
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:indeterminate="true"
-            android:indeterminateTint="#1C6A56"
+            android:indeterminateTint="@color/splash_loader"
             android:indeterminateTintMode="src_in" />
 
         <!-- App Name -->
@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:text="Loosen"
-            android:textColor="#15201B"
+            android:textColor="@color/splash_title"
             android:textSize="30sp"
             android:textStyle="bold"
             android:letterSpacing="0.05" />
@@ -37,7 +37,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="Stretching that fits your body."
-            android:textColor="#4F5E57"
+            android:textColor="@color/splash_tagline"
             android:textSize="14sp" />
 
     </LinearLayout>

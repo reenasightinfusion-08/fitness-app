@@ -24,7 +24,14 @@ class AppPlayerButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final dimension = isPrimary ? 76.r : 56.r;
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final dimension = isTablet
+        ? (isPrimary ? 64.0 : 48.0)
+        : (isPrimary ? 76.r : 56.r);
+    final iconSize = isTablet
+        ? (isPrimary ? 28.0 : 20.0)
+        : (isPrimary ? 34.r : 22.r);
     final isEnabled = onTap != null;
     final foreground = isPrimary ? colors.playerBg : colors.playerInk;
 
@@ -52,7 +59,7 @@ class AppPlayerButton extends StatelessWidget {
                     child: Icon(
                       icon,
                       key: ValueKey(icon),
-                      size: isPrimary ? 34.r : 22.r,
+                      size: iconSize,
                       color: foreground,
                     ),
                   ),

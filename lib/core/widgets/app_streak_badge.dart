@@ -16,10 +16,10 @@ class AppStreakBadge extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.width >= 600;
 
-    final iconSize = isTablet ? 22.0 : 16.r;
-    final fontSize = isTablet ? (isLarge ? 20.0 : 18.0) : null;
-    final padH = isTablet ? (isLarge ? 20.0 : 18.0) : (isLarge ? 14.w : 11.w);
-    final padV = isTablet ? (isLarge ? 12.0 : 10.0) : (isLarge ? 9.h : 7.h);
+    final iconSize = isTablet ? 16.0 : 16.r;
+    final fontSize = isTablet ? (isLarge ? 14.5 : 13.0) : null;
+    final padH = isTablet ? (isLarge ? 14.0 : 11.0) : (isLarge ? 14.w : 11.w);
+    final padV = isTablet ? (isLarge ? 8.0 : 6.0) : (isLarge ? 9.h : 7.h);
 
     return Semantics(
       label: 'Current streak: $days ${days == 1 ? 'day' : 'days'}',

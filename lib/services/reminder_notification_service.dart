@@ -135,8 +135,12 @@ class ReminderNotificationService {
   }
 
   Future<void> cancelAll() async {
-    await init();
-    if (_ready) await _plugin.cancelAll();
+    if (!_ready) return;
+    try {
+      await _plugin.cancelAll();
+    } catch (e) {
+      debugPrint('[Reminders] cancelAll failed: $e');
+    }
   }
 
   /// The next [weekday] (1 = Monday) at [time], strictly in the future.

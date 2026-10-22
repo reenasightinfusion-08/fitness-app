@@ -56,7 +56,7 @@ class TimeStep extends ConsumerWidget {
                       'Daily reminder',
                       style: AppTextStyle.titleSmall.copyWith(
                         fontSize: MediaQuery.sizeOf(context).width >= 600
-                            ? (MediaQuery.sizeOf(context).height * 0.026).clamp(19.0, 28.0)
+                            ? 15.0
                             : null,
                       ),
                     ),
@@ -67,7 +67,7 @@ class TimeStep extends ConsumerWidget {
                       style: AppTextStyle.meta.copyWith(
                         color: context.colors.ink2,
                         fontSize: MediaQuery.sizeOf(context).width >= 600
-                            ? (MediaQuery.sizeOf(context).height * 0.020).clamp(15.5, 24.0)
+                            ? 13.0
                             : null,
                       ),
                     ),

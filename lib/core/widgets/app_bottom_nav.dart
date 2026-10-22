@@ -120,7 +120,7 @@ class AppBottomNavTab extends StatelessWidget {
         onTap: onTap,
         borderRadius: AppBorderRadius.md,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: isTablet ? 10.0 : 6.h),
+          padding: EdgeInsets.symmetric(vertical: isTablet ? 6.0 : 6.h),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -133,17 +133,17 @@ class AppBottomNavTab extends StatelessWidget {
                   tween: ColorTween(end: color),
                   builder: (context, animatedColor, child) => Icon(
                     isActive ? item.activeIcon : item.icon,
-                    size: isTablet ? 28.0 : 22.r,
+                    size: isTablet ? 22.0 : 22.r,
                     color: animatedColor,
                   ),
                 ),
               ),
-              (isTablet ? 4.0 : 2.0).verticalSpace,
+              (isTablet ? 2.0 : 2.0).verticalSpace,
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 180),
                 style: AppTextStyle.tab.copyWith(
                   color: color,
-                  fontSize: isTablet ? 15.0 : null,
+                  fontSize: isTablet ? 11.5 : null,
                 ),
                 child: Text(item.label),
               ),

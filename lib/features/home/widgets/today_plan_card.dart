@@ -99,14 +99,12 @@ class TodayPlanCard extends StatelessWidget {
 
     final eyebrowStyle = AppTextStyle.eyebrow.copyWith(
       color: colors.ink3,
-      fontSize: isTablet ? 18.0 : null,
+      fontSize: isTablet ? 12.0 : null,
     );
-    final titleStyle = AppTextStyle.display(
-      isTablet ? 36 : 24,
-    ).copyWith(fontSize: isTablet ? 36.0 : null);
+    final titleStyle = AppTextStyle.display(24);
     final metaStyle = AppTextStyle.meta.copyWith(
       color: colors.ink2,
-      fontSize: isTablet ? 18.0 : null,
+      fontSize: isTablet ? 13.0 : null,
     );
 
     return AppCard(
@@ -116,7 +114,7 @@ class TodayPlanCard extends StatelessWidget {
           Text("Today's plan · ${plan.durationText}", style: eyebrowStyle),
           (isTablet ? 4.0 : 2.0).verticalSpace,
           Text(plan.name, style: titleStyle),
-          (isTablet ? 18.0 : 14.0).verticalSpace,
+          (isTablet ? 14.0 : 14.0).verticalSpace,
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -124,15 +122,15 @@ class TodayPlanCard extends StatelessWidget {
                 for (final stretch in plan.stretches) ...[
                   StretchThumbnail(
                     stretch: stretch,
-                    size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
+                    size: AppThumbSize.medium,
                   ),
-                  (isTablet ? 10.0 : 6.0).horizontalSpace,
+                  (isTablet ? 8.0 : 6.0).horizontalSpace,
                 ],
               ],
             ),
           ),
           if (resumeFromStretch != null && !isCompleted) ...[
-            (isTablet ? 10.0 : 6.0).verticalSpace,
+            (isTablet ? 8.0 : 6.0).verticalSpace,
             Text(
               'Paused · stretch ${resumeFromStretch! + 1} of ${plan.stretches.length}'
               '${plan.stretches.length > resumeFromStretch! ? ': ${plan.stretches[resumeFromStretch!].name}' : ''}',
@@ -140,10 +138,10 @@ class TodayPlanCard extends StatelessWidget {
             ),
           ],
           if (plan.tags.isNotEmpty || isCompleted) ...[
-            (isTablet ? 14.0 : 10.0).verticalSpace,
+            (isTablet ? 12.0 : 10.0).verticalSpace,
             Wrap(
-              spacing: isTablet ? 8.0 : 6.w,
-              runSpacing: isTablet ? 8.0 : 6.h,
+              spacing: isTablet ? 6.0 : 6.w,
+              runSpacing: isTablet ? 6.0 : 6.h,
               children: [
                 if (isCompleted)
                   const AppTag(
@@ -156,17 +154,17 @@ class TodayPlanCard extends StatelessWidget {
               ],
             ),
           ],
-          (isTablet ? 18.0 : 14.0).verticalSpace,
+          (isTablet ? 16.0 : 14.0).verticalSpace,
           Row(
             children: [
-              Expanded(child: _primaryAction(isTablet ? 78.0 : null)),
-              (isTablet ? 14.0 : 10.0).horizontalSpace,
+              Expanded(child: _primaryAction(isTablet ? 50.0 : null)),
+              (isTablet ? 10.0 : 10.0).horizontalSpace,
               Expanded(
                 child: AppButton(
                   label: 'See stretches',
                   variant: AppButtonVariant.secondary,
                   onPressed: onSeeStretches,
-                  minHeight: isTablet ? 68.0 : null,
+                  minHeight: isTablet ? 50.0 : null,
                 ),
               ),
             ],

@@ -13,8 +13,8 @@ class AppFieldLabel extends StatelessWidget {
     final colors = context.colors;
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.width >= 600;
-    final labelSize = isTablet ? 20.0 : null;
-    final optSize = isTablet ? 16.0 : null;
+    final labelSize = isTablet ? 14.0 : null;
+    final optSize = isTablet ? 12.0 : null;
 
     return Text.rich(
       TextSpan(

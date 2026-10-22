@@ -27,12 +27,12 @@ class AppTileCard extends StatelessWidget {
     final isTablet = size.width >= 600;
 
     final titleStyle = AppTextStyle.titleSmall.copyWith(
-      fontSize: isTablet ? 24.0 : null,
+      fontSize: isTablet ? 15.0 : null,
       fontWeight: FontWeight.w700,
       height: 1.25,
     );
     final metaStyle = AppTextStyle.meta.copyWith(
-      fontSize: isTablet ? 18.0 : null,
+      fontSize: isTablet ? 13.0 : null,
       color: colors.ink2,
     );
 
@@ -46,19 +46,19 @@ class AppTileCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: EdgeInsets.all(isTablet ? 18.0 : 12.r),
+          padding: EdgeInsets.all(isTablet ? 14.0 : 12.r),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               thumbnail ??
-                  AppThumb(
-                    size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
+                  const AppThumb(
+                    size: AppThumbSize.medium,
                   ),
-              (isTablet ? 10.0 : 6.0).verticalSpace,
+              (isTablet ? 8.0 : 6.0).verticalSpace,
               const Spacer(),
               Text(title, style: titleStyle),
               if (meta != null) ...[
-                if (isTablet) 3.verticalSpace,
+                2.verticalSpace,
                 Text(meta!, style: metaStyle),
               ],
               const Spacer(),

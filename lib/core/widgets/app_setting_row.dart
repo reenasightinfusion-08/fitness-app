@@ -31,10 +31,10 @@ class AppSettingRow extends StatelessWidget {
     final colors = context.colors;
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.width >= 600;
-    final titleFontSize = isTablet ? 22.0 : null;
-    final subFontSize = isTablet ? 17.5 : null;
-    final padV = isTablet ? 16.0 : 12.h;
-    final chevronSize = isTablet ? 26.0 : 20.r;
+    final titleFontSize = isTablet ? 15.0 : null;
+    final subFontSize = isTablet ? 13.0 : null;
+    final padV = isTablet ? 12.0 : 12.h;
+    final chevronSize = isTablet ? 20.0 : 20.r;
 
     final trailingWidget =
         trailing ??

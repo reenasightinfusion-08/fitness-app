@@ -33,8 +33,8 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     final colors = context.colors;
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.width >= 600;
-    final barHeight = isTablet ? 64.0 : 54.h;
-    final slotWidth = isTablet ? 50.0 : 42.r;
+    final barHeight = isTablet ? 54.0 : 54.h;
+    final slotWidth = isTablet ? 42.0 : 42.r;
 
     return Material(
       color: backgroundColor ?? colors.ground,
@@ -68,7 +68,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyle.titleMedium.copyWith(
                           color: isOnDark ? colors.playerInk : colors.ink,
-                          fontSize: isTablet ? 22.0 : null,
+                          fontSize: isTablet ? 16.0 : null,
                         ),
                       ),
                 ),

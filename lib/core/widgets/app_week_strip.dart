@@ -42,15 +42,15 @@ class AppWeekDayCell extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.width >= 600;
 
-    final circleSize = isTablet ? 60.0 : 32.r;
+    final circleSize = isTablet ? 34.0 : 32.r;
     final labelStyle = AppTextStyle.eyebrow.copyWith(
       color: colors.ink3,
-      fontSize: isTablet ? 18.0 : null,
-      fontWeight: isTablet ? FontWeight.w700 : null,
+      fontSize: isTablet ? 11.5 : null,
+      fontWeight: isTablet ? FontWeight.w600 : null,
     );
     final numberStyle = AppTextStyle.numeric.copyWith(
-      fontSize: isTablet ? 22.0 : null,
-      fontWeight: isTablet ? FontWeight.w800 : null,
+      fontSize: isTablet ? 13.5 : null,
+      fontWeight: isTablet ? FontWeight.w700 : null,
       color: day.isDone ? colors.accentInk : colors.ink3,
     );
 
@@ -64,7 +64,7 @@ class AppWeekDayCell extends StatelessWidget {
             day.label,
             style: labelStyle,
           ),
-          (isTablet ? 12.0 : 6.0).verticalSpace,
+          (isTablet ? 6.0 : 6.0).verticalSpace,
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             width: circleSize,
@@ -74,7 +74,7 @@ class AppWeekDayCell extends StatelessWidget {
               color: day.isDone ? colors.accent : colors.surface2,
               shape: BoxShape.circle,
               border: day.isToday
-                  ? Border.all(color: colors.warm, width: isTablet ? 3.0 : 2)
+                  ? Border.all(color: colors.warm, width: 2.0)
                   : null,
             ),
             child: Text(

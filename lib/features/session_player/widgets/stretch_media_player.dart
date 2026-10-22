@@ -84,21 +84,18 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
       await controller.setLooping(true);
       await controller.setVolume(0);
 
-      // Detect the vignette background profile of the video.
-      // Falls back to brand color after 3 seconds so video playback never hangs.
-      final background = await VideoBackgroundService.detect(url).timeout(
-        const Duration(seconds: 3),
-        onTimeout: () => VideoBackground.fallback,
-      );
-      if (!mounted || _controller != controller) {
-        await controller.dispose();
-        return;
-      }
       setState(() {
-        _background = background ?? VideoBackground.fallback;
+        _background = _background ?? VideoBackground.fallback;
         _isInitialized = true;
       });
       _syncPlayback();
+
+      // Detect the vignette background profile of the video asynchronously.
+      VideoBackgroundService.detect(url).then((background) {
+        if (mounted && _controller == controller && background != null) {
+          setState(() => _background = background);
+        }
+      });
     } catch (e) {
       debugPrint('[StretchMediaPlayer] failed: $e');
       if (mounted && _controller == controller) {
@@ -125,7 +122,7 @@ class _StretchMediaPlayerState extends State<StretchMediaPlayer> {
   Widget build(BuildContext context) {
     final controller = _controller;
 
-    if (widget.showVideo && _isInitialized && controller != null && !_hasError) {
+    if (_isInitialized && controller != null && !_hasError) {
       final background = _background ?? VideoBackground.fallback;
       final videoSize = controller.value.size;
 

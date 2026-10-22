@@ -90,6 +90,8 @@ class ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       );
     }
 
+    final isTablet = MediaQuery.sizeOf(context).width >= 600;
+
     return Scaffold(
       backgroundColor: colors.ground,
       appBar: AppTopBar(
@@ -97,62 +99,71 @@ class ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         onBack: () => ref.read(appFlowProvider.notifier).showLogin(),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: AppInsets.page,
-          child: Form(
-            key: formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('Set a new password', style: AppTextStyle.headline),
-                6.verticalSpace,
-                Text.rich(
-                  TextSpan(
-                    style: AppTextStyle.bodyMedium.copyWith(color: colors.ink2),
-                    children: [
-                      const TextSpan(text: 'For '),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isTablet ? 480.0 : double.infinity,
+            ),
+            child: SingleChildScrollView(
+              padding: isTablet
+                  ? const EdgeInsets.symmetric(horizontal: 24.0, vertical: 28.0)
+                  : AppInsets.page,
+              child: Form(
+                key: formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Set a new password', style: AppTextStyle.headline),
+                    6.verticalSpace,
+                    Text.rich(
                       TextSpan(
-                        text: pending.email,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        style: AppTextStyle.bodyMedium.copyWith(color: colors.ink2),
+                        children: [
+                          const TextSpan(text: 'For '),
+                          TextSpan(
+                            text: pending.email,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                    18.verticalSpace,
+                    AppTextField(
+                      controller: codeController,
+                      label: 'Code',
+                      hint: '6-digit code',
+                      variant: AppTextFieldVariant.otp,
+                      validator: AppValidators.otp,
+                      onChanged: (_) {
+                        if (codeError != null) setState(() => codeError = null);
+                      },
+                    ),
+                    if (codeError != null) ...[
+                      6.verticalSpace,
+                      Text(
+                        codeError!,
+                        style: AppTextStyle.meta.copyWith(color: colors.danger),
                       ),
                     ],
-                  ),
+                    14.verticalSpace,
+                    AppTextField(
+                      controller: passwordController,
+                      label: 'New password',
+                      hint: 'At least 8 characters',
+                      variant: AppTextFieldVariant.password,
+                      autofillHints: const [AutofillHints.newPassword],
+                      validator: AppValidators.password,
+                      onSubmitted: (_) => submit(pending),
+                    ),
+                    18.verticalSpace,
+                    AppButton(
+                      label: 'Save new password',
+                      onPressed: () => submit(pending),
+                      isLoading: isLoading,
+                    ),
+                  ],
                 ),
-                18.verticalSpace,
-                AppTextField(
-                  controller: codeController,
-                  label: 'Code',
-                  hint: '6-digit code',
-                  variant: AppTextFieldVariant.otp,
-                  validator: AppValidators.otp,
-                  onChanged: (_) {
-                    if (codeError != null) setState(() => codeError = null);
-                  },
-                ),
-                if (codeError != null) ...[
-                  6.verticalSpace,
-                  Text(
-                    codeError!,
-                    style: AppTextStyle.meta.copyWith(color: colors.danger),
-                  ),
-                ],
-                14.verticalSpace,
-                AppTextField(
-                  controller: passwordController,
-                  label: 'New password',
-                  hint: 'At least 8 characters',
-                  variant: AppTextFieldVariant.password,
-                  autofillHints: const [AutofillHints.newPassword],
-                  validator: AppValidators.password,
-                  onSubmitted: (_) => submit(pending),
-                ),
-                18.verticalSpace,
-                AppButton(
-                  label: 'Save new password',
-                  onPressed: () => submit(pending),
-                  isLoading: isLoading,
-                ),
-              ],
+              ),
             ),
           ),
         ),

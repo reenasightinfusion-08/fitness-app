@@ -111,17 +111,33 @@ class AppFlowController extends Notifier<AppRoute> {
   /// Clears everything tied to the signed-in account (call after the session
   /// is gone) so the next account starts clean, on the Today tab.
   Future<void> resetUserState() async {
+    debugPrint('[resetUserState] a: start');
     ref.invalidate(homeTabProvider);
+    debugPrint('[resetUserState] b: invalidated homeTabProvider');
     ref.invalidate(onboardingProfileProvider);
+    debugPrint('[resetUserState] c: invalidated onboardingProfileProvider');
     ref.invalidate(sessionSettingsProvider);
+    debugPrint('[resetUserState] d: invalidated sessionSettingsProvider');
     ref.invalidate(customRoutinesProvider);
+    debugPrint('[resetUserState] e: invalidated customRoutinesProvider');
     ref.invalidate(favoritesProvider);
+    debugPrint('[resetUserState] f: invalidated favoritesProvider');
     ref.invalidate(hurtStretchesProvider);
+    debugPrint('[resetUserState] g: invalidated hurtStretchesProvider');
     ref.invalidate(remindersProvider);
+    debugPrint('[resetUserState] h: invalidated remindersProvider');
     ref.invalidate(deskNudgeProvider);
+    debugPrint('[resetUserState] i: invalidated deskNudgeProvider');
     ref.invalidate(todaysPlanProvider);
+    debugPrint('[resetUserState] j: invalidated todaysPlanProvider');
     ref.invalidate(planOverviewProvider);
-    await ReminderNotificationService.instance.cancelAll();
+    debugPrint('[resetUserState] k: invalidated planOverviewProvider');
+    try {
+      await ReminderNotificationService.instance.cancelAll();
+      debugPrint('[resetUserState] l: cancelAll finished');
+    } catch (e, st) {
+      debugPrint('[resetUserState] cancelAll threw error: $e\n$st');
+    }
   }
 
   /// Shows the tabbed home shell: after a successful sign-in, leaving the

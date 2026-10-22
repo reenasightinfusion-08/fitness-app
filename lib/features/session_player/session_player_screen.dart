@@ -289,7 +289,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
           CueKind.trans,
           text: '$pos ${stretch.setupCue}',
           mode: widget.guideMode,
-        rate: widget.voiceRate,
+          rate: widget.voiceRate,
         );
         break;
       case _StepKind.hold:
@@ -304,7 +304,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
           CueKind.start,
           text: text,
           mode: widget.guideMode,
-        rate: widget.voiceRate,
+          rate: widget.voiceRate,
         );
         break;
       case _StepKind.switchSides:
@@ -312,7 +312,7 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
           CueKind.switchSides,
           text: 'Switch sides.',
           mode: widget.guideMode,
-        rate: widget.voiceRate,
+          rate: widget.voiceRate,
         );
         break;
     }
@@ -459,39 +459,152 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
       _StepKind.hold => stretch.feelCue ?? 'Hold, and breathe.',
     };
 
+    final size = MediaQuery.sizeOf(context);
+    final isTablet = size.width >= 600;
+    final isLandscape = isTablet && size.width > size.height;
+
+    final topBar = Padding(
+      padding: isTablet
+          ? const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0)
+          : EdgeInsets.fromLTRB(14.w, 6.h, 14.w, 6.h),
+      child: Row(
+        children: [
+          AppIconButton(
+            icon: Icons.close_rounded,
+            tooltip: 'End session',
+            isOnDark: true,
+            onPressed: _exit,
+          ),
+          (isTablet ? 16.0 : 8.0).horizontalSpace,
+          Expanded(
+            child: AppSegmentProgress(
+              total: _stretches.length,
+              currentIndex: step.stretchIndex,
+            ),
+          ),
+          (isTablet ? 16.0 : 8.0).horizontalSpace,
+          AppIconButton(
+            icon: Icons.info_outline_rounded,
+            tooltip: 'How to do this stretch',
+            isOnDark: true,
+            onPressed: _showStretchInfo,
+          ),
+        ],
+      ),
+    );
+
+    if (isLandscape) {
+      return Scaffold(
+        backgroundColor: colors.playerBg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              topBar,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28.0,
+                    vertical: 12.0,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        flex: 6,
+                        child: Center(
+                          child: _buildVideoPlayer(
+                            stretch,
+                            step,
+                            stretchThumbUrl,
+                            maxHeight: size.height * 0.74,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 36.0),
+                      Expanded(
+                        flex: 5,
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 460.0),
+                            child: _buildControlsContent(
+                              context,
+                              colors,
+                              step,
+                              stretch,
+                              isFirstStretch,
+                              cue,
+                              nextStretch,
+                              nextThumbUrl,
+                              hasNextThumb,
+                              isSwapEnabled,
+                              isTablet: true,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (isTablet) {
+      return Scaffold(
+        backgroundColor: colors.playerBg,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 8.0,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520.0),
+                child: Column(
+                  children: [
+                    topBar,
+                    const SizedBox(height: 12.0),
+                    _buildVideoPlayer(
+                      stretch,
+                      step,
+                      stretchThumbUrl,
+                      maxHeight: 360.0,
+                    ),
+                    const SizedBox(height: 16.0),
+                    _buildControlsContent(
+                      context,
+                      colors,
+                      step,
+                      stretch,
+                      isFirstStretch,
+                      cue,
+                      nextStretch,
+                      nextThumbUrl,
+                      hasNextThumb,
+                      isSwapEnabled,
+                      isTablet: true,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Default mobile layout (100% unchanged)
     return Scaffold(
       backgroundColor: colors.playerBg,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(14.w, 6.h, 14.w, 6.h),
-                child: Row(
-                  children: [
-                    AppIconButton(
-                      icon: Icons.close_rounded,
-                      tooltip: 'End session',
-                      isOnDark: true,
-                      onPressed: _exit,
-                    ),
-                    8.horizontalSpace,
-                    Expanded(
-                      child: AppSegmentProgress(
-                        total: _stretches.length,
-                        currentIndex: step.stretchIndex,
-                      ),
-                    ),
-                    8.horizontalSpace,
-                    AppIconButton(
-                      icon: Icons.info_outline_rounded,
-                      tooltip: 'How to do this stretch',
-                      isOnDark: true,
-                      onPressed: _showStretchInfo,
-                    ),
-                  ],
-                ),
-              ),
+              topBar,
               ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: 390.w),
                 child: AspectRatio(
@@ -520,155 +633,189 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
               20.verticalSpace,
               Padding(
                 padding: EdgeInsets.fromLTRB(14.w, 6.h, 14.w, 16.h),
+                child: _buildControlsContent(
+                  context,
+                  colors,
+                  step,
+                  stretch,
+                  isFirstStretch,
+                  cue,
+                  nextStretch,
+                  nextThumbUrl,
+                  hasNextThumb,
+                  isSwapEnabled,
+                  isTablet: false,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideoPlayer(
+    StretchPreview stretch,
+    _SessionStep step,
+    String? stretchThumbUrl, {
+    double? maxWidth,
+    double? maxHeight,
+  }) {
+    final video = AspectRatio(
+      aspectRatio: 16 / 13,
+      child: ColoredBox(
+        color: Colors.transparent,
+        child: ClipRRect(
+          borderRadius: AppBorderRadius.hero,
+          child: Transform.flip(
+            flipX:
+                stretch.isEachSide &&
+                (step.side == 'Second' || step.kind == _StepKind.switchSides),
+            child: StretchMediaPlayer(
+              videoUrl: stretch.model?.videoUrl,
+              thumbnailUrl: stretchThumbUrl,
+              holdSeconds: stretch.model?.defaultHoldSeconds ?? 30,
+              showVideo: step.kind == _StepKind.hold,
+              playing: !paused,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (maxWidth != null || maxHeight != null) {
+      return ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: maxWidth ?? double.infinity,
+          maxHeight: maxHeight ?? double.infinity,
+        ),
+        child: video,
+      );
+    }
+    return video;
+  }
+
+  Widget _buildControlsContent(
+    BuildContext context,
+    AppColors colors,
+    _SessionStep step,
+    StretchPreview stretch,
+    bool isFirstStretch,
+    String cue,
+    StretchPreview? nextStretch,
+    String? nextThumbUrl,
+    bool hasNextThumb,
+    bool isSwapEnabled, {
+    required bool isTablet,
+  }) {
+    final timerFontSize = isTablet ? 68.0 : 80.0;
+    final stretchNameFontSize = isTablet ? 24.0 : null;
+    final cueWidth = isTablet ? 380.0 : 260.w;
+    final cueHeight = isTablet ? 40.0 : 44.h;
+    final nextUpPadding = isTablet
+        ? const EdgeInsets.all(12.0)
+        : EdgeInsets.all(12.r);
+
+    return Column(
+      mainAxisAlignment: isTablet
+          ? MainAxisAlignment.center
+          : MainAxisAlignment.spaceEvenly,
+      children: [
+        Text(
+          step.side == null
+              ? _phaseLabel(step, isFirstStretch).toUpperCase()
+              : '${_phaseLabel(step, isFirstStretch).toUpperCase()} · ${step.side} side',
+          style: AppTextStyle.eyebrow.copyWith(
+            color: colors.playerDim,
+            fontSize: isTablet ? 12.0 : null,
+          ),
+        ),
+        (isTablet ? 3.0 : 3.0).verticalSpace,
+        Text(
+          stretch.name,
+          style: AppTextStyle.headline.copyWith(
+            color: colors.playerInk,
+            fontSize: stretchNameFontSize,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        (isTablet ? 10.0 : 12.0).verticalSpace,
+        Text(
+          _formatSeconds(remaining),
+          style: AppTextStyle.timer.copyWith(
+            color: colors.playerInk,
+            fontSize: timerFontSize,
+          ),
+        ),
+        (isTablet ? 10.0 : 12.0).verticalSpace,
+        SizedBox(
+          width: cueWidth,
+          height: cueHeight,
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(
+              cue,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyle.bodySmall.copyWith(
+                color: colors.playerDim,
+                fontSize: isTablet ? 13.5 : null,
+              ),
+            ),
+          ),
+        ),
+        (isTablet ? 12.0 : 14.0).verticalSpace,
+        Container(
+          padding: nextUpPadding,
+          decoration: BoxDecoration(
+            color: colors.playerInk.withValues(alpha: 0.07),
+            borderRadius: AppBorderRadius.xl,
+          ),
+          child: Row(
+            children: [
+              AppThumb(
+                isOnDark: true,
+                child: nextStretch == null
+                    ? null
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(
+                          isTablet ? 8.0 : 8.r,
+                        ),
+                        child: StretchVideoFrame(
+                          videoUrl: nextStretch.model?.videoUrl,
+                          holdSeconds:
+                              nextStretch.model?.defaultHoldSeconds ?? 30,
+                          isOnDark: true,
+                          fallback: hasNextThumb
+                              ? Image.network(
+                                  nextThumbUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const StretchPlaceholder(isOnDark: true),
+                                )
+                              : const StretchPlaceholder(isOnDark: true),
+                        ),
+                      ),
+              ),
+              (isTablet ? 12.0 : 12.0).horizontalSpace,
+              Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      step.side == null
-                          ? _phaseLabel(step, isFirstStretch).toUpperCase()
-                          : '${_phaseLabel(step, isFirstStretch).toUpperCase()} · ${step.side} side',
-                      style: AppTextStyle.eyebrow.copyWith(
+                      nextStretch == null ? 'Last stretch' : 'Next up',
+                      style: AppTextStyle.caption.copyWith(
                         color: colors.playerDim,
+                        fontSize: isTablet ? 12.0 : null,
                       ),
                     ),
-                    3.verticalSpace,
                     Text(
-                      stretch.name,
-                      style: AppTextStyle.headline.copyWith(
+                      nextStretch?.name ?? 'Almost done',
+                      style: AppTextStyle.titleSmall.copyWith(
                         color: colors.playerInk,
+                        fontSize: isTablet ? 14.5 : null,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    12.verticalSpace,
-                    Text(
-                      _formatSeconds(remaining),
-                      style: AppTextStyle.timer.copyWith(
-                        color: colors.playerInk,
-                        fontSize: 80,
-                      ),
-                    ),
-                    12.verticalSpace,
-                    SizedBox(
-                      width: 260.w,
-                      height: 44.h, // Fixed height reserved for 2 lines of text
-                      child: Align(
-                        alignment: Alignment
-                            .center, // Keeps 1-line text centered inside the 44.h box
-                        child: Text(
-                          cue,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyle.bodySmall.copyWith(
-                            color: colors.playerDim,
-                          ),
-                        ),
-                      ),
-                    ),
-                    14.verticalSpace,
-                    Container(
-                      padding: EdgeInsets.all(12.r),
-                      decoration: BoxDecoration(
-                        color: colors.playerInk.withValues(alpha: 0.07),
-                        borderRadius: AppBorderRadius.xl,
-                      ),
-                      child: Row(
-                        children: [
-                          AppThumb(
-                            isOnDark: true,
-                            child: nextStretch == null
-                                ? null
-                                : ClipRRect(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                    child: StretchVideoFrame(
-                                      videoUrl: nextStretch.model?.videoUrl,
-                                      holdSeconds:
-                                          nextStretch.model?.defaultHoldSeconds ??
-                                          30,
-                                      isOnDark: true,
-                                      fallback: hasNextThumb
-                                          ? Image.network(
-                                              nextThumbUrl,
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) =>
-                                                      const StretchPlaceholder(isOnDark: true),
-                                            )
-                                          : const StretchPlaceholder(isOnDark: true),
-                                    ),
-                                  ),
-                          ),
-                          12.horizontalSpace,
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  nextStretch == null
-                                      ? 'Last stretch'
-                                      : 'Next up',
-                                  style: AppTextStyle.caption.copyWith(
-                                    color: colors.playerDim,
-                                  ),
-                                ),
-                                Text(
-                                  nextStretch?.name ?? 'Almost done',
-                                  style: AppTextStyle.titleSmall.copyWith(
-                                    color: colors.playerInk,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    14.verticalSpace,
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        AppPlayerButton(
-                          icon: Icons.skip_previous_rounded,
-                          tooltip: 'Back',
-                          onTap: _goBack,
-                        ),
-                        AppPlayerButton(
-                          icon: Icons.swap_horiz_rounded,
-                          tooltip: isSwapEnabled
-                              ? 'Swap side'
-                              : 'Swap side (only active during two-sided stretch)',
-                          label: 'Swap',
-                          onTap: isSwapEnabled ? _toggleSide : null,
-                        ),
-                        AppPlayerButton(
-                          icon: paused
-                              ? Icons.play_arrow_rounded
-                              : Icons.pause_rounded,
-                          tooltip: paused ? 'Resume' : 'Pause',
-                          isPrimary: true,
-                          onTap: _togglePause,
-                        ),
-                        AppPlayerButton(
-                          icon: Icons.add_rounded,
-                          tooltip: 'Add 15 seconds',
-                          label: '15 sec',
-                          onTap: _addFifteen,
-                        ),
-                        AppPlayerButton(
-                          icon: Icons.skip_next_rounded,
-                          tooltip: 'Skip to next stretch',
-                          onTap: () => setState(_advance),
-                        ),
-                      ],
-                    ),
-                    14.verticalSpace,
-                    AppProgressBar(
-                      value: _totalSeconds == 0
-                          ? 0
-                          : _elapsedSeconds / _totalSeconds,
-                      height: 3,
-                      color: colors.warm,
-                      trackColor: colors.playerInk.withValues(alpha: 0.12),
                     ),
                   ],
                 ),
@@ -676,8 +823,50 @@ class SessionPlayerScreenState extends State<SessionPlayerScreen> {
             ],
           ),
         ),
-      )
+        (isTablet ? 14.0 : 14.0).verticalSpace,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            AppPlayerButton(
+              icon: Icons.skip_previous_rounded,
+              tooltip: 'Back',
+              onTap: _goBack,
+            ),
+            AppPlayerButton(
+              icon: Icons.swap_horiz_rounded,
+              tooltip: isSwapEnabled
+                  ? 'Swap side'
+                  : 'Swap side (only active during two-sided stretch)',
+              label: 'Swap',
+              onTap: isSwapEnabled ? _toggleSide : null,
+            ),
+            AppPlayerButton(
+              icon: paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+              tooltip: paused ? 'Resume' : 'Pause',
+              isPrimary: true,
+              onTap: _togglePause,
+            ),
+            AppPlayerButton(
+              icon: Icons.add_rounded,
+              tooltip: 'Add 15 seconds',
+              label: '15 sec',
+              onTap: _addFifteen,
+            ),
+            AppPlayerButton(
+              icon: Icons.skip_next_rounded,
+              tooltip: 'Skip to next stretch',
+              onTap: () => setState(_advance),
+            ),
+          ],
+        ),
+        (isTablet ? 14.0 : 14.0).verticalSpace,
+        AppProgressBar(
+          value: _totalSeconds == 0 ? 0 : _elapsedSeconds / _totalSeconds,
+          height: 3,
+          color: colors.warm,
+          trackColor: colors.playerInk.withValues(alpha: 0.12),
+        ),
+      ],
     );
-
   }
 }

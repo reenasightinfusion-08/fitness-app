@@ -31,15 +31,15 @@ class AppResumeBanner extends StatelessWidget {
 
     final dimStyle = AppTextStyle.meta.copyWith(
       color: colors.playerDim,
-      fontSize: isTablet ? 18.0 : null,
+      fontSize: isTablet ? 12.0 : null,
     );
     final titleStyle = AppTextStyle.titleMedium.copyWith(
       color: colors.playerInk,
-      fontSize: isTablet ? 28.0 : null,
+      fontSize: isTablet ? 16.0 : null,
     );
 
     return Container(
-      padding: EdgeInsets.all(isTablet ? 20.0 : 14.r),
+      padding: EdgeInsets.all(isTablet ? 14.0 : 14.r),
       decoration: BoxDecoration(
         color: colors.playerBg,
         borderRadius: AppBorderRadius.xxl,
@@ -47,22 +47,22 @@ class AppResumeBanner extends StatelessWidget {
       child: Row(
         children: [
           thumbnail ??
-              AppThumb(
-                size: isTablet ? AppThumbSize.large : AppThumbSize.medium,
+              const AppThumb(
+                size: AppThumbSize.medium,
                 isOnDark: true,
               ),
-          (isTablet ? 18.0 : 12.0).horizontalSpace,
+          (isTablet ? 14.0 : 12.0).horizontalSpace,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(eyebrow, style: dimStyle),
-                (isTablet ? 4.0 : 0.0).verticalSpace,
+                (isTablet ? 2.0 : 0.0).verticalSpace,
                 Text(
                   title,
                   style: titleStyle,
                 ),
-                (isTablet ? 4.0 : 0.0).verticalSpace,
+                (isTablet ? 2.0 : 0.0).verticalSpace,
                 Text(
                   subtitle,
                   style: dimStyle,
@@ -72,13 +72,13 @@ class AppResumeBanner extends StatelessWidget {
               ],
             ),
           ),
-          (isTablet ? 18.0 : 12.0).horizontalSpace,
+          (isTablet ? 14.0 : 12.0).horizontalSpace,
           AppButton(
             label: 'Resume',
             icon: Icons.play_arrow_rounded,
             onPressed: onResume,
             variant: AppButtonVariant.inverse,
-            size: isTablet ? AppButtonSize.regular : AppButtonSize.small,
+            size: AppButtonSize.small,
             isExpanded: false,
           ),
         ],

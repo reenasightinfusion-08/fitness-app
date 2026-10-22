@@ -53,6 +53,8 @@ class ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isTablet = MediaQuery.sizeOf(context).width >= 600;
+
     return Scaffold(
       backgroundColor: colors.ground,
       appBar: AppTopBar(
@@ -60,37 +62,46 @@ class ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         onBack: () => ref.read(appFlowProvider.notifier).showLogin(),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: AppInsets.page,
-          child: Form(
-            key: formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('Forgot your password?', style: AppTextStyle.headline),
-                6.verticalSpace,
-                Text(
-                  "Enter your email and we'll send a code to reset it.",
-                  style: AppTextStyle.bodyMedium.copyWith(color: colors.ink2),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isTablet ? 480.0 : double.infinity,
+            ),
+            child: SingleChildScrollView(
+              padding: isTablet
+                  ? const EdgeInsets.symmetric(horizontal: 24.0, vertical: 28.0)
+                  : AppInsets.page,
+              child: Form(
+                key: formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Forgot your password?', style: AppTextStyle.headline),
+                    6.verticalSpace,
+                    Text(
+                      "Enter your email and we'll send a code to reset it.",
+                      style: AppTextStyle.bodyMedium.copyWith(color: colors.ink2),
+                    ),
+                    18.verticalSpace,
+                    AppTextField(
+                      controller: emailController,
+                      label: 'Email',
+                      hint: 'you@example.com',
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.email],
+                      validator: AppValidators.email,
+                      onSubmitted: (_) => submit(),
+                    ),
+                    18.verticalSpace,
+                    AppButton(
+                      label: 'Send reset code',
+                      onPressed: submit,
+                      isLoading: isLoading,
+                    ),
+                  ],
                 ),
-                18.verticalSpace,
-                AppTextField(
-                  controller: emailController,
-                  label: 'Email',
-                  hint: 'you@example.com',
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.done,
-                  autofillHints: const [AutofillHints.email],
-                  validator: AppValidators.email,
-                  onSubmitted: (_) => submit(),
-                ),
-                18.verticalSpace,
-                AppButton(
-                  label: 'Send reset code',
-                  onPressed: submit,
-                  isLoading: isLoading,
-                ),
-              ],
+              ),
             ),
           ),
         ),

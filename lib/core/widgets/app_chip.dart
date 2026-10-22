@@ -32,22 +32,21 @@ class AppChip extends StatelessWidget {
     final foreground = isSelected ? colors.accentInk : colors.ink;
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.width >= 600;
-    final h = size.height;
 
     final minH = isTablet
-        ? (h * (isCompact ? 0.052 : 0.068)).clamp(50.0, 76.0)
+        ? (isCompact ? 34.0 : 40.0)
         : (isCompact ? 34.h : 40.h);
     final padH = isTablet
-        ? (h * (isCompact ? 0.022 : 0.030)).clamp(20.0, 38.0)
+        ? (isCompact ? 12.0 : 16.0)
         : (isCompact ? 12.w : 14.w);
     final padV = isTablet
-        ? (h * (isCompact ? 0.014 : 0.018)).clamp(12.0, 22.0)
+        ? (isCompact ? 6.0 : 9.0)
         : 8.h;
     final chipFontSize = isTablet
-        ? (h * (isCompact ? 0.020 : 0.026)).clamp(isCompact ? 16.0 : 19.0, 28.0)
+        ? (isCompact ? 13.0 : 14.0)
         : null;
     final iconSize = isTablet
-        ? (h * 0.028).clamp(20.0, 32.0)
+        ? 16.0
         : 16.r;
 
     return Semantics(
