@@ -330,7 +330,7 @@ class WelcomeScreen extends ConsumerWidget {
                         left: 24.0,
                         child: _FrostedBadge(
                           icon: Icons.auto_awesome_rounded,
-                          label: 'Loosen Mobility & Recovery',
+                          label: 'StretchMind Mobility & Recovery',
                           colors: colors,
                         ),
                       ),

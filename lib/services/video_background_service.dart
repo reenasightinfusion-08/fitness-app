@@ -1,6 +1,5 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
@@ -62,7 +61,6 @@ class VideoBackgroundService {
 
   /// Returns null when the frame can't be read; callers fall back to [VideoBackground.fallback].
   static Future<VideoBackground?> detect(String url) async {
-    if (kIsWeb) return VideoBackground.fallback;
     if (_cache.containsKey(url)) return _cache[url];
     VideoBackground? result;
     try {

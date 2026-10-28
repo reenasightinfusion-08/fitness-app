@@ -4,9 +4,6 @@ build
 .github
 android
 ios
-macos
-linux
-web
 windows
 lib
 assets

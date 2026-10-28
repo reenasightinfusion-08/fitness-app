@@ -9,7 +9,7 @@ const KEYS_TTL_MS = 60 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 8000;
 
 // For the native flow the token's audience is the app's bundle id.
-const clientId = () => (process.env.APPLE_CLIENT_ID || 'com.sightinfusion.fitness').trim();
+const clientId = () => (process.env.APPLE_CLIENT_ID || 'com.si.stretchmind.app').trim();
 
 const sha256Hex = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');
 

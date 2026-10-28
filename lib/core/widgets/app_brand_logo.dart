@@ -35,7 +35,7 @@ class AppBrandLogo extends StatelessWidget {
           );
 
     return Semantics(
-      label: 'Loosen',
+      label: 'StretchMind',
       excludeSemantics: true,
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -52,9 +52,16 @@ class AppBrandLogo extends StatelessWidget {
                     ? (isLarge ? 18.0 : 12.0)
                     : (isLarge ? 12 : 8).w)
                 .horizontalSpace,
-            Text(
-              'loosen',
-              style: wordmarkStyle,
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'StretchMind',
+                  maxLines: 1,
+                  style: wordmarkStyle,
+                ),
+              ),
             ),
           ],
         ],

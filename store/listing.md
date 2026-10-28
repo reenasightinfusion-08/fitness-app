@@ -1,4 +1,4 @@
-# Loosen: store listing and privacy forms
+# StretchMind: store listing and privacy forms
 
 Copy these into App Store Connect and Google Play Console. Re-check them against the app on the day you submit; the privacy forms must match what the app really does.
 
@@ -14,20 +14,21 @@ Copy these into App Store Connect and Google Play Console. Re-check them against
 
 ## Listing text
 
-**App name:** Loosen
-**Apple subtitle (30 chars):** Daily stretching for you
-**Play short description (80 chars):** Daily stretching routines built around your body, limits and schedule.
+**App name (shown under the icon):** StretchMind
+**Store title, Apple and Play (30 chars):** StretchMind: AI Stretching
+**Apple subtitle (30 chars):** Flexibility & Back Pain Relief
+**Play short description (80 chars):** Gentle daily stretching for flexibility, back pain, posture & mobility. Free.
 **Category:** Health & Fitness
-**Apple keywords (100 chars):** stretching,flexibility,mobility,yoga,back pain,desk,warm up,posture,routine,reminder,physio
+**Apple keywords (100 chars):** mobility,yoga,posture,desk,warm up,neck,hip,hamstring,splits,routine,timer,senior,physio,shoulder
 
 **Full description**
 
-Loosen builds a short daily stretching routine around you: the tight spots you have, the injuries you are working around, the equipment you actually own and the minutes you can spare.
+StretchMind builds a short daily stretching routine around you: the tight spots you have, the injuries you are working around, the equipment you actually own and the minutes you can spare.
 
 How it works
 - Answer a few quick questions and get a plan made for your body, refreshed every day.
 - A calm voice talks you through each hold, so you never need to look at your phone. Prefer beeps or silence? Switch any time.
-- Skip anything that hurts. Mark a stretch as painful and Loosen leaves routines that contain it out of your plan.
+- Skip anything that hurts. Mark a stretch as painful and StretchMind leaves routines that contain it out of your plan.
 - Build your own routines from the stretch library and save your favourites.
 - Follow your streak, history and flexibility progress.
 - Set reminders that fit your day, such as a desk break or an evening wind-down.
@@ -37,9 +38,9 @@ Made to be gentle
 - Free to use, with ads. No subscriptions, no in-app purchases.
 - Delete your account and all its data from inside the app, any time.
 
-Loosen offers general stretching guidance and is not medical advice. Talk to a doctor or physiotherapist before starting if you are pregnant, injured or unsure whether stretching is right for you.
+StretchMind offers general stretching guidance and is not medical advice. Talk to a doctor or physiotherapist before starting if you are pregnant, injured or unsure whether stretching is right for you.
 
-**What's new (first release):** Welcome to Loosen. Your daily stretching plan, guided by voice, built around your body.
+**What's new (first release):** Welcome to StretchMind. Your daily stretching plan, guided by voice, built around your body.
 
 ## Age rating
 
@@ -90,7 +91,7 @@ Also required for iOS: `PrivacyInfo.xcprivacy` (item 18), the Google SKAdNetwork
 
 ## App review notes (Apple) / access instructions (Play)
 
-> Loosen does not need an account to look around: tap "Explore with a sample account" on the welcome screen. To test sign-up, use any email you control; a 6-digit verification code is emailed. Or sign in with the demo account below (create it yourself before submitting; mark it onboarding-complete).
+> StretchMind does not need an account to look around: tap "Explore with a sample account" on the welcome screen. To test sign-up, use any email you control; a 6-digit verification code is emailed. Or sign in with the demo account below (create it yourself before submitting; mark it onboarding-complete).
 >
 > Demo account: _email_ / _password_
 >

@@ -27,7 +27,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="28dp"
-            android:text="Loosen"
+            android:text="StretchMind"
             android:textColor="@color/splash_title"
             android:textSize="46sp"
             android:textStyle="bold"

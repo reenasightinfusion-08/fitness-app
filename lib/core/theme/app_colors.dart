@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Loosen palette. The only file allowed to hold raw color values.
+/// StretchMind palette. The only file allowed to hold raw color values.
 ///
 /// Registered as a [ThemeExtension] so every token flips automatically
 /// between light and dark mode. Read it with `context.colors`.

@@ -1,4 +1,4 @@
-package com.example.fitness_app
+package com.si.stretchmind.app
 
 import android.content.Intent
 import android.os.Bundle

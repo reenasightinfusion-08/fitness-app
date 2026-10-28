@@ -44,7 +44,7 @@ class ReminderNotificationService {
       styleInformation: BigTextStyleInformation(
         body,
         contentTitle: title,
-        summaryText: 'Loosen',
+        summaryText: 'StretchMind',
       ),
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,

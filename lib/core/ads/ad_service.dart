@@ -8,8 +8,7 @@ import 'ad_ids.dart';
 /// interstitial and app open). Banner and native ads are widgets — see
 /// BannerAdWidget and NativeAdWidget.
 class AdService {
-  static bool get supported =>
-      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+  static bool get supported => Platform.isAndroid || Platform.isIOS;
 
   static bool _initialized = false;
 

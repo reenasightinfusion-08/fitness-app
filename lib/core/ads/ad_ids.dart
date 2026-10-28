@@ -1,10 +1,9 @@
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart';
 
 /// Google's official test ad units. Replace with your real AdMob unit IDs
 /// before release (and the app IDs in AndroidManifest.xml / Info.plist).
 class AdIds {
-  static bool get _android => !kIsWeb && Platform.isAndroid;
+  static bool get _android => Platform.isAndroid;
 
   static String get banner => _android
       ? 'ca-app-pub-3940256099942544/9214589741'

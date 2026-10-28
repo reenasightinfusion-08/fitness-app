@@ -40,7 +40,7 @@ async function sendCode(email, code, purpose) {
   }
 
   const isVerify = purpose === 'verify';
-  const subject = isVerify ? 'Verify your Loosen account' : 'Reset your password';
+  const subject = isVerify ? 'Verify your StretchMind account' : 'Reset your password';
   const actionText = isVerify ? 'verify your email address' : 'reset your password';
 
   const html = `
@@ -65,7 +65,7 @@ async function sendCode(email, code, purpose) {
 
   let from = (process.env.SMTP_FROM || '').trim();
   if (!from || !from.includes('@')) {
-    from = `"Loosen" <${smtpUser}>`;
+    from = `"StretchMind" <${smtpUser}>`;
   } else if (!from.includes('<') && from.includes(' ')) {
     const parts = from.trim().split(/\s+/);
     const emailPart = parts.pop();

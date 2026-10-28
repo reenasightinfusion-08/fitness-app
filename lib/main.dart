@@ -67,7 +67,7 @@ class FitnessApp extends ConsumerWidget {
         return fontSize * scale;
       },
       builder: (context, child) => MaterialApp(
-        title: 'Loosen',
+        title: 'StretchMind',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,

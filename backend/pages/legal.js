@@ -3,7 +3,7 @@
 // constants below, not the page text, when the contact details change.
 const express = require('express');
 
-const APP = 'Loosen';
+const APP = 'StretchMind';
 const COMPANY = 'Sightinfusion';
 const EMAIL = 'anand@sightinfusion.com';
 const UPDATED = '15 October 2026';

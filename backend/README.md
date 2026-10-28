@@ -1,6 +1,6 @@
 # fitness-backend
 
-Express + MongoDB auth API for the Loosen (fitness-app) Flutter client.
+Express + MongoDB auth API for the StretchMind (fitness-app) Flutter client.
 
 ## Setup
 
